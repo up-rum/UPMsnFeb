@@ -16,7 +16,6 @@
 
 import UIKit
 import PushKit
-import MatrixSDK
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -48,48 +47,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
     
     // MARK: - UIApplicationDelegate
-    func isSameDay(date1: Date, date2: Date) -> Bool {
-        let diff = Calendar.current.dateComponents([.month], from: date1, to: date2)
-        if diff.day == 0 {
-            return true
-        } else {
-            return false
-        }
-    }
+    
     // MARK: Life cycle
     
     func application(_ application: UIApplication, willFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
-        let date = UserDefaults.standard.object(forKey: "syncDate") as? Date
-        MXLog.warning("abc===>> \(date)")
-
-
-       var isDifferentDay = false
-        let dateToday = Calendar.current.component(.day, from: Date())
-
-
-        if date != nil {
-            let date2 = Calendar.current.component(.day, from: date ?? Date())
-            if dateToday == date2 {
-               isDifferentDay = false
-           }
-            else {
-                isDifferentDay = true
-            }
-        }
-        else {
-            isDifferentDay = true
-        }
-
-//        nextDate.compare(is)
-        MXLog.warning(isSameDay)
-        if isDifferentDay {
-            APIServices.shared.upLastSyncApi { result in
-                MXLog.warning("Success")
-            } failure: { failureMsg in
-                MXLog.warning("failed")
-            }
-
-        }
         return self.legacyAppDelegate.application(application, willFinishLaunchingWithOptions: launchOptions)
     }
     

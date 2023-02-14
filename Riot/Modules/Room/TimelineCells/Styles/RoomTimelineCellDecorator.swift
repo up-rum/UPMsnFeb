@@ -22,12 +22,8 @@ protocol RoomTimelineCellDecorator {
     
     func addTimestampLabelIfNeeded(toCell cell: MXKRoomBubbleTableViewCell,
                                    cellData: RoomBubbleCellData)
-    func addTimeLimitLabelIfNeeded(toCell cell: MXKRoomBubbleTableViewCell,
-                                   cellData: RoomBubbleCellData)
     
     func addTimestampLabel(toCell cell: MXKRoomBubbleTableViewCell, cellData: RoomBubbleCellData)
-
-    func addTimeLimitLabel(toCell cell: MXKRoomBubbleTableViewCell, cellData: RoomBubbleCellData)
     
     func addURLPreviewView(_ urlPreviewView: URLPreviewView,
                            toCell cell: MXKRoomBubbleTableViewCell,

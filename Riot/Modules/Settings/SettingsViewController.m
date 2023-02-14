@@ -172,12 +172,18 @@ typedef NS_ENUM(NSUInteger, LABS_ENABLE)
     LABS_ENABLE_RINGING_FOR_GROUP_CALLS_INDEX = 0,
     LABS_ENABLE_THREADS_INDEX,
     LABS_ENABLE_AUTO_REPORT_DECRYPTION_ERRORS,
-    LABS_ENABLE_LIVE_LOCATION_SHARING
+    LABS_ENABLE_LIVE_LOCATION_SHARING,
+    LABS_ENABLE_NEW_SESSION_MANAGER,
+    LABS_ENABLE_NEW_CLIENT_INFO_FEATURE,
+    LABS_ENABLE_WYSIWYG_COMPOSER,
+    LABS_ENABLE_VOICE_BROADCAST,
+    LABS_ENABLE_CRYPTO_SDK
 };
 
 typedef NS_ENUM(NSUInteger, SECURITY)
 {
     SECURITY_BUTTON_INDEX = 0,
+    DEVICE_MANAGER_INDEX
 };
 
 typedef void (^blockSettingsViewController_onReadyToDestroy)(void);
@@ -186,8 +192,7 @@ typedef void (^blockSettingsViewController_onReadyToDestroy)(void);
 
 @interface SettingsViewController () <UITextFieldDelegate, MXKCountryPickerViewControllerDelegate, MXKLanguagePickerViewControllerDelegate, DeactivateAccountViewControllerDelegate,
 NotificationSettingsCoordinatorBridgePresenterDelegate,
-SecureBackupSetupCoordinatorBridgePresenterDelegate,
-SignOutAlertPresenterDelegate,
+SignOutFlowPresenterDelegate,
 SingleImagePickerPresenterDelegate,
 SettingsDiscoveryTableViewSectionDelegate, SettingsDiscoveryViewModelCoordinatorDelegate,
 SettingsIdentityServerCoordinatorBridgePresenterDelegate,
@@ -264,7 +269,7 @@ ChangePasswordCoordinatorBridgePresenterDelegate>
 
 @property (nonatomic, strong) NotificationSettingsCoordinatorBridgePresenter *notificationSettingsBridgePresenter;
 
-@property (nonatomic, strong) SignOutAlertPresenter *signOutAlertPresenter;
+@property (nonatomic, strong) SignOutFlowPresenter *signOutFlowPresenter;
 @property (nonatomic, weak) UIButton *signOutButton;
 @property (nonatomic, strong) SingleImagePickerPresenter *imagePickerPresenter;
 
@@ -272,11 +277,7 @@ ChangePasswordCoordinatorBridgePresenterDelegate>
 @property (nonatomic, strong) SettingsDiscoveryTableViewSection *settingsDiscoveryTableViewSection;
 @property (nonatomic, strong) SettingsDiscoveryThreePidDetailsCoordinatorBridgePresenter *discoveryThreePidDetailsPresenter;
 
-@property (nonatomic, strong) SecureBackupSetupCoordinatorBridgePresenter *secureBackupSetupCoordinatorBridgePresenter;
-
 @property (nonatomic, strong) TableViewSections *tableViewSections;
-
-@property (nonatomic, strong) CrossSigningSetupCoordinatorBridgePresenter *crossSigningSetupCoordinatorBridgePresenter;
 
 @property (nonatomic, strong) ReauthenticationCoordinatorBridgePresenter *reauthenticationCoordinatorBridgePresenter;
 
@@ -284,6 +285,7 @@ ChangePasswordCoordinatorBridgePresenterDelegate>
 
 @property (nonatomic, strong) ThreadsBetaCoordinatorBridgePresenter *threadsBetaBridgePresenter;
 @property (nonatomic, strong) ChangePasswordCoordinatorBridgePresenter *changePasswordBridgePresenter;
+@property (nonatomic, strong) UserSessionsFlowCoordinatorBridgePresenter *userSessionsFlowCoordinatorBridgePresenter;
 
 /**
  Whether or not to check for contacts access after the user accepts the service terms. The value of this property is
@@ -364,15 +366,14 @@ ChangePasswordCoordinatorBridgePresenterDelegate>
     {
         [sectionUserSettings addRowWithTag: USER_SETTINGS_PHONENUMBERS_OFFSET + index];
     }
-    //Rum - 24Nov22
-//    if (BuildSettings.settingsScreenAllowAddingEmailThreepids)
-//    {
-//        [sectionUserSettings addRowWithTag:USER_SETTINGS_ADD_EMAIL_INDEX];
-//    }
-//    if (BuildSettings.settingsScreenAllowAddingPhoneThreepids)
-//    {
-//        [sectionUserSettings addRowWithTag:USER_SETTINGS_ADD_PHONENUMBER_INDEX];
-//    }
+    if (BuildSettings.settingsScreenAllowAddingEmailThreepids)
+    {
+        [sectionUserSettings addRowWithTag:USER_SETTINGS_ADD_EMAIL_INDEX];
+    }
+    if (BuildSettings.settingsScreenAllowAddingPhoneThreepids)
+    {
+        [sectionUserSettings addRowWithTag:USER_SETTINGS_ADD_PHONENUMBER_INDEX];
+    }
     if (BuildSettings.settingsScreenShowThreepidExplanatory)
     {
         NSMutableAttributedString *attributedString = [[NSMutableAttributedString alloc] initWithString:[VectorL10n settingsThreePidsManagementInformationPart1] attributes:@{}];
@@ -401,6 +402,13 @@ ChangePasswordCoordinatorBridgePresenterDelegate>
     
     Section *sectionSecurity = [Section sectionWithTag:SECTION_TAG_SECURITY];
     [sectionSecurity addRowWithTag:SECURITY_BUTTON_INDEX];
+        
+    if (RiotSettings.shared.enableNewSessionManager)
+    {
+        // NOTE: Add device manager entry point in the security section atm for debug purpose
+        [sectionSecurity addRowWithTag:DEVICE_MANAGER_INDEX];
+    }
+    
     sectionSecurity.headerTitle = [VectorL10n settingsSecurity];
     [tmpSections addObject:sectionSecurity];
     
@@ -436,28 +444,28 @@ ChangePasswordCoordinatorBridgePresenterDelegate>
         [tmpSections addObject:sectionCalls];
     }
     
-//    if (BuildSettings.settingsScreenShowDiscoverySettings)
-//    {
-//        Section *sectionDiscovery = [Section sectionWithTag:SECTION_TAG_DISCOVERY];
-//        NSInteger count = self.settingsDiscoveryTableViewSection.numberOfRows;
-//        for (NSInteger index = 0; index < count; index++)
-//        {
-//            [sectionDiscovery addRowWithTag:index];
-//        }
-//        sectionDiscovery.headerTitle = [VectorL10n settingsDiscoverySettings];
-//        sectionDiscovery.attributedFooterTitle = self.settingsDiscoveryTableViewSection.attributedFooterTitle;
-//        [tmpSections addObject:sectionDiscovery];
-//    }
+    if (BuildSettings.settingsScreenShowDiscoverySettings)
+    {
+        Section *sectionDiscovery = [Section sectionWithTag:SECTION_TAG_DISCOVERY];
+        NSInteger count = self.settingsDiscoveryTableViewSection.numberOfRows;
+        for (NSInteger index = 0; index < count; index++)
+        {
+            [sectionDiscovery addRowWithTag:index];
+        }
+        sectionDiscovery.headerTitle = [VectorL10n settingsDiscoverySettings];
+        sectionDiscovery.attributedFooterTitle = self.settingsDiscoveryTableViewSection.attributedFooterTitle;
+        [tmpSections addObject:sectionDiscovery];
+    }
     
-//    if (BuildSettings.settingsScreenAllowIdentityServerConfig)
-//    {
-//        Section *sectionIdentityServer = [Section sectionWithTag:SECTION_TAG_IDENTITY_SERVER];
-//        [sectionIdentityServer addRowWithTag:IDENTITY_SERVER_INDEX];
-//
-//        sectionIdentityServer.headerTitle = [VectorL10n settingsIdentityServerSettings];
-//        sectionIdentityServer.footerTitle = account.mxSession.identityService.identityServer ? VectorL10n.settingsIdentityServerDescription : VectorL10n.settingsIdentityServerNoIsDescription;
-//        [tmpSections addObject:sectionIdentityServer];
-//    }
+    if (BuildSettings.settingsScreenAllowIdentityServerConfig)
+    {
+        Section *sectionIdentityServer = [Section sectionWithTag:SECTION_TAG_IDENTITY_SERVER];
+        [sectionIdentityServer addRowWithTag:IDENTITY_SERVER_INDEX];
+        
+        sectionIdentityServer.headerTitle = [VectorL10n settingsIdentityServerSettings];
+        sectionIdentityServer.footerTitle = account.mxSession.identityService.identityServer ? VectorL10n.settingsIdentityServerDescription : VectorL10n.settingsIdentityServerNoIsDescription;
+        [tmpSections addObject:sectionIdentityServer];
+    }
     
     if (BuildSettings.allowLocalContactsAccess)
     {
@@ -555,10 +563,10 @@ ChangePasswordCoordinatorBridgePresenterDelegate>
     [tmpSections addObject:sectionAdvanced];
     
     Section *sectionAbout = [Section sectionWithTag:SECTION_TAG_ABOUT];
-//    if (BuildSettings.applicationCopyrightUrlString.length)
-//    {
-//        [sectionAbout addRowWithTag:ABOUT_COPYRIGHT_INDEX];
-//    }
+    if (BuildSettings.applicationCopyrightUrlString.length)
+    {
+        [sectionAbout addRowWithTag:ABOUT_COPYRIGHT_INDEX];
+    }
     if (BuildSettings.applicationTermsConditionsUrlString.length)
     {
         [sectionAbout addRowWithTag:ABOUT_TERM_CONDITIONS_INDEX];
@@ -567,7 +575,7 @@ ChangePasswordCoordinatorBridgePresenterDelegate>
     {
         [sectionAbout addRowWithTag:ABOUT_PRIVACY_INDEX];
     }
-//    [sectionAbout addRowWithTag:ABOUT_THIRD_PARTY_INDEX];
+    [sectionAbout addRowWithTag:ABOUT_THIRD_PARTY_INDEX];
     sectionAbout.headerTitle = VectorL10n.settingsAbout;
 
     if (BuildSettings.settingsScreenShowAdvancedSettings)
@@ -580,6 +588,11 @@ ChangePasswordCoordinatorBridgePresenterDelegate>
     if (BuildSettings.settingsScreenShowLabSettings)
     {
         Section *sectionLabs = [Section sectionWithTag:SECTION_TAG_LABS];
+        if (MXSDKOptions.sharedInstance.isCryptoSDKAvailable)
+        {
+            [sectionLabs addRowWithTag:LABS_ENABLE_CRYPTO_SDK];
+        }
+        
         [sectionLabs addRowWithTag:LABS_ENABLE_RINGING_FOR_GROUP_CALLS_INDEX];
         [sectionLabs addRowWithTag:LABS_ENABLE_THREADS_INDEX];
         [sectionLabs addRowWithTag:LABS_ENABLE_AUTO_REPORT_DECRYPTION_ERRORS];
@@ -587,20 +600,27 @@ ChangePasswordCoordinatorBridgePresenterDelegate>
         {
             [sectionLabs addRowWithTag:LABS_ENABLE_LIVE_LOCATION_SHARING];
         }
+        [sectionLabs addRowWithTag:LABS_ENABLE_NEW_SESSION_MANAGER];
+        [sectionLabs addRowWithTag:LABS_ENABLE_NEW_CLIENT_INFO_FEATURE];
+        if (@available(iOS 15.0, *))
+        {
+            [sectionLabs addRowWithTag:LABS_ENABLE_WYSIWYG_COMPOSER];
+        }
+        [sectionLabs addRowWithTag:LABS_ENABLE_VOICE_BROADCAST];
         sectionLabs.headerTitle = [VectorL10n settingsLabs];
         if (sectionLabs.hasAnyRows)
         {
             [tmpSections addObject:sectionLabs];
         }
     }
-    //Rum 24Nov22
-//    if (BuildSettings.settingsScreenAllowDeactivatingAccount)
-//    {
-//        Section *sectionDeactivate = [Section sectionWithTag:SECTION_TAG_DEACTIVATE_ACCOUNT];
-//        [sectionDeactivate addRowWithTag:0];
-//        sectionDeactivate.headerTitle = [VectorL10n settingsDeactivateAccount];
-//        [tmpSections addObject:sectionDeactivate];
-//    }
+    
+    if (BuildSettings.settingsScreenAllowDeactivatingAccount)
+    {
+        Section *sectionDeactivate = [Section sectionWithTag:SECTION_TAG_DEACTIVATE_ACCOUNT];
+        [sectionDeactivate addRowWithTag:0];
+        sectionDeactivate.headerTitle = [VectorL10n settingsDeactivateAccount];
+        [tmpSections addObject:sectionDeactivate];
+    }
     
     //  update sections
     _tableViewSections.sections = tmpSections;
@@ -689,9 +709,6 @@ ChangePasswordCoordinatorBridgePresenterDelegate>
     }];
     [self userInterfaceThemeDidChange];
     
-    self.signOutAlertPresenter = [SignOutAlertPresenter new];
-    self.signOutAlertPresenter.delegate = self;
-    
     _tableViewSections = [TableViewSections new];
     _tableViewSections.delegate = self;
     [self updateSections];
@@ -758,8 +775,7 @@ ChangePasswordCoordinatorBridgePresenterDelegate>
         
         [super destroy];
     }
-
-    _secureBackupSetupCoordinatorBridgePresenter = nil;
+    
     identityServerSettingsCoordinatorBridgePresenter = nil;
 }
 
@@ -1323,6 +1339,8 @@ ChangePasswordCoordinatorBridgePresenterDelegate>
     
     // Update notification access
     [self refreshSystemNotificationSettings];
+    
+    [[MXKAccountManager sharedManager].activeAccounts.firstObject loadCurrentPusher:nil failure:nil];
 }
 
 - (void)refreshSystemNotificationSettings
@@ -1433,13 +1451,11 @@ ChangePasswordCoordinatorBridgePresenterDelegate>
     
     NSString *sdkVersionInfo = [NSString stringWithFormat:@"Matrix SDK %@", MatrixSDKVersion];
     
-    NSString *olmVersionInfo = [NSString stringWithFormat:@"OLM %@", [OLMKit versionString]];    
-    
     [footerText appendFormat:@"%@\n", loggedUserInfo];
     [footerText appendFormat:@"%@\n", homeserverInfo];
     [footerText appendFormat:@"%@\n", appVersionInfo];
     [footerText appendFormat:@"%@\n", sdkVersionInfo];
-    [footerText appendFormat:@"%@", olmVersionInfo];
+    [footerText appendFormat:@"%@", self.mainSession.crypto.version];
     
     return [footerText copy];
 }
@@ -2239,11 +2255,11 @@ ChangePasswordCoordinatorBridgePresenterDelegate>
     }
     else if (section == SECTION_TAG_TIMELINE)
     {
-//        if (row == TIMELINE_STYLE_INDEX)
-//        {
-//            cell = [self buildMessageBubblesCellForTableView:tableView atIndexPath:indexPath];
-//        } else if
-       if (row == TIMELINE_SHOW_REDACTIONS_IN_ROOM_HISTORY_INDEX)
+        if (row == TIMELINE_STYLE_INDEX)
+        {
+            cell = [self buildMessageBubblesCellForTableView:tableView atIndexPath:indexPath];
+        }
+        else if (row == TIMELINE_SHOW_REDACTIONS_IN_ROOM_HISTORY_INDEX)
         {
             MXKTableViewCellWithLabelAndSwitch* labelAndSwitchCell = [self getLabelAndSwitchCell:tableView forIndexPath:indexPath];
 
@@ -2524,6 +2540,70 @@ ChangePasswordCoordinatorBridgePresenterDelegate>
         {
             cell = [self buildLiveLocationSharingCellForTableView:tableView atIndexPath:indexPath];
         }
+        else if (row == LABS_ENABLE_NEW_SESSION_MANAGER)
+        {
+            MXKTableViewCellWithLabelAndSwitch *labelAndSwitchCell = [self getLabelAndSwitchCell:tableView forIndexPath:indexPath];
+
+            labelAndSwitchCell.mxkLabel.text = [VectorL10n settingsLabsEnableNewSessionManager];
+            labelAndSwitchCell.mxkSwitch.on = RiotSettings.shared.enableNewSessionManager;
+            labelAndSwitchCell.mxkSwitch.onTintColor = ThemeService.shared.theme.tintColor;
+
+            [labelAndSwitchCell.mxkSwitch addTarget:self action:@selector(toggleEnableNewSessionManager:) forControlEvents:UIControlEventTouchUpInside];
+
+            cell = labelAndSwitchCell;
+        }
+        else if (row == LABS_ENABLE_NEW_CLIENT_INFO_FEATURE)
+        {
+            MXKTableViewCellWithLabelAndSwitch *labelAndSwitchCell = [self getLabelAndSwitchCell:tableView forIndexPath:indexPath];
+
+            labelAndSwitchCell.mxkLabel.text = [VectorL10n settingsLabsEnableNewClientInfoFeature];
+            labelAndSwitchCell.mxkSwitch.on = RiotSettings.shared.enableClientInformationFeature;
+            labelAndSwitchCell.mxkSwitch.onTintColor = ThemeService.shared.theme.tintColor;
+
+            [labelAndSwitchCell.mxkSwitch addTarget:self action:@selector(toggleEnableNewClientInfoFeature:) forControlEvents:UIControlEventTouchUpInside];
+
+            cell = labelAndSwitchCell;
+        }
+        else if (row == LABS_ENABLE_WYSIWYG_COMPOSER)
+        {
+            MXKTableViewCellWithLabelAndSwitch *labelAndSwitchCell = [self getLabelAndSwitchCell:tableView forIndexPath:indexPath];
+
+            labelAndSwitchCell.mxkLabel.text = [VectorL10n settingsLabsEnableWysiwygComposer];
+            labelAndSwitchCell.mxkSwitch.on = RiotSettings.shared.enableWysiwygComposer;
+            labelAndSwitchCell.mxkSwitch.onTintColor = ThemeService.shared.theme.tintColor;
+
+            [labelAndSwitchCell.mxkSwitch addTarget:self action:@selector(toggleEnableWysiwygComposerFeature:) forControlEvents:UIControlEventTouchUpInside];
+
+            cell = labelAndSwitchCell;
+        }
+        
+        else if (row == LABS_ENABLE_VOICE_BROADCAST)
+        {
+            MXKTableViewCellWithLabelAndSwitch *labelAndSwitchCell = [self getLabelAndSwitchCell:tableView forIndexPath:indexPath];
+
+            labelAndSwitchCell.mxkLabel.text = [VectorL10n settingsLabsEnableVoiceBroadcast];
+            labelAndSwitchCell.mxkSwitch.on = RiotSettings.shared.enableVoiceBroadcast;
+            labelAndSwitchCell.mxkSwitch.onTintColor = ThemeService.shared.theme.tintColor;
+
+            [labelAndSwitchCell.mxkSwitch addTarget:self action:@selector(toggleEnableVoiceBroadcastFeature:) forControlEvents:UIControlEventTouchUpInside];
+
+            cell = labelAndSwitchCell;
+        }
+        else
+        {
+            if (row == LABS_ENABLE_CRYPTO_SDK)
+            {
+                MXKTableViewCellWithLabelAndSwitch *labelAndSwitchCell = [self getLabelAndSwitchCell:tableView forIndexPath:indexPath];
+                BOOL isEnabled = MXSDKOptions.sharedInstance.enableCryptoSDK;
+                labelAndSwitchCell.mxkLabel.text = isEnabled ? VectorL10n.settingsLabsDisableCryptoSdk : VectorL10n.settingsLabsEnableCryptoSdk;
+                labelAndSwitchCell.mxkSwitch.on = isEnabled;
+                [labelAndSwitchCell.mxkSwitch setEnabled:!isEnabled];
+                labelAndSwitchCell.mxkSwitch.onTintColor = ThemeService.shared.theme.tintColor;
+                [labelAndSwitchCell.mxkSwitch addTarget:self action:@selector(enableCryptoSDKFeature:) forControlEvents:UIControlEventTouchUpInside];
+                
+                cell = labelAndSwitchCell;
+            }
+        }
     }
     else if (section == SECTION_TAG_SECURITY)
     {
@@ -2532,6 +2612,11 @@ ChangePasswordCoordinatorBridgePresenterDelegate>
             case SECURITY_BUTTON_INDEX:
                 cell = [self getDefaultTableViewCell:tableView];
                 cell.textLabel.text = [VectorL10n securitySettingsTitle];
+                [cell vc_setAccessoryDisclosureIndicatorWithCurrentTheme];
+                break;
+            case DEVICE_MANAGER_INDEX:
+                cell = [self getDefaultTableViewCell:tableView];
+                cell.textLabel.text = [VectorL10n userSessionsSettings];
                 [cell vc_setAccessoryDisclosureIndicatorWithCurrentTheme];
                 break;
         }
@@ -2799,6 +2884,7 @@ ChangePasswordCoordinatorBridgePresenterDelegate>
                 WebViewViewController *webViewViewController = [[WebViewViewController alloc] initWithURL:BuildSettings.applicationCopyrightUrlString];
                 
                 webViewViewController.title = [VectorL10n settingsCopyright];
+                [webViewViewController vc_setLargeTitleDisplayMode:UINavigationItemLargeTitleDisplayModeNever];
                 
                 [self pushViewController:webViewViewController];
             }
@@ -2807,6 +2893,7 @@ ChangePasswordCoordinatorBridgePresenterDelegate>
                 WebViewViewController *webViewViewController = [[WebViewViewController alloc] initWithURL:BuildSettings.applicationTermsConditionsUrlString];
                 
                 webViewViewController.title = [VectorL10n settingsTermConditions];
+                [webViewViewController vc_setLargeTitleDisplayMode:UINavigationItemLargeTitleDisplayModeNever];
                 
                 [self pushViewController:webViewViewController];
             }
@@ -2815,6 +2902,7 @@ ChangePasswordCoordinatorBridgePresenterDelegate>
                 WebViewViewController *webViewViewController = [[WebViewViewController alloc] initWithURL:BuildSettings.applicationPrivacyPolicyUrlString];
                 
                 webViewViewController.title = [VectorL10n settingsPrivacyPolicy];
+                [webViewViewController vc_setLargeTitleDisplayMode:UINavigationItemLargeTitleDisplayModeNever];
                 
                 [self pushViewController:webViewViewController];
             }
@@ -2825,6 +2913,7 @@ ChangePasswordCoordinatorBridgePresenterDelegate>
                 WebViewViewController *webViewViewController = [[WebViewViewController alloc] initWithLocalHTMLFile:htmlFile];
                 
                 webViewViewController.title = [VectorL10n settingsThirdPartyNotices];
+                [webViewViewController vc_setLargeTitleDisplayMode:UINavigationItemLargeTitleDisplayModeNever];
                 
                 [self pushViewController:webViewViewController];
             }
@@ -2886,6 +2975,11 @@ ChangePasswordCoordinatorBridgePresenterDelegate>
                     [self pushViewController:securityViewController];
                     break;
                 }
+                case DEVICE_MANAGER_INDEX:
+                {
+                    [self showUserSessionsFlow];
+                    break;
+                }
             }
         }
         else if (section == SECTION_TAG_NOTIFICATIONS)
@@ -2914,13 +3008,11 @@ ChangePasswordCoordinatorBridgePresenterDelegate>
 {
     self.signOutButton = (UIButton*)sender;
     
-    MXKeyBackup *keyBackup = self.mainSession.crypto.backup;
+    SignOutFlowPresenter *flowPresenter = [[SignOutFlowPresenter alloc] initWithSession:self.mainSession presentingViewController:self];
+    flowPresenter.delegate = self;
     
-    [self.signOutAlertPresenter presentFor:keyBackup.state
-                      areThereKeysToBackup:keyBackup.hasKeysToBackup
-                                      from:self
-                                sourceView:self.signOutButton
-                                  animated:YES];
+    [flowPresenter startWithSourceView:self.signOutButton];
+    self.signOutFlowPresenter = flowPresenter;
 }
 
 - (void)onRemove3PID:(NSIndexPath*)indexPath
@@ -3257,6 +3349,57 @@ ChangePasswordCoordinatorBridgePresenterDelegate>
     MXSDKOptions.sharedInstance.enableThreads = enable;
     [[MXKRoomDataSourceManager sharedManagerForMatrixSession:self.mainSession] reset];
     [[AppDelegate theDelegate] restoreEmptyDetailsViewController];
+}
+
+- (void)toggleEnableNewSessionManager:(UISwitch *)sender
+{
+    RiotSettings.shared.enableNewSessionManager = sender.isOn;
+    [self updateSections];
+}
+
+- (void)toggleEnableNewClientInfoFeature:(UISwitch *)sender
+{
+    BOOL isEnabled = sender.isOn;
+    RiotSettings.shared.enableClientInformationFeature = isEnabled;
+    MXSDKOptions.sharedInstance.enableNewClientInformationFeature = isEnabled;
+    [self.mainSession updateClientInformation];
+}
+
+- (void)toggleEnableWysiwygComposerFeature:(UISwitch *)sender
+{
+    RiotSettings.shared.enableWysiwygComposer = sender.isOn;
+}
+
+- (void)toggleEnableVoiceBroadcastFeature:(UISwitch *)sender
+{
+    RiotSettings.shared.enableVoiceBroadcast = sender.isOn;
+}
+
+- (void)enableCryptoSDKFeature:(UISwitch *)sender
+{
+    [currentAlert dismissViewControllerAnimated:NO completion:nil];
+    UIAlertController *confirmationAlert = [UIAlertController alertControllerWithTitle:VectorL10n.settingsLabsEnableCryptoSdk
+                                                                             message:VectorL10n.settingsLabsConfirmCryptoSdk
+                                                                      preferredStyle:UIAlertControllerStyleAlert];
+
+    MXWeakify(self);
+    [confirmationAlert addAction:[UIAlertAction actionWithTitle:[VectorL10n cancel] style:UIAlertActionStyleCancel handler:^(UIAlertAction * action) {
+        MXStrongifyAndReturnIfNil(self);
+        self->currentAlert = nil;
+
+        [sender setOn:NO animated:YES];
+    }]];
+
+    [confirmationAlert addAction:[UIAlertAction actionWithTitle:[VectorL10n continue] style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
+        
+        [CryptoSDKConfiguration.shared enable];
+        [Analytics.shared trackCryptoSDKEnabled];
+        
+        [[AppDelegate theDelegate] reloadMatrixSessions:YES];
+    }]];
+
+    [self presentViewController:confirmationAlert animated:YES completion:nil];
+    currentAlert = confirmationAlert;
 }
 
 - (void)togglePinRoomsWithMissedNotif:(UISwitch *)sender
@@ -3684,11 +3827,13 @@ ChangePasswordCoordinatorBridgePresenterDelegate>
         msisdn = [NSString stringWithFormat:@"+%@", [e164 substringFromIndex:2]];
     }
     
+    NSString *countryCode = newPhoneNumberCell.isoCountryCode;
+
     [self showAuthenticationIfNeededForAdding:kMX3PIDMediumMSISDN withSession:session completion:^(NSDictionary *authParams) {
         [self startActivityIndicator];
 
         __block MX3PidAddSession *new3Pid;
-        new3Pid = [session.threePidAddManager startAddPhoneNumberSessionWithPhoneNumber:msisdn countryCode:nil success:^{
+        new3Pid = [session.threePidAddManager startAddPhoneNumberSessionWithPhoneNumber:msisdn countryCode:countryCode success:^{
 
             [self showValidationMsisdnDialogWithMessage:[VectorL10n accountMsisdnValidationMessage] for3PidAddSession:new3Pid threePidAddManager:session.threePidAddManager authenticationParameters:authParams];
 
@@ -4116,123 +4261,25 @@ ChangePasswordCoordinatorBridgePresenterDelegate>
     self.notificationSettingsBridgePresenter = nil;
 }
 
+#pragma mark - SignOutFlowPresenterDelegate
 
-#pragma mark - SecureBackupSetupCoordinatorBridgePresenter
-
-- (void)showSecureBackupSetupFromSignOutFlow
+- (void)signOutFlowPresenterDidStartLoading:(SignOutFlowPresenter *)presenter
 {
-    if (self.canSetupSecureBackup)
-    {
-        [self setupSecureBackup2];
-    }
-    else
-    {
-        // Set up cross-signing first
-        [self setupCrossSigningWithTitle:[VectorL10n secureKeyBackupSetupIntroTitle]
-                                 message:[VectorL10n securitySettingsUserPasswordDescription]
-                                 success:^{
-                                     [self setupSecureBackup2];
-                                 } failure:^(NSError *error) {
-                                 }];
-    }
-}
-
-- (void)setupSecureBackup2
-{
-    SecureBackupSetupCoordinatorBridgePresenter *secureBackupSetupCoordinatorBridgePresenter = [[SecureBackupSetupCoordinatorBridgePresenter alloc] initWithSession:self.mainSession allowOverwrite:YES];
-    secureBackupSetupCoordinatorBridgePresenter.delegate = self;
-    
-    [secureBackupSetupCoordinatorBridgePresenter presentFrom:self animated:YES];
-    
-    self.secureBackupSetupCoordinatorBridgePresenter = secureBackupSetupCoordinatorBridgePresenter;
-}
-
-- (BOOL)canSetupSecureBackup
-{
-    return [self.mainSession vc_canSetupSecureBackup];
-}
-
-#pragma mark - SecureBackupSetupCoordinatorBridgePresenterDelegate
-
-- (void)secureBackupSetupCoordinatorBridgePresenterDelegateDidComplete:(SecureBackupSetupCoordinatorBridgePresenter *)coordinatorBridgePresenter
-{
-    [self.secureBackupSetupCoordinatorBridgePresenter dismissWithAnimated:YES completion:nil];
-    self.secureBackupSetupCoordinatorBridgePresenter = nil;
-}
-
-- (void)secureBackupSetupCoordinatorBridgePresenterDelegateDidCancel:(SecureBackupSetupCoordinatorBridgePresenter *)coordinatorBridgePresenter
-{
-    [self.secureBackupSetupCoordinatorBridgePresenter dismissWithAnimated:YES completion:nil];
-    self.secureBackupSetupCoordinatorBridgePresenter = nil;
-}
-
-#pragma mark - SignOutAlertPresenterDelegate
-
-- (void)signOutAlertPresenterDidTapBackupAction:(SignOutAlertPresenter * _Nonnull)presenter
-{
-    [self showSecureBackupSetupFromSignOutFlow];
-}
-
-- (void)signOutAlertPresenterDidTapSignOutAction:(SignOutAlertPresenter * _Nonnull)presenter
-{
-    // Prevent user to perform user interaction in settings when sign out
-    // TODO: Prevent user interaction in all application (navigation controller and split view controller included)
+    [self startActivityIndicator];
     self.view.userInteractionEnabled = NO;
     self.signOutButton.enabled = NO;
-    
-    [self startActivityIndicator];
-    
-    MXWeakify(self);
-    
-    [[AppDelegate theDelegate] logoutWithConfirmation:NO completion:^(BOOL isLoggedOut) {
-        MXStrongifyAndReturnIfNil(self);
-        
-        [self stopActivityIndicator];
-        
-        self.view.userInteractionEnabled = YES;
-        self.signOutButton.enabled = YES;
-    }];
 }
 
-- (void)setupCrossSigningWithTitle:(NSString*)title
-                           message:(NSString*)message
-                           success:(void (^)(void))success
-                           failure:(void (^)(NSError *error))failure
-
+- (void)signOutFlowPresenterDidStopLoading:(SignOutFlowPresenter *)presenter
 {
-    [self startActivityIndicator];
-    self.view.userInteractionEnabled = NO;
-    
-    MXWeakify(self);
-    
-    void (^animationCompletion)(void) = ^void () {
-        MXStrongifyAndReturnIfNil(self);
-        
-        [self stopActivityIndicator];
-        self.view.userInteractionEnabled = YES;
-        [self.crossSigningSetupCoordinatorBridgePresenter dismissWithAnimated:YES completion:^{}];
-        self.crossSigningSetupCoordinatorBridgePresenter = nil;
-    };
-    
-    CrossSigningSetupCoordinatorBridgePresenter *crossSigningSetupCoordinatorBridgePresenter = [[CrossSigningSetupCoordinatorBridgePresenter alloc] initWithSession:self.mainSession];
-        
-    [crossSigningSetupCoordinatorBridgePresenter presentWith:title
-                                                     message:message
-                                                        from:self
-                                                    animated:YES
-                                                     success:^{
-        animationCompletion();
-        success();
-    } cancel:^{
-        animationCompletion();
-        failure(nil);
-    } failure:^(NSError * _Nonnull error) {
-        animationCompletion();
-        [[AppDelegate theDelegate] showErrorAsAlert:error];
-        failure(error);
-    }];
-    
-    self.crossSigningSetupCoordinatorBridgePresenter = crossSigningSetupCoordinatorBridgePresenter;
+    [self stopActivityIndicator];
+    self.view.userInteractionEnabled = YES;
+    self.signOutButton.enabled = YES;
+}
+
+- (void)signOutFlowPresenter:(SignOutFlowPresenter *)presenter didFailWith:(NSError *)error
+{
+    [[AppDelegate theDelegate] showErrorAsAlert:error];
 }
 
 #pragma mark - SingleImagePickerPresenterDelegate
@@ -4522,6 +4569,37 @@ ChangePasswordCoordinatorBridgePresenterDelegate>
 {
     [bridgePresenter dismissWithAnimated:YES completion:nil];
     self.changePasswordBridgePresenter = nil;
+}
+
+#pragma mark - User sessions management
+
+- (void)showUserSessionsFlow
+{
+    if (!self.mainSession)
+    {
+        MXLogError(@"[SettingsViewController] Cannot show user sessions flow, no user session available");
+        return;
+    }
+    
+    if (!self.navigationController)
+    {
+        MXLogError(@"[SettingsViewController] Cannot show user sessions flow, no navigation controller available");
+        return;
+    }
+    
+    UserSessionsFlowCoordinatorBridgePresenter *userSessionsFlowCoordinatorBridgePresenter = [[UserSessionsFlowCoordinatorBridgePresenter alloc] initWithMxSession:self.mainSession];
+    
+    MXWeakify(self);
+    
+    userSessionsFlowCoordinatorBridgePresenter.completion = ^{
+        MXStrongifyAndReturnIfNil(self);
+        
+        self.userSessionsFlowCoordinatorBridgePresenter = nil;
+    };
+
+    self.userSessionsFlowCoordinatorBridgePresenter = userSessionsFlowCoordinatorBridgePresenter;
+
+    [self.userSessionsFlowCoordinatorBridgePresenter pushFrom:self.navigationController animated:YES];
 }
 
 @end

@@ -34,7 +34,6 @@
 enum
 {
     SECTION_PIN_CODE,
-    SECTION_CLEAR_DATA,
     SECTION_CRYPTO_SESSIONS,
     SECTION_SECURE_BACKUP,
     SECTION_CROSSSIGNING,
@@ -57,10 +56,6 @@ enum {
     PIN_CODE_CHANGE,
     PIN_CODE_BIOMETRICS,
     PIN_CODE_COUNT
-};
-
-enum {
-    CLEAR_DATA_SETTING,
 };
 
 enum {
@@ -161,6 +156,7 @@ TableViewSectionsDelegate>
     // Do any additional setup after loading the view, typically from a nib.
     
     self.navigationItem.title = [VectorL10n securitySettingsTitle];
+    [self vc_setLargeTitleDisplayMode:UINavigationItemLargeTitleDisplayModeNever];
     [self vc_removeBackTitle];
 
     [self.tableView registerClass:MXKTableViewCellWithLabelAndSwitch.class forCellReuseIdentifier:[MXKTableViewCellWithLabelAndSwitch defaultReuseIdentifier]];
@@ -298,15 +294,12 @@ TableViewSectionsDelegate>
     // Pin code section
     
     Section *pinCodeSection = [Section sectionWithTag:SECTION_PIN_CODE];
-    Section *clearDataSection = [Section sectionWithTag:SECTION_CLEAR_DATA];
-
+    
     // Header and footer
     if ([PinCodePreferences shared].isBiometricsAvailable)
     {
         pinCodeSection.headerTitle = [VectorL10n pinProtectionSettingsSectionHeaderWithBiometrics:[PinCodePreferences shared].localizedBiometricsName];
-    }
-    else
-    {
+    } else {
         pinCodeSection.headerTitle = [VectorL10n pinProtectionSettingsSectionHeader];
     }
     if (PinCodePreferences.shared.isPinSet)
@@ -328,16 +321,10 @@ TableViewSectionsDelegate>
     }
     
     [sections addObject:pinCodeSection];
-
-
-//    if ([PinCodePreferences shared].isPinSet)
-    {
-        [clearDataSection addRowWithTag:CLEAR_DATA_SETTING];
-        [sections addObject:clearDataSection];
-    }
+    
     // Crypto sessions section
         
-    if (RiotSettings.shared.settingsSecurityScreenShowSessions)
+    if (RiotSettings.shared.settingsSecurityScreenShowSessions && !RiotSettings.shared.enableNewSessionManager)
     {
         Section *sessionsSection = [Section sectionWithTag:SECTION_CRYPTO_SESSIONS];
         
@@ -640,7 +627,7 @@ TableViewSectionsDelegate>
 
 - (void)loadCrossSigning
 {
-    MXCrossSigning *crossSigning = self.mainSession.crypto.crossSigning;
+    id<MXCrossSigning> crossSigning = self.mainSession.crypto.crossSigning;
     
     [crossSigning refreshStateWithSuccess:^(BOOL stateUpdated) {
         if (stateUpdated)
@@ -656,7 +643,7 @@ TableViewSectionsDelegate>
 {
     NSInteger numberOfRowsInCrossSigningSection;
     
-    MXCrossSigning *crossSigning = self.mainSession.crypto.crossSigning;
+    id<MXCrossSigning> crossSigning = self.mainSession.crypto.crossSigning;
     switch (crossSigning.state)
     {
         case MXCrossSigningStateNotBootstrapped:                // Action: Bootstrap
@@ -674,7 +661,7 @@ TableViewSectionsDelegate>
 
 - (NSAttributedString*)crossSigningInformation
 {
-    MXCrossSigning *crossSigning = self.mainSession.crypto.crossSigning;
+    id<MXCrossSigning> crossSigning = self.mainSession.crypto.crossSigning;
     
     NSString *crossSigningInformation;
     switch (crossSigning.state)
@@ -721,7 +708,7 @@ TableViewSectionsDelegate>
     buttonCell.mxkButton.accessibilityIdentifier = nil;
     
     // And customise it
-    MXCrossSigning *crossSigning = self.mainSession.crypto.crossSigning;
+    id<MXCrossSigning> crossSigning = self.mainSession.crypto.crossSigning;
     switch (crossSigning.state)
     {
         case MXCrossSigningStateNotBootstrapped:                // Action: Bootstrap
@@ -1195,16 +1182,12 @@ TableViewSectionsDelegate>
             }
             else
             {
-                MXSession *session = [AppDelegate theDelegate].mxSessions.firstObject;
-                //  when we have a VoIP push while the application is killed, session.callManager will not be ready yet. Configure it.
-                [[AppDelegate theDelegate] configureCallManagerIfRequiredForSession:session];
-
                 MXKTableViewCellWithLabelAndSwitch *switchCell = [self getLabelAndSwitchCell:tableView forIndexPath:indexPath];
-
+                
                 switchCell.mxkLabel.text = [VectorL10n pinProtectionSettingsEnablePin];
                 switchCell.mxkSwitch.on = [PinCodePreferences shared].isPinSet;
                 [switchCell.mxkSwitch addTarget:self action:@selector(enablePinCodeSwitchValueChanged:) forControlEvents:UIControlEventValueChanged];
-
+                
                 cell = switchCell;
             }
             
@@ -1226,22 +1209,6 @@ TableViewSectionsDelegate>
             cell = switchCell;
         }
     }
-    else if (sectionTag == SECTION_CLEAR_DATA)
-    {
-        MXKTableViewCellWithLabelAndSwitch *switchCell = [self getLabelAndSwitchCell:tableView forIndexPath:indexPath];
-
-        switchCell.mxkLabel.text = @"Clear data pin code";
-        if ([PinCodePreferences shared].isPinSet) {
-            switchCell.mxkSwitch.on = [PinCodePreferences shared].isClearPinSet;
-
-        }
-        else {
-            switchCell.mxkSwitch.on = NO;
-        }
-        [switchCell.mxkSwitch addTarget:self action:@selector(enableClearDataSwitchValueChanged:) forControlEvents:UIControlEventValueChanged];
-
-        cell = switchCell;
-    }
     else if (sectionTag == SECTION_CRYPTO_SESSIONS)
     {
         cell = [self deviceCellWithDevice:devicesArray[rowTag] forTableView:tableView];
@@ -1251,9 +1218,9 @@ TableViewSectionsDelegate>
         cell = [secureBackupSection cellForRowAtRow:rowTag];
     }
 #ifdef CROSS_SIGNING_AND_BACKUP_DEV
-    else if (section == SECTION_KEYBACKUP)
+    else if (sectionTag == SECTION_KEYBACKUP)
     {
-        cell = [keyBackupSection cellForRowAtRow:row];
+        cell = [keyBackupSection cellForRowAtRow:rowTag];
     }
 #endif
     else if (sectionTag == SECTION_CROSSSIGNING)
@@ -1340,10 +1307,7 @@ TableViewSectionsDelegate>
 - (UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section
 {
     NSString *footerTitle = [_tableViewSections sectionAtIndex:section].footerTitle;
-    if(section == 1)
-    {
-        footerTitle = @"Enable quick clear data pin code functionality";
-    }
+    
     if (!footerTitle)
     {
         return nil;
@@ -1549,33 +1513,6 @@ TableViewSectionsDelegate>
     self.setPinCoordinatorBridgePresenter = [[SetPinCoordinatorBridgePresenter alloc] initWithSession:self.mainSession viewMode:viewMode];
     self.setPinCoordinatorBridgePresenter.delegate = self;
     [self.setPinCoordinatorBridgePresenter presentFrom:self animated:YES];
-}
-- (void)enableClearDataSwitchValueChanged:(UISwitch *)sender
-{
-    if ([PinCodePreferences shared].isPinSet) {
-        if(sender.isOn){
-        SetPinCoordinatorViewMode viewMode = SetPinCoordinatorViewModeClearData;
-        self.setPinCoordinatorBridgePresenter = [[SetPinCoordinatorBridgePresenter alloc] initWithSession:self.mainSession viewMode:viewMode];
-        self.setPinCoordinatorBridgePresenter.delegate = self;
-        [self.setPinCoordinatorBridgePresenter presentFrom:self animated:YES];
-        }
-        else{
-            [PinCodePreferences shared].clearPin = nil;
-        }
-    }
-    else {
-        sender.on = NO;
-        UIAlertController* alert = [UIAlertController alertControllerWithTitle:@""
-                                       message:@"To enable clear data pin code you must 'Enable PIN'"
-                                       preferredStyle:UIAlertControllerStyleAlert];
-
-        UIAlertAction* defaultAction = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault
-           handler:^(UIAlertAction * action) {}];
-
-        [alert addAction:defaultAction];
-        [self presentViewController:alert animated:YES completion:nil];
-
-    }
 }
 
 - (void)enableBiometricsSwitchValueChanged:(UISwitch *)sender

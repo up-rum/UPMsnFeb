@@ -204,8 +204,6 @@ final class EnterPinCodeViewController: UIViewController {
             self.renderConfirmPin()
         case .pinsDontMatch:
             self.renderPinsDontMatch()
-        case .clearPinSameAsUnlock:
-            self.renderClearPinsSameAsUnlock()
         case .unlock:
             self.renderUnlockByPin()
         case .wrongPin:
@@ -220,8 +218,6 @@ final class EnterPinCodeViewController: UIViewController {
             self.renderInactive()
         case .changePin:
             self.renderChangePin()
-        case .clearData:
-            self.renderConfirmPin()
         }
     }
     
@@ -271,16 +267,6 @@ final class EnterPinCodeViewController: UIViewController {
         let error = MXKErrorViewModel(title: VectorL10n.pinProtectionMismatchErrorTitle,
                                       message: VectorL10n.pinProtectionMismatchErrorMessage)
         
-        self.activityPresenter.removeCurrentActivityIndicator(animated: true)
-        self.errorPresenter.presentError(from: self, for: error, animated: true) {
-            self.viewModel.process(viewAction: .pinsDontMatchAlertAction)
-        }
-    }
-
-    private func renderClearPinsSameAsUnlock() {
-        let error = MXKErrorViewModel(title: "",
-                                      message: "Clear data pin cannot be same as unlock pin")
-
         self.activityPresenter.removeCurrentActivityIndicator(animated: true)
         self.errorPresenter.presentError(from: self, for: error, animated: true) {
             self.viewModel.process(viewAction: .pinsDontMatchAlertAction)

@@ -19,11 +19,11 @@ import SwiftUI
 
 enum MockPollEditFormScreenState: MockScreenState, CaseIterable {
     case standard
-
+    
     var screenType: Any.Type {
         PollEditForm.self
     }
-
+    
     var screenView: ([Any], AnyView) {
         let viewModel = PollEditFormViewModel(parameters: PollEditFormViewModelParameters(mode: .creation, pollDetails: .default))
         return ([viewModel], AnyView(PollEditForm(viewModel: viewModel.context)))

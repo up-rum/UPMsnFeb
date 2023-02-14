@@ -64,6 +64,7 @@
 @end
 
 @implementation MasterTabBarController
+@synthesize onboardingCoordinatorBridgePresenter, selectedRoomId, selectedEventId, selectedRoomSession, selectedRoomPreviewData, selectedContact, isOnboardingInProgress;
 
 #pragma mark - Properties override
 
@@ -87,10 +88,7 @@
 {
     return (RoomsViewController*)[self viewControllerForClass:RoomsViewController.class];
 }
-- (MyRecentCallViewController *)callHistoryViewController
-{
-    return (MyRecentCallViewController*)[self viewControllerForClass:MyRecentCallViewController.class];
-}
+
 #pragma mark - Life cycle
 
 - (void)viewDidLoad
@@ -157,8 +155,6 @@
         }];
         [self userInterfaceThemeDidChange];
     }
-    
-    self.tabBar.hidden = BuildSettings.newAppLayoutEnabled;
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -509,9 +505,9 @@
 {
     [self releaseSelectedItem];
     
-    _selectedRoomId = paramaters.roomId;
-    _selectedEventId = paramaters.eventId;
-    _selectedRoomSession = paramaters.mxSession;
+    selectedRoomId = paramaters.roomId;
+    selectedEventId = paramaters.eventId;
+    selectedRoomSession = paramaters.mxSession;
     
     [self.masterTabBarDelegate masterTabBarController:self didSelectRoomWithParameters:paramaters completion:completion];
     
@@ -524,9 +520,9 @@
     
     RoomPreviewData *roomPreviewData = parameters.previewData;
     
-    _selectedRoomPreviewData = roomPreviewData;
-    _selectedRoomId = roomPreviewData.roomId;
-    _selectedRoomSession = roomPreviewData.mxSession;
+    selectedRoomPreviewData = roomPreviewData;
+    selectedRoomId = roomPreviewData.roomId;
+    selectedRoomSession = roomPreviewData.mxSession;
     
     [self.masterTabBarDelegate masterTabBarController:self didSelectRoomPreviewWithParameters:parameters completion:completion];
     
@@ -544,7 +540,7 @@
 {
     [self releaseSelectedItem];
     
-    _selectedContact = contact;
+    selectedContact = contact;
     
     [self.masterTabBarDelegate masterTabBarController:self didSelectContact:contact withPresentationParameters:presentationParameters];
     
@@ -553,12 +549,12 @@
 
 - (void)releaseSelectedItem
 {
-    _selectedRoomId = nil;
-    _selectedEventId = nil;
-    _selectedRoomSession = nil;
-    _selectedRoomPreviewData = nil;
+    selectedRoomId = nil;
+    selectedEventId = nil;
+    selectedRoomSession = nil;
+    selectedRoomPreviewData = nil;
     
-    _selectedContact = nil;
+    selectedContact = nil;
 }
 
 - (NSUInteger)missedDiscussionsCount
@@ -612,26 +608,20 @@
 {
     if (roomParentId) {
         NSString *parentName = [mxSession roomSummaryWithRoomId:roomParentId].displayname;
-        if (!BuildSettings.newAppLayoutEnabled)
-        {
-            NSMutableArray<NSString *> *breadcrumbs = [[NSMutableArray alloc] initWithObjects:parentName, nil];
+        NSMutableArray<NSString *> *breadcrumbs = [[NSMutableArray alloc] initWithObjects:parentName, nil];
 
-            MXSpace *firstRootAncestor = roomParentId ? [mxSession.spaceService firstRootAncestorForRoomWithId:roomParentId] : nil;
-            NSString *rootName = nil;
-            if (firstRootAncestor)
-            {
-                rootName = [mxSession roomSummaryWithRoomId:firstRootAncestor.spaceId].displayname;
-                [breadcrumbs insertObject:rootName atIndex:0];
-            }
-            titleView.breadcrumbView.breadcrumbs = breadcrumbs;
+        MXSpace *firstRootAncestor = roomParentId ? [mxSession.spaceService firstRootAncestorForRoomWithId:roomParentId] : nil;
+        NSString *rootName = nil;
+        if (firstRootAncestor)
+        {
+            rootName = [mxSession roomSummaryWithRoomId:firstRootAncestor.spaceId].displayname;
+            [breadcrumbs insertObject:rootName atIndex:0];
         }
+        titleView.breadcrumbView.breadcrumbs = breadcrumbs;
     }
     else
     {
-        if (!BuildSettings.newAppLayoutEnabled)
-        {
-            titleView.breadcrumbView.breadcrumbs = @[];
-        }
+        titleView.breadcrumbView.breadcrumbs = @[];
     }
     
     recentsDataSource.currentSpace = [mxSession.spaceService getSpaceWithId:roomParentId];
@@ -640,8 +630,6 @@
 
 - (void)updateSideMenuNotifcationIcon
 {
-    if (BuildSettings.newAppLayoutEnabled) { return; }
-    
     BOOL displayNotification = NO;
     
     for (MXRoomSummary *summary in recentsDataSource.mxSession.spaceService.rootSpaceSummaries) {
@@ -672,11 +660,8 @@
 
 -(void)setupTitleView
 {
-    if (!BuildSettings.newAppLayoutEnabled)
-    {
-        titleView = [MainTitleView new];
-        self.navigationItem.titleView = titleView;
-    }
+    titleView = [MainTitleView new];
+    self.navigationItem.titleView = titleView;
 }
 
 -(void)setTitleLabelText:(NSString *)text
@@ -864,9 +849,9 @@
 
 - (void)presentVerifyCurrentSessionAlertIfNeededWithSession:(MXSession*)session
 {
-    if ((RiotSettings.shared.hideVerifyThisSessionAlert
+    if (RiotSettings.shared.hideVerifyThisSessionAlert
         || self.reviewSessionAlertHasBeenDisplayed
-        || self.isOnboardingInProgress))
+        || self.isOnboardingInProgress)
     {
         return;
     }
@@ -918,7 +903,7 @@
 
 - (void)presentReviewUnverifiedSessionsAlertIfNeededWithSession:(MXSession*)session
 {
-    if (RiotSettings.shared.hideReviewSessionsAlert || self.reviewSessionAlertHasBeenDisplayed)
+    if (self.reviewSessionAlertHasBeenDisplayed)
     {
         return;
     }
@@ -935,12 +920,12 @@
             break;
         }
     }
-    //Rum
-//    if (isUserHasOneUnverifiedDevice)
-//    {
-//        self.reviewSessionAlertHasBeenDisplayed = YES;
-//        [self presentReviewUnverifiedSessionsAlertWithSession:session];
-//    }
+    
+    if (isUserHasOneUnverifiedDevice)
+    {
+        self.reviewSessionAlertHasBeenDisplayed = YES;
+        [self presentReviewUnverifiedSessionsAlertWithSession:session];
+    }
 }
 
 - (void)presentReviewUnverifiedSessionsAlertWithSession:(MXSession*)session
@@ -949,8 +934,8 @@
     
     [currentAlert dismissViewControllerAnimated:NO completion:nil];
     
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:[VectorL10n keyVerificationSelfVerifyUnverifiedSessionsAlertTitle]
-                                                                   message:[VectorL10n keyVerificationSelfVerifyUnverifiedSessionsAlertMessage]
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:[VectorL10n keyVerificationAlertTitle]
+                                                                   message:[VectorL10n keyVerificationAlertBody]
                                                             preferredStyle:UIAlertControllerStyleAlert];
     
     [alert addAction:[UIAlertAction actionWithTitle:[VectorL10n keyVerificationSelfVerifyUnverifiedSessionsAlertValidateAction]
@@ -962,13 +947,6 @@
     [alert addAction:[UIAlertAction actionWithTitle:[VectorL10n later]
                                               style:UIAlertActionStyleCancel
                                             handler:nil]];
-    
-    [alert addAction:[UIAlertAction actionWithTitle:[VectorL10n doNotAskAgain]
-                                              style:UIAlertActionStyleDestructive
-                                            handler:^(UIAlertAction * action) {
-                                                RiotSettings.shared.hideReviewSessionsAlert = YES;
-                                            }]];
-    
     
     [self presentViewController:alert animated:YES completion:nil];
     
@@ -990,7 +968,6 @@
 {
     self.reviewSessionAlertHasBeenDisplayed = NO;
     RiotSettings.shared.hideVerifyThisSessionAlert = NO;
-    RiotSettings.shared.hideReviewSessionsAlert = NO;
 }
 
 #pragma mark - UITabBarDelegate

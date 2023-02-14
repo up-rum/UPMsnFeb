@@ -14,15 +14,14 @@
 // limitations under the License.
 //
 
-import SwiftUI
 import CommonKit
+import SwiftUI
 
 protocol OnboardingSplashScreenCoordinatorProtocol: Coordinator, Presentable {
     var completion: ((OnboardingSplashScreenViewModelResult) -> Void)? { get set }
 }
 
 final class OnboardingSplashScreenCoordinator: OnboardingSplashScreenCoordinatorProtocol {
-    
     // MARK: - Properties
     
     // MARK: Private
@@ -42,18 +41,18 @@ final class OnboardingSplashScreenCoordinator: OnboardingSplashScreenCoordinator
     // MARK: - Setup
     
     init() {
-        
-        UserDefaults.standard.setValue("", forKey: "upusername")
         let viewModel = OnboardingSplashScreenViewModel()
         let view = OnboardingSplashScreen(viewModel: viewModel.context)
         onboardingSplashScreenViewModel = viewModel
         onboardingSplashScreenHostingController = VectorHostingController(rootView: view)
         onboardingSplashScreenHostingController.vc_removeBackTitle()
+        onboardingSplashScreenHostingController.isNavigationBarHidden = true
         
         indicatorPresenter = UserIndicatorTypePresenter(presentingViewController: onboardingSplashScreenHostingController)
     }
     
     // MARK: - Public
+
     func start() {
         MXLog.debug("[OnboardingSplashScreenCoordinator] did start.")
         onboardingSplashScreenViewModel.completion = { [weak self] result in
@@ -65,14 +64,12 @@ final class OnboardingSplashScreenCoordinator: OnboardingSplashScreenCoordinator
                 self.completion?(result)
             case .register:
                 self.completion?(result)
-            case .uplogin:
-                print("fdf")
             }
         }
     }
     
     func toPresentable() -> UIViewController {
-        return onboardingSplashScreenHostingController
+        onboardingSplashScreenHostingController
     }
     
     /// Stops any ongoing activities in the coordinator.
@@ -92,16 +89,3 @@ final class OnboardingSplashScreenCoordinator: OnboardingSplashScreenCoordinator
         loadingIndicator = nil
     }
 }
-
-//extension LoginPageModelResult {
-//    /// The result converted into an authentication flow.
-//    var flow: AuthenticationFlow {
-//        switch self {
-//        case .login:
-//            return .login
-//        case .register:
-//            return .register
-//        }
-//    }
-//}
-

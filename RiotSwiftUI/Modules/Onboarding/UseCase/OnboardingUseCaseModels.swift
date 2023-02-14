@@ -1,4 +1,4 @@
-// 
+//
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,10 +20,6 @@ import Foundation
 
 // MARK: View model
 
-enum OnboardingUseCaseStateAction {
-    case viewAction(OnboardingUseCaseViewAction)
-}
-
 enum OnboardingUseCaseViewModelResult {
     case personalMessaging
     case workMessaging
@@ -33,25 +29,8 @@ enum OnboardingUseCaseViewModelResult {
 
 // MARK: View
 
-struct OnboardingUseCaseViewState: BindableState {
-    enum UsernameAvailability {
-        /// The availability of the username is unknown.
-        case unknown
-        /// The username is available.
-        case available
-        /// The username is invalid for the following reason.
-        case invalid(String)
-    }
-}
-struct OnboardingUseCaseBindings {
-    /// The username input by the user.
-    var username = ""
-    /// The password input by the user.
-    var password = ""
-    /// Information describing the currently displayed alert.
-    var alertInfo: AlertInfo<AuthenticationRegistrationErrorType>?
-}
+struct OnboardingUseCaseViewState: BindableState { }
+
 enum OnboardingUseCaseViewAction {
     case answer(OnboardingUseCaseViewModelResult)
-    case validateUsername(OnboardingUseCaseViewModelResult)
 }

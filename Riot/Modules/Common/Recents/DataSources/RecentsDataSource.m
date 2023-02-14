@@ -174,6 +174,12 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
 - (RecentsDataSourceSections *)makeDataSourceSections
 {
     NSMutableArray *types = [NSMutableArray array];
+    if (self.recentsDataSourceMode == RecentsDataSourceModeRoomInvites)
+    {
+        [types addObject:@(RecentsDataSourceSectionTypeInvites)];
+        return [[RecentsDataSourceSections alloc] initWithSectionTypes:types.copy];
+    }
+    
     if (self.crossSigningBannerDisplay != CrossSigningBannerDisplayNone)
     {
         [types addObject:@(RecentsDataSourceSectionTypeCrossSigningBanner)];
@@ -183,7 +189,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
         [types addObject:@(RecentsDataSourceSectionTypeSecureBackupBanner)];
     }
     
-    if (!BuildSettings.newAppLayoutEnabled && self.invitesCellDataArray.count > 0)
+    if (self.invitesCellDataArray.count > 0)
     {
         [types addObject:@(RecentsDataSourceSectionTypeInvites)];
     }
@@ -227,11 +233,6 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
     if (self.allChatsRoomCellDataArray.count > 0 || _recentsDataSourceMode == RecentsDataSourceModeAllChats)
     {
         [types addObject:@(RecentsDataSourceSectionTypeAllChats)];
-    }
-    
-    if (self.currentSpace == nil && BuildSettings.newAppLayoutEnabled && self.invitesCellDataArray.count > 0)
-    {
-        [types addObject:@(RecentsDataSourceSectionTypeInvites)];
     }
     
     if (self.currentSpace != nil && self.suggestedRoomCellDataArray.count > 0)
@@ -625,7 +626,13 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
     }
     else if (sectionType == RecentsDataSourceSectionTypeInvites && !(shrinkedSectionsBitMask & RECENTSDATASOURCE_SECTION_INVITES))
     {
-        count = self.invitesCellDataArray.count;
+        if (self.recentsDataSourceMode == RecentsDataSourceModeAllChats)
+        {
+            count = 1;
+        }
+        else {
+            count = self.invitesCellDataArray.count;
+        }
     }
     else if (sectionType == RecentsDataSourceSectionTypeSuggestedRooms && !(shrinkedSectionsBitMask & RECENTSDATASOURCE_SECTION_SUGGESTED))
     {
@@ -637,7 +644,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
     }
     else if (sectionType == RecentsDataSourceSectionTypeAllChats && !(shrinkedSectionsBitMask & RECENTSDATASOURCE_SECTION_ALL_CHATS))
     {
-        count = self.allChatsRoomCellDataArray.count;
+        count = self.allChatsRoomCellDataArray.count ?: 1;
     }
     
     // Adjust this count according to the potential dragged cell.
@@ -660,7 +667,9 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
     if (sectionType == RecentsDataSourceSectionTypeSecureBackupBanner ||
         sectionType == RecentsDataSourceSectionTypeCrossSigningBanner ||
         sectionType == RecentsDataSourceSectionTypeBreadcrumbs ||
-        (sectionType == RecentsDataSourceSectionTypeAllChats && !self.allChatsFilterOptions.optionsCount))
+        (sectionType == RecentsDataSourceSectionTypeInvites && self.recentsDataSourceMode == RecentsDataSourceModeAllChats) ||
+        (sectionType == RecentsDataSourceSectionTypeAllChats && !self.allChatsFilterOptions.optionsCount) ||
+        (sectionType == RecentsDataSourceSectionTypeAllChats && self.currentSpace != nil && self.currentSpace.childRoomIds.count == 0))
     {
         return 0.0;
     }
@@ -859,6 +868,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
     if (sectionType == RecentsDataSourceSectionTypeSecureBackupBanner ||
         sectionType == RecentsDataSourceSectionTypeCrossSigningBanner ||
         sectionType == RecentsDataSourceSectionTypeBreadcrumbs ||
+        (sectionType == RecentsDataSourceSectionTypeInvites && self.recentsDataSourceMode == RecentsDataSourceModeRoomInvites) ||
         (sectionType == RecentsDataSourceSectionTypeAllChats && !self.allChatsFilterOptions.optionsCount))
     {
         return nil;
@@ -1052,8 +1062,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
         return cell;
     }
     else if ((sectionType == RecentsDataSourceSectionTypeConversation && !self.conversationCellDataArray.count)
-             || (sectionType == RecentsDataSourceSectionTypePeople && !self.peopleCellDataArray.count)
-             || (sectionType == RecentsDataSourceSectionTypeAllChats && !self.allChatsRoomCellDataArray.count))
+             || (sectionType == RecentsDataSourceSectionTypePeople && !self.peopleCellDataArray.count))
     {
         MXKTableViewCell *tableViewCell = [tableView dequeueReusableCellWithIdentifier:[MXKTableViewCell defaultReuseIdentifier]];
         if (!tableViewCell)
@@ -1078,6 +1087,42 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
             tableViewCell.textLabel.text = [VectorL10n roomRecentsNoConversation];
         }
         
+        return tableViewCell;
+    }
+    else if (sectionType == RecentsDataSourceSectionTypeAllChats && !self.allChatsRoomCellDataArray.count) {
+        RecentEmptySectionTableViewCell *tableViewCell = [tableView dequeueReusableCellWithIdentifier:[RecentEmptySectionTableViewCell defaultReuseIdentifier]];
+        
+        if (self.searchPatternsList)
+        {
+            tableViewCell.iconView.image = [UIImage systemImageNamed:@"magnifyingglass"];
+            tableViewCell.titleLabel.text = VectorL10n.allChatsNothingFoundPlaceholderTitle;
+            tableViewCell.messageLabel.text = VectorL10n.allChatsNothingFoundPlaceholderMessage;
+        }
+        else if (self.currentSpace && !self.currentSpace.childRoomIds.count)
+        {
+            RecentEmptySectionTableViewCell *tableViewCell = [tableView dequeueReusableCellWithIdentifier:[RecentEmptySpaceSectionTableViewCell defaultReuseIdentifier]];
+
+            tableViewCell.iconView.image = [ThemeService.shared isCurrentThemeDark] ? AssetImages.allChatsEmptySpaceArtworkDark.image : AssetImages.allChatsEmptySpaceArtwork.image;
+            tableViewCell.titleLabel.text = [VectorL10n allChatsEmptyViewTitle: self.currentSpace.summary.displayname];
+            tableViewCell.messageLabel.text = VectorL10n.allChatsEmptySpaceInformation;
+            
+            return tableViewCell;
+        }
+        else
+        {
+            tableViewCell.iconView.image = AssetImages.allChatsEmptyListPlaceholderIcon.image;
+            tableViewCell.titleLabel.text = VectorL10n.allChatsEmptyListPlaceholderTitle;
+            tableViewCell.messageLabel.text = VectorL10n.allChatsEmptyUnreadsPlaceholderMessage;
+        }
+
+        return tableViewCell;
+    }
+    else if (sectionType == RecentsDataSourceSectionTypeInvites && self.recentsDataSourceMode == RecentsDataSourceModeAllChats)
+    {
+        RecentsInvitesTableViewCell *tableViewCell = [tableView dequeueReusableCellWithIdentifier:[RecentsInvitesTableViewCell defaultReuseIdentifier]];
+        
+        tableViewCell.invitesCount = self.recentsListService.invitedRoomListData.counts.total.numberOfRooms;
+
         return tableViewCell;
     }
     
@@ -1184,9 +1229,16 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
         return self.droppingCellBackGroundView.frame.size.height;
     }
     if ((sectionType == RecentsDataSourceSectionTypeConversation && !self.conversationCellDataArray.count)
-         || (sectionType == RecentsDataSourceSectionTypePeople && !self.peopleCellDataArray.count))
+        || (sectionType == RecentsDataSourceSectionTypePeople && !self.peopleCellDataArray.count))
     {
         return 50.0;
+    }
+    if (sectionType == RecentsDataSourceSectionTypeAllChats && !self.allChatsRoomCellDataArray.count) {
+        return 320.0;
+    }
+    if (sectionType == RecentsDataSourceSectionTypeInvites && self.recentsDataSourceMode == RecentsDataSourceModeAllChats)
+    {
+        return 32.0;
     }
     
     // Override this method here to use our own cellDataAtIndexPath
@@ -1498,7 +1550,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
 
 - (BOOL)isDraggableCellAt:(NSIndexPath*)path
 {
-    if (_recentsDataSourceMode == RecentsDataSourceModePeople || _recentsDataSourceMode == RecentsDataSourceModeRooms)
+    if (_recentsDataSourceMode == RecentsDataSourceModePeople || _recentsDataSourceMode == RecentsDataSourceModeRooms || _recentsDataSourceMode == RecentsDataSourceModeRoomInvites)
     {
         return NO;
     }
@@ -1682,7 +1734,10 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
 - (void)recentsListServiceDidChangeData:(id<RecentsListServiceProtocol>)service
                      totalCountsChanged:(BOOL)totalCountsChanged
 {
-    [[AppDelegate theDelegate].masterTabBarController refreshTabBarBadges];
+    if (!BuildSettings.newAppLayoutEnabled)
+    {
+        [[AppDelegate theDelegate].masterTabBarController refreshTabBarBadges];
+    }
 }
 
 - (void)recentsListServiceDidChangeData:(id<RecentsListServiceProtocol>)service

@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -55,13 +55,13 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
     if (self = [super init]) {
         _rootViewController = rootViewController;
         _shareItemProvider = shareItemProvider;
-
+        
         _pendingImages = [NSMutableArray array];
         _imageUploadProgresses = [NSMutableDictionary dictionary];
-
+        
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onMediaLoaderStateDidChange:) name:kMXMediaLoaderStateDidChangeNotification object:nil];
     }
-
+    
     return self;
 }
 
@@ -80,7 +80,7 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
 - (BOOL)roomsContainEncryptedRoom:(NSArray<MXRoom *> *)rooms
 {
     BOOL foundEncryptedRoom = NO;
-
+    
     for (MXRoom *room in rooms)
     {
         if (room.summary.isEncrypted)
@@ -89,7 +89,7 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
             break;
         }
     }
-
+    
     return foundEncryptedRoom;
 }
 
@@ -102,28 +102,28 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
 - (void)sendItemsToRooms:(NSArray<MXRoom *> *)rooms success:(void (^)(void))success failure:(void (^)(NSArray<NSError *> *))failure
 {
     [self resetPendingData];
-
+    
     __block NSMutableArray<NSError *> *errors;
     dispatch_group_t dispatchGroup = dispatch_group_create();
-
+    
     void (^requestSuccess)(void) = ^() {
         dispatch_group_leave(dispatchGroup);
     };
-
+    
     void (^requestFailure)(NSError *) = ^(NSError *requestError) {
         if (errors == nil)
         {
             errors = [NSMutableArray array];
         }
-
+        
         if(requestError)
         {
             [errors addObject:requestError];
         }
-
+        
         dispatch_group_leave(dispatchGroup);
     };
-
+    
     MXWeakify(self);
     for (id<ShareItemProtocol> item in self.shareItemProvider.items)
     {
@@ -131,13 +131,13 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
             dispatch_group_enter(dispatchGroup);
             [self.shareItemProvider loadItem:item completion:^(id item, NSError *error) {
                 MXStrongifyAndReturnIfNil(self);
-
+                
                 if (error)
                 {
                     requestFailure(error);
                     return;
                 }
-
+                
                 NSString *text = nil;
                 if([item isKindOfClass:[NSString class]])
                 {
@@ -147,60 +147,60 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
                 {
                     text = [(NSURL *)item absoluteString];
                 }
-
+                
                 if(text.length == 0)
                 {
                     requestFailure(nil);
                     return;
                 }
-
+                
                 [self sendText:text toRooms:rooms success:requestSuccess failure:requestFailure];
             }];
         }
-
+        
         if (item.type == ShareItemTypeFileURL) {
             dispatch_group_enter(dispatchGroup);
             [self.shareItemProvider loadItem:item completion:^(NSURL *url, NSError *error) {
                 MXStrongifyAndReturnIfNil(self);
-
+                
                 if (error)
                 {
                     requestFailure(error);
                     return;
                 }
-
+                
                 [self sendFileWithUrl:url toRooms:rooms success:requestSuccess failure:requestFailure];
             }];
         }
-
+        
         if (item.type == ShareItemTypeVideo || item.type == ShareItemTypeMovie)
         {
             dispatch_group_enter(dispatchGroup);
             [self.shareItemProvider loadItem:item completion:^(NSURL *videoLocalUrl, NSError *error) {
                 MXStrongifyAndReturnIfNil(self);
-
+                
                 if (error)
                 {
                     requestFailure(error);
                     return;
                 }
-
+                
                 [self sendVideo:videoLocalUrl toRooms:rooms success:requestSuccess failure:requestFailure];
             }];
         }
-
+        
         if (item.type == ShareItemTypeImage)
         {
             dispatch_group_enter(dispatchGroup);
             [self.shareItemProvider loadItem:item completion:^(id<NSSecureCoding> itemProviderItem, NSError *error) {
                 MXStrongifyAndReturnIfNil(self);
-
+                
                 if (error)
                 {
                     requestFailure(error);
                     return;
                 }
-
+                
                 NSData *imageData;
                 if ([(NSObject *)itemProviderItem isKindOfClass:[NSData class]])
                 {
@@ -219,13 +219,13 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
                     UIImage *image = (UIImage*)itemProviderItem;
                     imageData = UIImagePNGRepresentation(image);
                 }
-
+                
                 if (!imageData)
                 {
                     requestFailure(error);
                     return;
                 }
-
+                
                 if ([self.shareItemProvider areAllItemsImages])
                 {
                     // When all items are images, they're processed together from the
@@ -239,7 +239,7 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
                     self.imageCompressionMode = ImageCompressionModeNone;
                     [self sendImageData:imageData toRooms:rooms success:requestSuccess failure:requestFailure];
                 }
-
+                
                 // When there are multiple content types the image will have been sent above.
                 // Otherwise, if we have loaded all of the images we can send them all together.
                 if ([self.shareItemProvider areAllItemsImages])
@@ -251,7 +251,7 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
                             MXStrongifyAndReturnIfNil(self);
                             [self sendImageDatas:self.pendingImages.copy toRooms:rooms success:requestSuccess failure:requestFailure];
                         };
-
+                        
                         if (RiotSettings.shared.showMediaCompressionPrompt)
                         {
                             // Create a compression prompt which will be nil when the sizes can't be determined or if there are no pending images.
@@ -275,10 +275,10 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
             }];
         }
     }
-
+    
     dispatch_group_notify(dispatchGroup, dispatch_get_main_queue(), ^{
         [self resetPendingData];
-
+        
         if (errors)
         {
             failure(errors);
@@ -299,97 +299,97 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
     {
         return nil;
     }
-
+    
     NSData *firstImageData = self.pendingImages.firstObject;
     UIImage *firstImage = [UIImage imageWithData:firstImageData];
-
+    
     MXKImageCompressionSizes compressionSizes = [MXKTools availableCompressionSizesForImage:firstImage originalFileSize:firstImageData.length];
-
+    
     if (compressionSizes.small.fileSize == 0 && compressionSizes.medium.fileSize == 0 && compressionSizes.large.fileSize == 0)
     {
         self.imageCompressionMode = ImageCompressionModeNone;
         MXLogDebug(@"[ShareManager] Bypass compression prompt and send originals for %lu image(s) due to undetermined file sizes", (unsigned long)self.pendingImages.count);
-
+        
         shareBlock();
-
+        
         return nil;
     }
-
+    
     UIAlertController *compressionPrompt = [UIAlertController alertControllerWithTitle:[VectorL10n attachmentSizePromptTitle]
                                                                                message:[VectorL10n attachmentSizePromptMessage]
                                                                         preferredStyle:UIAlertControllerStyleActionSheet];
-
+    
     if (compressionSizes.small.fileSize)
     {
         NSString *title = [VectorL10n attachmentSmall:[MXTools fileSizeToString:compressionSizes.small.fileSize]];
-
+        
         MXWeakify(self);
         [compressionPrompt addAction:[UIAlertAction actionWithTitle:title style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
             MXStrongifyAndReturnIfNil(self);
-
+            
             self.imageCompressionMode = ImageCompressionModeSmall;
             [self logCompressionSizeChoice:compressionSizes.small];
-
+            
             shareBlock();
         }]];
     }
-
+    
     if (compressionSizes.medium.fileSize)
     {
         NSString *title = [VectorL10n attachmentMedium:[MXTools fileSizeToString:compressionSizes.medium.fileSize]];
-
+        
         MXWeakify(self);
         [compressionPrompt addAction:[UIAlertAction actionWithTitle:title style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
             MXStrongifyAndReturnIfNil(self);
-
+            
             self.imageCompressionMode = ImageCompressionModeMedium;
             [self logCompressionSizeChoice:compressionSizes.medium];
-
+            
             shareBlock();
         }]];
     }
-
+    
     // Do not offer the possibility to resize an image with a dimension above kLargeImageSizeMaxDimension, to prevent the risk of memory limit exception.
     // TODO: Remove this condition when issue https://github.com/vector-im/riot-ios/issues/2341 will be fixed.
     if (compressionSizes.large.fileSize && (MAX(compressionSizes.large.imageSize.width, compressionSizes.large.imageSize.height) <= kLargeImageSizeMaxDimension))
     {
         NSString *title = [VectorL10n attachmentLarge:[MXTools fileSizeToString:compressionSizes.large.fileSize]];
-
+        
         MXWeakify(self);
         [compressionPrompt addAction:[UIAlertAction actionWithTitle:title style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
             MXStrongifyAndReturnIfNil(self);
-
+            
             self.imageCompressionMode = ImageCompressionModeLarge;
             self.actualLargeSize = compressionSizes.actualLargeSize;
-
+            
             [self logCompressionSizeChoice:compressionSizes.large];
-
+            
             shareBlock();
         }]];
     }
-
+    
     // To limit memory consumption when encrypting, we suggest the original resolution only if the image size is moderate
     if (compressionSizes.original.fileSize < kImageMaxFileSize)
     {
         NSString *fileSizeString = [MXTools fileSizeToString:compressionSizes.original.fileSize];
-
+        
         NSString *title = [VectorL10n attachmentOriginal:fileSizeString];
-
+        
         MXWeakify(self);
         [compressionPrompt addAction:[UIAlertAction actionWithTitle:title style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
             MXStrongifyAndReturnIfNil(self);
-
+            
             self.imageCompressionMode = ImageCompressionModeNone;
             [self logCompressionSizeChoice:compressionSizes.original];
-
+            
             shareBlock();
         }]];
     }
-
+    
     [compressionPrompt addAction:[UIAlertAction actionWithTitle:[VectorL10n cancel]
                                                           style:UIAlertActionStyleCancel
                                                         handler:nil]];
-
+    
     return compressionPrompt;
 }
 
@@ -425,35 +425,35 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
 {
     CGFloat width = 0.0f;
     CGFloat height = 0.0f;
-
+    
     CGImageSourceRef imageSource = CGImageSourceCreateWithData((CFDataRef)imageData, NULL);
-
+    
     CFDictionaryRef imageProperties = CGImageSourceCopyPropertiesAtIndex(imageSource, 0, NULL);
-
+    
     CFRelease(imageSource);
-
+    
     if (imageProperties != NULL)
     {
         CFNumberRef widthNumber  = CFDictionaryGetValue(imageProperties, kCGImagePropertyPixelWidth);
         CFNumberRef heightNumber = CFDictionaryGetValue(imageProperties, kCGImagePropertyPixelHeight);
         CFNumberRef orientationNumber = CFDictionaryGetValue(imageProperties, kCGImagePropertyOrientation);
-
+        
         if (widthNumber != NULL)
         {
             CFNumberGetValue(widthNumber, kCFNumberCGFloatType, &width);
         }
-
+        
         if (heightNumber != NULL)
         {
             CFNumberGetValue(heightNumber, kCFNumberCGFloatType, &height);
         }
-
+        
         // Check orientation and flip size if required
         if (orientationNumber != NULL)
         {
             int orientation;
             CFNumberGetValue(orientationNumber, kCFNumberIntType, &orientation);
-
+            
             // For orientation from kCGImagePropertyOrientationLeftMirrored to kCGImagePropertyOrientationLeft flip size
             if (orientation >= 5)
             {
@@ -462,10 +462,10 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
                 height = tempWidth;
             }
         }
-
+        
         CFRelease(imageProperties);
     }
-
+    
     return CGSizeMake(width, height);
 }
 
@@ -474,7 +474,7 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
     NSString *fileSize = [MXTools fileSizeToString:compressionSize.fileSize round:NO];
     NSUInteger imageWidth = compressionSize.imageSize.width;
     NSUInteger imageHeight = compressionSize.imageSize.height;
-
+    
     MXLogDebug(@"[ShareItemSender] User choose image compression with output size %lu x %lu (output file size: %@)", (unsigned long)imageWidth, (unsigned long)imageHeight, fileSize);
     MXLogDebug(@"[ShareItemSender] Number of images to send: %lu", (unsigned long)self.pendingImages.count);
 }
@@ -489,15 +489,15 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
         case MXMediaLoaderStateUploadInProgress:
         {
             self.imageUploadProgresses[loader.uploadId] = (NSNumber *)loader.statisticsDict[kMXMediaLoaderProgressValueKey];
-
+            
             const NSInteger totalImagesCount = self.pendingImages.count;
             CGFloat totalProgress = 0.0;
-
+            
             for (NSNumber *progress in self.imageUploadProgresses.allValues)
             {
                 totalProgress += progress.floatValue/totalImagesCount;
             }
-
+            
             [self.delegate shareItemSender:self didUpdateProgress:totalProgress];
             break;
         }
@@ -520,7 +520,7 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
         failure(nil);
         return;
     }
-
+    
     __block NSError *error = nil;
     dispatch_group_t dispatchGroup = dispatch_group_create();
     for (MXRoom *room in rooms) {
@@ -535,7 +535,7 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
             dispatch_group_leave(dispatchGroup);
         }];
     }
-
+    
     dispatch_group_notify(dispatchGroup, dispatch_get_main_queue(), ^{
         if(error) {
             failure(error);
@@ -557,12 +557,12 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
         failure(nil);
         return;
     }
-
+    
     NSString *mimeType;
     CFStringRef uti = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, (__bridge CFStringRef)[fileUrl pathExtension] , NULL);
     mimeType = [self mimeTypeFromUTI:(__bridge NSString *)uti];
     CFRelease(uti);
-
+    
     __block NSError *error = nil;
     dispatch_group_t dispatchGroup = dispatch_group_create();
     for (MXRoom *room in rooms) {
@@ -577,7 +577,7 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
             dispatch_group_leave(dispatchGroup);
         } keepActualFilename:YES];
     }
-
+    
     dispatch_group_notify(dispatchGroup, dispatch_get_main_queue(), ^{
         if(error) {
             failure(error);
@@ -593,12 +593,12 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
           failure:(void(^)(NSError *error))failure
 {
     AVURLAsset *videoAsset = [[AVURLAsset alloc] initWithURL:videoLocalUrl options:nil];
-
+    
     MXWeakify(self);
-
+    
     void (^sendVideo)(void) = ^void()  {
         MXStrongifyAndReturnIfNil(self);
-
+        
         [self didStartSending];
         if (!videoLocalUrl)
         {
@@ -606,7 +606,7 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
             failure(nil);
             return;
         }
-
+        
         // Retrieve the video frame at 1 sec to define the video thumbnail
         AVAssetImageGenerator *assetImageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:videoAsset];
         assetImageGenerator.appliesPreferredTrackTransform = YES;
@@ -615,7 +615,7 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
         // Finalize video attachment
         UIImage *videoThumbnail = [[UIImage alloc] initWithCGImage:imageRef];
         CFRelease(imageRef);
-
+        
         __block NSError *error = nil;
         dispatch_group_t dispatchGroup = dispatch_group_create();
         for (MXRoom *room in rooms) {
@@ -630,7 +630,7 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
                 dispatch_group_leave(dispatchGroup);
             }];
         }
-
+        
         dispatch_group_notify(dispatchGroup, dispatch_get_main_queue(), ^{
             if(error) {
                 failure(error);
@@ -639,9 +639,9 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
             }
         });
     };
-
+    
     BOOL allRoomsAreUnencrypted = ![self roomsContainEncryptedRoom:rooms];
-
+    
     // When rooms are unencrypted convert the video according to the user's normal preferences
     if (allRoomsAreUnencrypted)
     {
@@ -658,12 +658,12 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
                 {
                     return;
                 }
-
+                
                 // Set the chosen video conversion preset.
                 [MXSDKOptions sharedInstance].videoConversionPresetName = presetName;
                 sendVideo();
             }];
-
+            
             [self presentCompressionPrompt:compressionPrompt];
         }
     }
@@ -674,7 +674,7 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
         UIAlertController *lowQualityPrompt = [UIAlertController alertControllerWithTitle:VectorL10n.shareExtensionLowQualityVideoTitle
                                                                                   message:[VectorL10n shareExtensionLowQualityVideoMessage:AppInfo.current.displayName]
                                                                            preferredStyle:UIAlertControllerStyleAlert];
-
+        
         UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:VectorL10n.cancel style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
             // Do nothing
         }];
@@ -682,11 +682,11 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
             [MXSDKOptions sharedInstance].videoConversionPresetName = AVAssetExportPresetMediumQuality;
             sendVideo();
         }];
-
+        
         [lowQualityPrompt addAction:cancelAction];
         [lowQualityPrompt addAction:sendAction];
         [lowQualityPrompt setPreferredAction:sendAction];
-
+        
         [self presentCompressionPrompt:lowQualityPrompt];
     }
 }
@@ -703,7 +703,7 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
         failure(nil);
         return;
     }
-
+    
     __block NSError *error = nil;
     dispatch_group_t dispatchGroup = dispatch_group_create();
     for (MXRoom *room in rooms) {
@@ -718,7 +718,7 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
             dispatch_group_leave(dispatchGroup);
         } keepActualFilename:YES];
     }
-
+    
     dispatch_group_notify(dispatchGroup, dispatch_get_main_queue(), ^{
         if(error) {
             failure(error);
@@ -739,14 +739,14 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
         failure(nil);
         return;
     }
-
+    
     [self didStartSending];
-
+    
     dispatch_group_t requestsGroup = dispatch_group_create();
     __block NSError *firstRequestError;
-
+    
     NSUInteger index = 0;
-
+    
     for (NSData *imageData in imageDatas)
     {
         @autoreleasepool
@@ -759,16 +759,16 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
                 {
                     firstRequestError = error;
                 }
-
+                
                dispatch_group_leave(requestsGroup);
             }];
         }
-
+        
         index++;
     }
-
+    
     dispatch_group_notify(requestsGroup, dispatch_get_main_queue(), ^{
-
+        
         if (firstRequestError)
         {
             failure(firstRequestError);
@@ -786,10 +786,10 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
               failure:(void(^)(NSError *error))failure
 {
     [self didStartSending];
-
+    
     NSString *imageUTI;
     NSString *mimeType;
-
+    
     if (!mimeType)
     {
         imageUTI = [self utiFromImageData:imageData];
@@ -798,7 +798,7 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
             mimeType = [self mimeTypeFromUTI:imageUTI];
         }
     }
-
+    
     if (!mimeType)
     {
         MXLogError(@"[ShareManager] sendImage failed. Cannot determine MIME type .");
@@ -808,16 +808,16 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
         }
         return;
     }
-
+    
     CGSize imageSize;
     NSData *finalImageData;
-
+    
     // Only resize JPEG or PNG files
     if ([self isResizingSupportedForUTI:imageUTI])
     {
         UIImage *convertedImage;
         CGSize newImageSize;
-
+        
         switch (self.imageCompressionMode) {
             case ImageCompressionModeSmall:
                 newImageSize = CGSizeMake(MXKTOOLS_SMALL_IMAGE_SIZE, MXKTOOLS_SMALL_IMAGE_SIZE);
@@ -832,13 +832,13 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
                 newImageSize = CGSizeZero;
                 break;
         }
-
+        
         if (!CGSizeEqualToSize(newImageSize, CGSizeZero))
         {
             // Resize the image and set image in right orientation too
             convertedImage = [MXKTools resizeImageWithData:imageData toFitInSize:newImageSize];
         }
-
+        
         if (convertedImage)
         {
             if ([imageUTI isEqualToString:(__bridge NSString *)kUTTypePNG])
@@ -849,7 +849,7 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
             {
                 finalImageData = UIImageJPEGRepresentation(convertedImage, 0.9);
             }
-
+            
             imageSize = convertedImage.size;
         }
         else
@@ -863,17 +863,17 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
         finalImageData = imageData;
         imageSize = [self imageSizeFromImageData:imageData];
     }
-
+    
     __block NSError *error = nil;
     dispatch_group_t dispatchGroup = dispatch_group_create();
     for (MXRoom *room in rooms) {
-
+                
         UIImage *thumbnail = nil;
         if (room.summary.isEncrypted) // Thumbnail is useful only in case of encrypted room
         {
             thumbnail = [MXKTools resizeImageWithData:imageData toFitInSize:kThumbnailSize];
         }
-
+        
         dispatch_group_enter(dispatchGroup);
         [room sendImage:finalImageData withImageSize:imageSize mimeType:mimeType andThumbnail:thumbnail threadId:nil localEcho:nil success:^(NSString *eventId) {
             dispatch_group_leave(dispatchGroup);
@@ -885,7 +885,7 @@ typedef NS_ENUM(NSInteger, ImageCompressionMode)
             dispatch_group_leave(dispatchGroup);
         }];
     }
-
+    
     dispatch_group_notify(dispatchGroup, dispatch_get_main_queue(), ^{
         if(error) {
             failure(error);

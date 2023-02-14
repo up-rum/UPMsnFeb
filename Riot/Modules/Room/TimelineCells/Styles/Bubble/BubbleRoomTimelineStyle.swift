@@ -65,7 +65,6 @@ class BubbleRoomTimelineStyle: RoomTimelineStyle {
                                  showTimestamp: false)
             
             self.cellDecorator.addTimestampLabel(toCell: cell, cellData: cellData)
-            self.cellDecorator.addTimeLimitLabel(toCell: cell, cellData: cellData)
         } else {
             cell.blurred = true
         }

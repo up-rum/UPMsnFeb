@@ -16,19 +16,10 @@
 
 import SwiftUI
 
-typealias TemplateSimpleScreenViewModelType = StateStoreViewModel<TemplateSimpleScreenViewState,TemplateSimpleScreenViewAction>
+typealias TemplateSimpleScreenViewModelType = StateStoreViewModel<TemplateSimpleScreenViewState, TemplateSimpleScreenViewAction>
 
 class TemplateSimpleScreenViewModel: TemplateSimpleScreenViewModelType, TemplateSimpleScreenViewModelProtocol {
-
-    // MARK: - Properties
-
-    // MARK: Private
-
-    // MARK: Public
-
     var completion: ((TemplateSimpleScreenViewModelResult) -> Void)?
-
-    // MARK: - Setup
 
     init(promptType: TemplateSimpleScreenPromptType, initialCount: Int = 0) {
         super.init(initialViewState: TemplateSimpleScreenViewState(promptType: promptType, count: 0))

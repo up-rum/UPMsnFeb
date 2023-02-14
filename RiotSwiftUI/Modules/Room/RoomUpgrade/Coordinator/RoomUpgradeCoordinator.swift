@@ -26,21 +26,21 @@ struct RoomUpgradeCoordinatorParameters {
 
 final class RoomUpgradeCoordinator: Coordinator, Presentable {
     // MARK: - Properties
-
+    
     // MARK: Private
-
+    
     private let parameters: RoomUpgradeCoordinatorParameters
     private let roomUpgradeHostingController: UIViewController
     private var roomUpgradeViewModel: RoomUpgradeViewModelProtocol
-
+    
     // MARK: Public
 
     // Must be used only internally
     var childCoordinators: [Coordinator] = []
     var completion: ((RoomUpgradeCoordinatorResult) -> Void)?
-
+    
     // MARK: - Setup
-
+    
     init(parameters: RoomUpgradeCoordinatorParameters) {
         self.parameters = parameters
         let viewModel = RoomUpgradeViewModel.makeRoomUpgradeViewModel(roomUpgradeService: RoomUpgradeService(session: parameters.session, roomId: parameters.roomId, parentSpaceId: parameters.parentSpaceId, versionOverride: parameters.versionOverride))
@@ -50,7 +50,7 @@ final class RoomUpgradeCoordinator: Coordinator, Presentable {
         roomUpgradeHostingController = VectorHostingController(rootView: view)
         roomUpgradeHostingController.view.backgroundColor = .clear
     }
-
+    
     // MARK: - Public
 
     func start() {
@@ -66,7 +66,7 @@ final class RoomUpgradeCoordinator: Coordinator, Presentable {
             }
         }
     }
-
+    
     func toPresentable() -> UIViewController {
         roomUpgradeHostingController
     }
