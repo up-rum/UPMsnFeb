@@ -1,13 +1,13 @@
 /*
  Copyright 2015 OpenMarket Ltd
  Copyright 2017 Vector Creations Ltd
-
+ 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
-
+ 
  http://www.apache.org/licenses/LICENSE-2.0
-
+ 
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,12 +54,12 @@ static NSDataDetector *linkDetector;
 {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-
+        
         userIdRegex = [NSRegularExpression regularExpressionWithPattern:kMXToolsRegexStringForMatrixUserIdentifier options:NSRegularExpressionCaseInsensitive error:nil];
         roomIdRegex = [NSRegularExpression regularExpressionWithPattern:kMXToolsRegexStringForMatrixRoomIdentifier options:NSRegularExpressionCaseInsensitive error:nil];
         roomAliasRegex = [NSRegularExpression regularExpressionWithPattern:kMXToolsRegexStringForMatrixRoomAlias options:NSRegularExpressionCaseInsensitive error:nil];
         eventIdRegex = [NSRegularExpression regularExpressionWithPattern:kMXToolsRegexStringForMatrixEventIdentifier options:NSRegularExpressionCaseInsensitive error:nil];
-
+        
         httpLinksRegex = [NSRegularExpression regularExpressionWithPattern:@"(?i)\\b(https?://\\S*)\\b" options:NSRegularExpressionCaseInsensitive error:nil];
         htmlTagsRegex  = [NSRegularExpression regularExpressionWithPattern:@"<(\\w+)[^>]*>" options:NSRegularExpressionCaseInsensitive error:nil];
         linkDetector = [NSDataDetector dataDetectorWithTypes:NSTextCheckingTypeLink error:nil];
@@ -184,7 +184,7 @@ static NSDataDetector *linkDetector;
 + (NSString*)formatSecondsInterval:(CGFloat)secondsInterval
 {
     NSMutableString* formattedString = [[NSMutableString alloc] init];
-
+    
     if (secondsInterval < 1)
     {
         [formattedString appendFormat:@"< 1%@", [VectorL10n formatTimeS]];
@@ -205,7 +205,7 @@ static NSDataDetector *linkDetector;
          (int)(secondsInterval) % 60, [VectorL10n formatTimeS]];
     }
     [formattedString appendString:@" left"];
-
+    
     return formattedString;
 }
 
@@ -247,7 +247,7 @@ static NSDataDetector *linkDetector;
 {
     NSString *msisdn = nil;
     NBPhoneNumber *phoneNb;
-
+    
     if ([phoneNumber hasPrefix:@"+"] || [phoneNumber hasPrefix:@"00"])
     {
         phoneNb = [[NBPhoneNumberUtil sharedInstance] parse:phoneNumber defaultRegion:nil error:nil];
@@ -257,18 +257,18 @@ static NSDataDetector *linkDetector;
         // Check whether the provided phone number is a valid msisdn.
         NSString *e164 = [NSString stringWithFormat:@"+%@", phoneNumber];
         phoneNb = [[NBPhoneNumberUtil sharedInstance] parse:e164 defaultRegion:nil error:nil];
-
+        
         if (![[NBPhoneNumberUtil sharedInstance] isValidNumber:phoneNb])
         {
             // Consider the phone number as a national one, and use the country code.
             phoneNb = [[NBPhoneNumberUtil sharedInstance] parse:phoneNumber defaultRegion:countryCode error:nil];
         }
     }
-
+    
     if ([[NBPhoneNumberUtil sharedInstance] isValidNumber:phoneNb])
     {
         NSString *e164 = [[NBPhoneNumberUtil sharedInstance] format:phoneNb numberFormat:NBEPhoneNumberFormatE164 error:nil];
-
+        
         if ([e164 hasPrefix:@"+"])
         {
             msisdn = [e164 substringFromIndex:1];
@@ -278,14 +278,14 @@ static NSDataDetector *linkDetector;
             msisdn = [e164 substringFromIndex:2];
         }
     }
-
+    
     return msisdn;
 }
 
 + (NSString*)readableMSISDN:(NSString*)msisdn
 {
     NSString *e164;
-
+    
     if (([e164 hasPrefix:@"+"]))
     {
         e164 = msisdn;
@@ -294,7 +294,7 @@ static NSDataDetector *linkDetector;
     {
         e164 = [NSString stringWithFormat:@"+%@", msisdn];
     }
-
+    
     NBPhoneNumber *phoneNb = [[NBPhoneNumberUtil sharedInstance] parse:e164 defaultRegion:nil error:nil];
     return [[NBPhoneNumberUtil sharedInstance] format:phoneNb numberFormat:NBEPhoneNumberFormatINTERNATIONAL error:nil];
 }
@@ -314,22 +314,22 @@ static NSDataDetector *linkDetector;
 + (NSUInteger)rgbValueWithColor:(UIColor*)color
 {
     CGFloat red, green, blue, alpha;
-
+    
     [color getRed:&red green:&green blue:&blue alpha:&alpha];
-
+    
     NSUInteger rgbValue = ((int)(red * 255) << 16) + ((int)(green * 255) << 8) + (blue * 255);
-
+    
     return rgbValue;
 }
 
 + (NSUInteger)argbValueWithColor:(UIColor*)color
 {
     CGFloat red, green, blue, alpha;
-
+    
     [color getRed:&red green:&green blue:&blue alpha:&alpha];
-
+    
     NSUInteger argbValue = ((int)(alpha * 255) << 24) + ((int)(red * 255) << 16) + ((int)(green * 255) << 8) + (blue * 255);
-
+    
     return argbValue;
 }
 
@@ -342,13 +342,13 @@ static NSDataDetector *linkDetector;
         // Nothing to do
         return imageSrc;
     }
-
+    
     // Draw the entire image in a graphics context, respecting the image’s orientation setting
     UIGraphicsBeginImageContext(imageSrc.size);
     [imageSrc drawAtPoint:CGPointMake(0, 0)];
     UIImage *retImage = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
-
+    
     return retImage;
 }
 
@@ -356,29 +356,29 @@ static NSDataDetector *linkDetector;
 {
     MXKImageCompressionSizes compressionSizes;
     memset(&compressionSizes, 0, sizeof(MXKImageCompressionSizes));
-
+    
     // Store the original
     compressionSizes.original.imageSize = image.size;
     compressionSizes.original.fileSize = originalFileSize ? originalFileSize : UIImageJPEGRepresentation(image, 0.9).length;
-
+    
     MXLogDebug(@"[MXKTools] availableCompressionSizesForImage: %f %f - File size: %tu", compressionSizes.original.imageSize.width, compressionSizes.original.imageSize.height, compressionSizes.original.fileSize);
-
+    
     compressionSizes.actualLargeSize = MXKTOOLS_LARGE_IMAGE_SIZE;
-
+    
     // Compute the file size for each compression level
     CGFloat maxSize = MAX(compressionSizes.original.imageSize.width, compressionSizes.original.imageSize.height);
     if (maxSize >= MXKTOOLS_SMALL_IMAGE_SIZE)
     {
         compressionSizes.small.imageSize = [MXKTools resizeImageSize:compressionSizes.original.imageSize toFitInSize:CGSizeMake(MXKTOOLS_SMALL_IMAGE_SIZE, MXKTOOLS_SMALL_IMAGE_SIZE) canExpand:NO];
-
+        
         compressionSizes.small.fileSize = (NSUInteger)[MXTools roundFileSize:(long long)(compressionSizes.small.imageSize.width * compressionSizes.small.imageSize.height * 0.20)];
-
+        
         if (maxSize >= MXKTOOLS_MEDIUM_IMAGE_SIZE)
         {
             compressionSizes.medium.imageSize = [MXKTools resizeImageSize:compressionSizes.original.imageSize toFitInSize:CGSizeMake(MXKTOOLS_MEDIUM_IMAGE_SIZE, MXKTOOLS_MEDIUM_IMAGE_SIZE) canExpand:NO];
-
+            
             compressionSizes.medium.fileSize = (NSUInteger)[MXTools roundFileSize:(long long)(compressionSizes.medium.imageSize.width * compressionSizes.medium.imageSize.height * 0.20)];
-
+            
             if (maxSize >= MXKTOOLS_LARGE_IMAGE_SIZE)
             {
                 // In case of panorama the large resolution (1024 x ...) is not relevant. We prefer consider the third of the panarama width.
@@ -392,9 +392,9 @@ static NSDataDetector *linkDetector;
                     // Keep a multiple of predefined large size
                     compressionSizes.actualLargeSize = floor(compressionSizes.actualLargeSize / MXKTOOLS_LARGE_IMAGE_SIZE) * MXKTOOLS_LARGE_IMAGE_SIZE;
                 }
-
+                
                 compressionSizes.large.imageSize = [MXKTools resizeImageSize:compressionSizes.original.imageSize toFitInSize:CGSizeMake(compressionSizes.actualLargeSize, compressionSizes.actualLargeSize) canExpand:NO];
-
+                
                 compressionSizes.large.fileSize = (NSUInteger)[MXTools roundFileSize:(long long)(compressionSizes.large.imageSize.width * compressionSizes.large.imageSize.height * 0.20)];
             }
             else
@@ -411,7 +411,7 @@ static NSDataDetector *linkDetector;
     {
         MXLogDebug(@"    - too small to fit in %d", MXKTOOLS_SMALL_IMAGE_SIZE);
     }
-
+    
     return compressionSizes;
 }
 
@@ -422,44 +422,44 @@ static NSDataDetector *linkDetector;
     {
         return CGSizeZero;
     }
-
+    
     CGSize resized = originalSize;
-
+    
     if ((maxSize.width > 0) && (maxSize.height > 0) && (canExpand || ((originalSize.width > maxSize.width) || (originalSize.height > maxSize.height))))
     {
         CGFloat ratioX = maxSize.width  / originalSize.width;
         CGFloat ratioY = maxSize.height / originalSize.height;
-
+        
         CGFloat scale = MIN(ratioX, ratioY);
         resized.width  *= scale;
         resized.height *= scale;
-
+        
         // padding
         resized.width  = floorf(resized.width  / 2) * 2;
         resized.height = floorf(resized.height / 2) * 2;
     }
-
+    
     return resized;
 }
 
 + (CGSize)resizeImageSize:(CGSize)originalSize toFillWithSize:(CGSize)maxSize canExpand:(BOOL)canExpand
 {
     CGSize resized = originalSize;
-
+    
     if ((maxSize.width > 0) && (maxSize.height > 0) && (canExpand || ((originalSize.width > maxSize.width) && (originalSize.height > maxSize.height))))
     {
         CGFloat ratioX = maxSize.width  / originalSize.width;
         CGFloat ratioY = maxSize.height / originalSize.height;
-
+        
         CGFloat scale = MAX(ratioX, ratioY);
         resized.width  *= scale;
         resized.height *= scale;
-
+        
         // padding
         resized.width  = floorf(resized.width  / 2) * 2;
         resized.height = floorf(resized.height / 2) * 2;
     }
-
+    
     return resized;
 }
 
@@ -471,13 +471,13 @@ static NSDataDetector *linkDetector;
 + (UIImage *)reduceImage:(UIImage *)image toFitInSize:(CGSize)size useMainScreenScale:(BOOL)useMainScreenScale
 {
     UIImage *resizedImage;
-
+    
     // Check whether resize is required
     if (size.width && size.height)
     {
         CGFloat width = image.size.width;
         CGFloat height = image.size.height;
-
+        
         if (width > size.width)
         {
             height = (height * size.width) / width;
@@ -490,28 +490,28 @@ static NSDataDetector *linkDetector;
             width = floorf(width / 2) * 2;
             height = size.height;
         }
-
+        
         if (width != image.size.width || height != image.size.height)
         {
             // Create the thumbnail
             CGSize imageSize = CGSizeMake(width, height);
-
+            
             // Convert first the provided size in pixels
-
+            
             // The scale factor is set to 0.0 to use the scale factor of the device’s main screen.
             CGFloat scale = useMainScreenScale ? 0.0 : 1.0;
-
+            
             UIGraphicsBeginImageContextWithOptions(imageSize, NO, scale);
-
+            
             //            // set to the top quality
             //            CGContextRef context = UIGraphicsGetCurrentContext();
             //            CGContextSetInterpolationQuality(context, kCGInterpolationHigh);
-
+            
             CGRect thumbnailRect = CGRectMake(0, 0, 0, 0);
             thumbnailRect.origin = CGPointMake(0.0,0.0);
             thumbnailRect.size.width  = imageSize.width;
             thumbnailRect.size.height = imageSize.height;
-
+            
             [image drawInRect:thumbnailRect];
             resizedImage = UIGraphicsGetImageFromCurrentImageContext();
             UIGraphicsEndImageContext();
@@ -521,7 +521,7 @@ static NSDataDetector *linkDetector;
     {
         resizedImage = image;
     }
-
+    
     return resizedImage;
 }
 
@@ -554,86 +554,86 @@ static NSDataDetector *linkDetector;
 + (UIImage*)resizeImage:(UIImage *)image toSize:(CGSize)size
 {
     UIImage *resizedImage = image;
-
+    
     // Check whether resize is required
     if (size.width && size.height)
     {
         // Convert first the provided size in pixels
         // The scale factor is set to 0.0 to use the scale factor of the device’s main screen.
         UIGraphicsBeginImageContextWithOptions(size, NO, 0.0);
-
+        
         CGContextRef context = UIGraphicsGetCurrentContext();
         CGContextSetInterpolationQuality(context, kCGInterpolationHigh);
-
+        
         [image drawInRect:CGRectMake(0, 0, size.width, size.height)];
         resizedImage = UIGraphicsGetImageFromCurrentImageContext();
-
+        
         UIGraphicsEndImageContext();
     }
-
+    
     return resizedImage;
 }
 
 + (UIImage*)resizeImageWithRoundedCorners:(UIImage *)image toSize:(CGSize)size
 {
     UIImage *resizedImage = image;
-
+    
     // Check whether resize is required
     if (size.width && size.height)
     {
         // Convert first the provided size in pixels
         // The scale factor is set to 0.0 to use the scale factor of the device’s main screen.
         UIGraphicsBeginImageContextWithOptions(size, NO, 0.0);
-
+        
         CGContextRef context = UIGraphicsGetCurrentContext();
         CGContextSetInterpolationQuality(context, kCGInterpolationHigh);
-
+        
         // Add a clip to round corners
         [[UIBezierPath bezierPathWithRoundedRect:CGRectMake(0, 0, size.width, size.height) cornerRadius:size.width/2] addClip];
-
+        
         [image drawInRect:CGRectMake(0, 0, size.width, size.height)];
         resizedImage = UIGraphicsGetImageFromCurrentImageContext();
-
+        
         UIGraphicsEndImageContext();
     }
-
+    
     return resizedImage;
 }
 
 + (UIImage*)paintImage:(UIImage*)image withColor:(UIColor*)color
 {
     UIImage *newImage;
-
+    
     const CGFloat *colorComponents = CGColorGetComponents(color.CGColor);
-
+    
     // Create a new image with the same size
     UIGraphicsBeginImageContextWithOptions(image.size, 0, 0);
-
+    
     CGContextRef gc = UIGraphicsGetCurrentContext();
-
+    
     CGRect rect = (CGRect){ .size = image.size};
-
+    
     [image drawInRect:rect
             blendMode:kCGBlendModeNormal
                 alpha:1];
-
+    
     // Binarize the image: Transform all colors into the provided color but keep the alpha
     CGContextSetBlendMode(gc, kCGBlendModeSourceIn);
     CGContextSetRGBFillColor(gc, colorComponents[0], colorComponents[1], colorComponents[2], colorComponents[3]);
     CGContextFillRect(gc, rect);
-
+    
     // Retrieve the result into an UIImage
     newImage = UIGraphicsGetImageFromCurrentImageContext();
-
+    
     UIGraphicsEndImageContext();
-
+    
     return newImage;
 }
 
 + (UIImageOrientation)imageOrientationForRotationAngleInDegree:(NSInteger)angle
 {
     NSInteger modAngle = angle % 360;
-
+    
     UIImageOrientation orientation = UIImageOrientationUp;
     if (45 <= modAngle && modAngle < 135)
     {
@@ -647,7 +647,7 @@ static NSDataDetector *linkDetector;
     {
         return UIImageOrientationLeft;
     }
-
+    
     return orientation;
 }
 
@@ -659,24 +659,24 @@ static NSMutableDictionary* backgroundByImageNameDict;
     {
         return backgroundColor;
     }
-
+    
     if (!backgroundByImageNameDict)
     {
         backgroundByImageNameDict = [[NSMutableDictionary alloc] init];
     }
-
+    
     NSString* key = [NSString stringWithFormat:@"%@ %f %f", resourceName, patternSize.width, resourceSize.width];
-
+    
     UIColor* bgColor = [backgroundByImageNameDict objectForKey:key];
-
+    
     if (!bgColor)
     {
         UIImageView* backgroundView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, patternSize.width, patternSize.height)];
         backgroundView.backgroundColor = backgroundColor;
-
+        
         CGFloat offsetX = (patternSize.width - resourceSize.width) / 2.0f;
         CGFloat offsetY = (patternSize.height - resourceSize.height) / 2.0f;
-
+        
         UIImageView* resourceImageView = [[UIImageView alloc] initWithFrame:CGRectMake(offsetX, offsetY, resourceSize.width, resourceSize.height)];
         resourceImageView.backgroundColor = [UIColor clearColor];
         UIImage *resImage = [UIImage imageNamed:resourceName];
@@ -688,25 +688,25 @@ static NSMutableDictionary* backgroundByImageNameDict;
         {
             resourceImageView.image = [MXKTools resizeImage:resImage toSize:resourceSize];
         }
-
-
+        
+        
         [backgroundView addSubview:resourceImageView];
-
+        
         // Create a "canvas" (image context) to draw in.
         UIGraphicsBeginImageContextWithOptions(backgroundView.frame.size, NO, 0);
-
+        
         // set to the top quality
         CGContextRef context = UIGraphicsGetCurrentContext();
         CGContextSetInterpolationQuality(context, kCGInterpolationHigh);
         [[backgroundView layer] renderInContext: UIGraphicsGetCurrentContext()];
         UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
         UIGraphicsEndImageContext();
-
-
+        
+        
         bgColor = [[UIColor alloc] initWithPatternImage:image];
         [backgroundByImageNameDict setObject:bgColor forKey:key];
     }
-
+    
     return bgColor;
 }
 
@@ -718,9 +718,9 @@ static NSMutableDictionary* backgroundByImageNameDict;
     UIAlertController *compressionPrompt = [UIAlertController alertControllerWithTitle:[VectorL10n attachmentSizePromptTitle]
                                                                                message:[VectorL10n attachmentSizePromptMessage]
                                                                         preferredStyle:UIAlertControllerStyleActionSheet];
-
+    
     CGSize naturalSize = [videoAsset tracksWithMediaType:AVMediaTypeVideo].firstObject.naturalSize;
-
+    
     // Provide 480p as the baseline preset.
     NSString *fileSizeString = [MXKTools estimatedFileSizeStringForVideoAsset:videoAsset withPresetName:AVAssetExportPreset640x480];
     NSString *title = [VectorL10n attachmentSmallWithResolution:@"480p" :fileSizeString];
@@ -730,7 +730,7 @@ static NSMutableDictionary* backgroundByImageNameDict;
         // Call the completion with 480p preset.
         completion(AVAssetExportPreset640x480);
     }]];
-
+    
     // Allow 720p when the video exceeds 480p.
     if (naturalSize.height > 480)
     {
@@ -743,7 +743,7 @@ static NSMutableDictionary* backgroundByImageNameDict;
             completion(AVAssetExportPreset1280x720);
         }]];
     }
-
+    
     // Allow 1080p when the video exceeds 720p.
     if (naturalSize.height > 720)
     {
@@ -756,14 +756,14 @@ static NSMutableDictionary* backgroundByImageNameDict;
             completion(AVAssetExportPreset1920x1080);
         }]];
     }
-
+    
     [compressionPrompt addAction:[UIAlertAction actionWithTitle:[VectorL10n cancel]
                                                           style:UIAlertActionStyleCancel
                                                         handler:^(UIAlertAction * action) {
         // Cancelled. Call the completion with nil.
         completion(nil);
     }]];
-
+    
     return compressionPrompt;
 }
 
@@ -771,7 +771,7 @@ static NSMutableDictionary* backgroundByImageNameDict;
 {
     AVAssetExportSession *exportSession = [AVAssetExportSession exportSessionWithAsset:videoAsset presetName:presetName];
     exportSession.timeRange = CMTimeRangeMake(kCMTimeZero, videoAsset.duration);
-
+    
     return [MXTools fileSizeToString:exportSession.estimatedOutputFileLength];
 }
 
@@ -803,28 +803,28 @@ static NSMutableDictionary* backgroundByImageNameDict;
                     [alert addAction:[UIAlertAction actionWithTitle:[VectorL10n settings]
                                                                      style:UIAlertActionStyleDefault
                                                                    handler:^(UIAlertAction * action) {
-
+                                                                       
                                                                        NSURL *url = [NSURL URLWithString:UIApplicationOpenSettingsURLString];
                                                                        [sharedApplication performSelector:@selector(openURL:) withObject:url];
-
+                                                                       
                                                                        // Note: it does not worth to check if the user changes the permission
                                                                        // because iOS restarts the app in case of change of app privacy settings
                                                                        handler(NO);
-
+                                                                       
                                                                    }]];
                 }
-
+                
                 [alert addAction:[UIAlertAction actionWithTitle:[VectorL10n ok]
                                                           style:UIAlertActionStyleDefault
                                                         handler:^(UIAlertAction * action) {
-
+                                                            
                                                             handler(NO);
-
+                                                            
                                                         }]];
-
+                
                 [viewController presentViewController:alert animated:YES completion:nil];
             }
-
+            
         });
     }];
 }
@@ -882,13 +882,13 @@ manualChangeMessageForVideo:(NSString*)manualChangeMessageForVideo
     {
         // Request address book access
         [[CNContactStore new] requestAccessForEntityType:CNEntityTypeContacts completionHandler:^(BOOL granted, NSError * _Nullable error) {
-
+            
             [MXSDKOptions.sharedInstance.analyticsDelegate trackContactsAccessGranted:granted];
-
+            
             dispatch_async(dispatch_get_main_queue(), ^{
-
+                
                 handler(granted);
-
+                
             });
         }];
     }
@@ -901,11 +901,11 @@ manualChangeMessageForVideo:(NSString*)manualChangeMessageForVideo
         [alert addAction:[UIAlertAction actionWithTitle:VectorL10n.cancel
                                                   style:UIAlertActionStyleDefault
                                                 handler:^(UIAlertAction * action) {
-
+            
             handler(NO);
-
+            
         }]];
-
+        
         // Add a shortcut to the app settings (This requires the shared application instance)
         UIApplication *sharedApplication = [UIApplication performSelector:@selector(sharedApplication)];
         if (sharedApplication)
@@ -916,19 +916,19 @@ manualChangeMessageForVideo:(NSString*)manualChangeMessageForVideo
                 [MXKAppSettings standardAppSettings].syncLocalContactsPermissionOpenedSystemSettings = YES;
                 // Wait for the setting to be saved as the app could be killed imminently.
                 [[NSUserDefaults standardUserDefaults] synchronize];
-
+                
                 NSURL *url = [NSURL URLWithString:UIApplicationOpenSettingsURLString];
                 [sharedApplication performSelector:@selector(openURL:) withObject:url];
-
+                
                 // Note: it does not worth to check if the user changes the permission
                 // because iOS restarts the app in case of change of app privacy settings
                 handler(NO);
             }];
-
+            
             [alert addAction: settingsAction];
             alert.preferredAction = settingsAction;
         }
-
+        
         [viewController presentViewController:alert animated:YES completion:nil];
     }
     else
@@ -948,28 +948,28 @@ manualChangeMessageForVideo:(NSString*)manualChangeMessageForVideo
     {
         [mutableAttributedString deleteCharactersInRange:NSMakeRange(mutableAttributedString.length - 1, 1)];
     }
-
+    
     // New lines may have also been introduced by the paragraph style
     // Make sure the last paragraph style has no spacing
     [mutableAttributedString enumerateAttributesInRange:NSMakeRange(0, mutableAttributedString.length) options:(NSAttributedStringEnumerationReverse) usingBlock:^(NSDictionary *attrs, NSRange range, BOOL *stop) {
-
+        
         if (attrs[NSParagraphStyleAttributeName])
         {
             NSString *subString = [mutableAttributedString.string substringWithRange:range];
             NSArray *components = [subString componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
-
+            
             NSMutableDictionary *updatedAttrs = [NSMutableDictionary dictionaryWithDictionary:attrs];
             NSMutableParagraphStyle *paragraphStyle = [updatedAttrs[NSParagraphStyleAttributeName] mutableCopy];
             paragraphStyle.paragraphSpacing = 0;
             updatedAttrs[NSParagraphStyleAttributeName] = paragraphStyle;
-
+            
             if (components.count > 1)
             {
                 NSString *lastComponent = components.lastObject;
-
+                
                 NSRange range2 = NSMakeRange(range.location, range.length - lastComponent.length);
                 [mutableAttributedString setAttributes:attrs range:range2];
-
+                
                 range2 = NSMakeRange(range2.location + range2.length, lastComponent.length);
                 [mutableAttributedString setAttributes:updatedAttrs range:range2];
             }
@@ -978,18 +978,18 @@ manualChangeMessageForVideo:(NSString*)manualChangeMessageForVideo
                 [mutableAttributedString setAttributes:updatedAttrs range:range];
             }
         }
-
+        
         // Check only the last paragraph
         *stop = YES;
     }];
-
+    
     // Image rendering failed on an exception until we replace the DTImageTextAttachments with a simple NSTextAttachment subclass
     // (thanks to https://github.com/Cocoanetics/DTCoreText/issues/863).
     [mutableAttributedString enumerateAttribute:NSAttachmentAttributeName
                                         inRange:NSMakeRange(0, mutableAttributedString.length)
                                         options:0
                                      usingBlock:^(id value, NSRange range, BOOL *stop) {
-
+                                         
                                          if ([value isKindOfClass:DTImageTextAttachment.class])
                                          {
                                              DTImageTextAttachment *attachment = (DTImageTextAttachment*)value;
@@ -997,7 +997,7 @@ manualChangeMessageForVideo:(NSString*)manualChangeMessageForVideo
                                              if (attachment.image)
                                              {
                                                  textAttachment.image = attachment.image;
-
+                                                 
                                                  CGRect frame = textAttachment.bounds;
                                                  frame.size = attachment.displaySize;
                                                  textAttachment.bounds = frame;
@@ -1021,25 +1021,25 @@ manualChangeMessageForVideo:(NSString*)manualChangeMessageForVideo
     {
         [MXKTools createLinksInMutableAttributedString:mutableAttributedString matchingRegex:userIdRegex];
     }
-
+    
     // If enabled, make room id clickable
     if (enabledMatrixIdsBitMask & MXKTOOLS_ROOM_IDENTIFIER_BITWISE)
     {
         [MXKTools createLinksInMutableAttributedString:mutableAttributedString matchingRegex:roomIdRegex];
     }
-
+    
     // If enabled, make room alias clickable
     if (enabledMatrixIdsBitMask & MXKTOOLS_ROOM_ALIAS_BITWISE)
     {
         [MXKTools createLinksInMutableAttributedString:mutableAttributedString matchingRegex:roomAliasRegex];
     }
-
+    
     // If enabled, make event id clickable
     if (enabledMatrixIdsBitMask & MXKTOOLS_EVENT_IDENTIFIER_BITWISE)
     {
         [MXKTools createLinksInMutableAttributedString:mutableAttributedString matchingRegex:eventIdRegex];
     }
-
+    
     // This allows to check for normal url based links (like https://element.io)
     // And set back the default link color
     NSArray *matches = [linkDetector matchesInString: [mutableAttributedString string] options:0 range: NSMakeRange(0,mutableAttributedString.length)];
@@ -1052,7 +1052,7 @@ manualChangeMessageForVideo:(NSString*)manualChangeMessageForVideo
             NSURLComponents *url = [[NSURLComponents new] initWithURL:matchUrl resolvingAgainstBaseURL:NO];
             if (url.URL)
             {
-//                [mutableAttributedString addAttribute:NSForegroundColorAttributeName value: ThemeService.shared.theme.colors.links range:matchRange];
+                [mutableAttributedString addAttribute:NSForegroundColorAttributeName value:ThemeService.shared.theme.colors.links range:matchRange];
             }
         }
     }
@@ -1061,26 +1061,26 @@ manualChangeMessageForVideo:(NSString*)manualChangeMessageForVideo
 + (void)createLinksInMutableAttributedString:(NSMutableAttributedString*)mutableAttributedString matchingRegex:(NSRegularExpression*)regex
 {
     __block NSArray *linkMatches;
-
+    
     // Enumerate each string matching the regex
     [regex enumerateMatchesInString:mutableAttributedString.string
                             options:0
                               range:NSMakeRange(0, mutableAttributedString.length)
                          usingBlock:^(NSTextCheckingResult *match, NSMatchingFlags flags, BOOL *stop) {
-
+        
         // Do not create a link if there is already one on the found match
         __block BOOL hasAlreadyLink = NO;
         [mutableAttributedString enumerateAttributesInRange:match.range
                                                     options:0
                                                  usingBlock:^(NSDictionary<NSString *,id> * _Nonnull attrs, NSRange range, BOOL * _Nonnull stop) {
-
+            
             if (attrs[NSLinkAttributeName])
             {
                 hasAlreadyLink = YES;
                 *stop = YES;
             }
         }];
-
+        
         // Do not create a link if the match is part of an http link.
         // The http link will be automatically generated by the UI afterwards.
         // So, do not break it now by adding a link on a subset of this http link.
@@ -1096,20 +1096,20 @@ manualChangeMessageForVideo:(NSString*)manualChangeMessageForVideo
                 // detect them when they are displayed. So let the UI create the link at display.
                 linkMatches = [httpLinksRegex matchesInString:mutableAttributedString.string options:0 range:NSMakeRange(0, mutableAttributedString.length)];
             }
-
+            
             for (NSTextCheckingResult *linkMatch in linkMatches)
             {
                 // If the match is fully in the link, skip it
                 if (NSIntersectionRange(match.range, linkMatch.range).length == match.range.length)
                 {
                     // but before we set the right color
-//                    [mutableAttributedString addAttribute:NSForegroundColorAttributeName value:ThemeService.shared.theme.colors.links range:linkMatch.range];
+                    [mutableAttributedString addAttribute:NSForegroundColorAttributeName value:ThemeService.shared.theme.colors.links range:linkMatch.range];
                     hasAlreadyLink = YES;
                     break;
                 }
             }
         }
-
+        
         if (!hasAlreadyLink)
         {
             // Make the link clickable
@@ -1118,7 +1118,7 @@ manualChangeMessageForVideo:(NSString*)manualChangeMessageForVideo
             NSString *link = [mutableAttributedString.string substringWithRange:match.range];
             link = [link stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
             [mutableAttributedString addAttribute:NSLinkAttributeName value:link range:match.range];
-//            [mutableAttributedString addAttribute:NSForegroundColorAttributeName value:ThemeService.shared.theme.colors.links range:match.range];
+            [mutableAttributedString addAttribute:NSForegroundColorAttributeName value:ThemeService.shared.theme.colors.links range:match.range];
         }
     }];
 }

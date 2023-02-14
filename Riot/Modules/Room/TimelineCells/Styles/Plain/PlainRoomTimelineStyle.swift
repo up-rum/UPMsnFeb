@@ -65,9 +65,6 @@ class PlainRoomTimelineStyle: RoomTimelineStyle {
             cell.selectComponent(UInt(selectedComponentIndex),
                                  showEditButton: false,
                                  showTimestamp: showTimestamp)
-            self.cellDecorator.addTimestampLabel(toCell: cell, cellData: cellData)
-            self.cellDecorator.addTimeLimitLabel(toCell: cell, cellData: cellData)
-
         } else {
             cell.blurred = true
         }

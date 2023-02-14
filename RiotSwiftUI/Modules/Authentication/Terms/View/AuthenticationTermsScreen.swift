@@ -18,26 +18,26 @@ import SwiftUI
 
 struct AuthenticationTermsScreen: View {
     // MARK: - Properties
-
+    
     // MARK: Private
-
+    
     @Environment(\.theme) private var theme
-
+    
     // MARK: Public
-
+    
     @ObservedObject var viewModel: AuthenticationTermsViewModel.Context
-
+    
     // MARK: Views
-
+    
     var body: some View {
         ScrollView {
             VStack(spacing: 40) {
                 header
                     .padding(.top, OnboardingMetrics.topPaddingToNavigationBar)
                     .padding(.horizontal)
-
+                
                 termsList // No horizontal padding as the list should span edge-to-edge.
-
+                
                 button
                     .padding(.horizontal)
             }
@@ -49,25 +49,25 @@ struct AuthenticationTermsScreen: View {
         .alert(item: $viewModel.alertInfo) { $0.alert }
         .accentColor(theme.colors.accent)
     }
-
+    
     /// The header containing the icon, title and message.
     var header: some View {
         VStack(spacing: 8) {
             OnboardingIconImage(image: Asset.Images.authenticationTermsIcon)
                 .padding(.bottom, 8)
-
+            
             Text(VectorL10n.authenticationTermsTitle)
                 .font(theme.fonts.title2B)
                 .multilineTextAlignment(.center)
                 .foregroundColor(theme.colors.primaryContent)
-
+            
             Text(viewModel.viewState.headerMessage)
                 .font(theme.fonts.body)
                 .multilineTextAlignment(.center)
                 .foregroundColor(theme.colors.secondaryContent)
         }
     }
-
+    
     /// The list of polices to be accepted.
     var termsList: some View {
         LazyVStack(spacing: 0) {
@@ -78,7 +78,7 @@ struct AuthenticationTermsScreen: View {
             }
         }
     }
-
+    
     /// The action button shown below the list.
     var button: some View {
         VStack {
@@ -91,7 +91,7 @@ struct AuthenticationTermsScreen: View {
             .accessibilityIdentifier("nextButton")
         }
     }
-
+    
     /// A simple toolbar with a cancel button.
     var toolbar: some ToolbarContent {
         ToolbarItem(placement: .cancellationAction) {

@@ -41,7 +41,6 @@ final class EnterPinCodeViewModel: EnterPinCodeViewModelType {
 
     weak var viewDelegate: EnterPinCodeViewModelViewDelegate?
     weak var coordinatorDelegate: EnterPinCodeViewModelCoordinatorDelegate?
-    
     private let pinCodePreferences: PinCodePreferences
     private let localAuthenticationService: LocalAuthenticationService
     
@@ -121,8 +120,10 @@ final class EnterPinCodeViewModel: EnterPinCodeViewModelType {
                     updateAfterPinSet()
                 case .unlock, .confirmPinToDeactivate:
                     //  unlocking
-
-                    if currentPin == pinCodePreferences.pin {
+                    if currentPin != pinCodePreferences.pin {
+                        //  no match
+                        updateAfterUnlockFailed()
+                    } else {
                         //  match
                         //  we can use biometrics anymore, if set
                         pinCodePreferences.canUseBiometricsToUnlock = nil
@@ -131,16 +132,6 @@ final class EnterPinCodeViewModel: EnterPinCodeViewModelType {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                             self.coordinatorDelegate?.enterPinCodeViewModelDidComplete(self)
                         }
-
-                    }
-                    else if currentPin == pinCodePreferences.clearPin{
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            self.coordinatorDelegate?.enterPinCodeViewModelClearData(self)
-                        }
-                    }
-                    else {
-                        //  no match
-                        updateAfterUnlockFailed()
                     }
                 case .changePin:
                     //  unlocking
@@ -158,23 +149,6 @@ final class EnterPinCodeViewModel: EnterPinCodeViewModelType {
                             //  choosing pin
                             updateAfterPinSet()
                         }
-                case .clearData:
-                    updateClearPinAfterPinSet()
-                    //  unlocking
-//                    if currentPin != pinCodePreferences.pin {
-//                        //  no match
-//                        updateAfterUnlockFailed()
-//                    } else {
-//                        //  match
-//                        //  we can use biometrics anymore, if set
-////                        pinCodePreferences.canUseBiometricsToUnlock = nil
-////                        pinCodePreferences.resetCounters()
-////                        //  complete with a little delay
-//                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-//                            self.coordinatorDelegate?.enterPinCodeViewModelClearData(self)
-//                        }
-//
-//                    }
                 default:
                     break
                 }
@@ -182,22 +156,7 @@ final class EnterPinCodeViewModel: EnterPinCodeViewModelType {
             }
         }
     }
-//    private func showSplashScreen() {
-//        MXLog.debug("[OnboardingCoordinator] showSplashScreen")
-//
-//        let coordinator = OnboardingSplashScreenCoordinator()
-//        coordinator.completion = { [weak self, weak coordinator] result in
-//            guard let self = self, let coordinator = coordinator else { return }
-////            self.splashScreenCoordinator(coordinator, didCompleteWith: result)
-//        }
-//
-//        coordinator.start()
-//        add(childCoordinator: coordinator)
-//
-//        navigationRouter.setRootModule(coordinator) { [weak self] in
-//            self?.remove(childCoordinator: coordinator)
-//        }
-//    }
+    
     private func viewState(for mode: SetPinCoordinatorViewMode) -> EnterPinCodeViewState {
         switch mode {
         case .setPin:
@@ -208,8 +167,6 @@ final class EnterPinCodeViewModel: EnterPinCodeViewModelType {
             return .choosePinAfterRegister
         case .changePin:
             return .changePin
-        case .clearData:
-            return .clearData
         default:
             return .inactive
         }
@@ -228,8 +185,6 @@ final class EnterPinCodeViewModel: EnterPinCodeViewModelType {
             update(viewState: .inactive)
         case .changePin:
             update(viewState: .changePin)
-        case .clearData:
-            update(viewState: .clearData)
         default:
             break
         }
@@ -272,32 +227,6 @@ final class EnterPinCodeViewModel: EnterPinCodeViewModelType {
             currentPin.removeAll()
             update(viewState: .confirmPin)
         } else if firstPin == currentPin { //  check first and second pins        
-                //  complete with a little delay
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    self.coordinatorDelegate?.enterPinCodeViewModel(self, didCompleteWithPin: self.firstPin)
-                }
-        } else {
-                update(viewState: .pinsDontMatch)
-        }
-    }
-    private func updateClearPinAfterPinSet() {
-        if firstPin.isEmpty {
-            //  check if this PIN is allowed
-            if pinCodePreferences.notAllowedPINs.contains(currentPin) {
-                viewMode = .notAllowedPin
-                update(viewState: .notAllowedPin)
-                return
-            }
-            //  go to next screen
-            firstPin = currentPin
-            currentPin.removeAll()
-            update(viewState: .confirmPin)
-        }
-        else if firstPin == pinCodePreferences.pin { //  check first and second pins
-                //  complete with a little delay
-            update(viewState: .clearPinSameAsUnlock)
-                }
-            else if firstPin == currentPin { //  check first and second pins
                 //  complete with a little delay
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                     self.coordinatorDelegate?.enterPinCodeViewModel(self, didCompleteWithPin: self.firstPin)

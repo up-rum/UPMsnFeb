@@ -2,13 +2,13 @@
 // $ createScreen.sh Threads/ThreadList ThreadList
 /*
  Copyright 2021 New Vector Ltd
-
+ 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
-
+ 
  http://www.apache.org/licenses/LICENSE-2.0
-
+ 
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,9 +19,9 @@
 import Foundation
 
 final class ThreadListViewModel: ThreadListViewModelProtocol {
-
+    
     // MARK: - Properties
-
+    
     // MARK: Private
 
     private let session: MXSession
@@ -32,35 +32,35 @@ final class ThreadListViewModel: ThreadListViewModelProtocol {
     private var nextBatch: String?
     private var currentOperation: MXHTTPOperation?
     private var longPressedThread: MXThreadProtocol?
-
+    
     // MARK: Public
 
     weak var viewDelegate: ThreadListViewModelViewDelegate?
     weak var coordinatorDelegate: ThreadListViewModelCoordinatorDelegate?
     var selectedFilterType: ThreadListFilterType = .all
-
+    
     private(set) var viewState: ThreadListViewState = .idle {
         didSet {
             self.viewDelegate?.threadListViewModel(self, didUpdateViewState: viewState)
         }
     }
-
+    
     // MARK: - Setup
-
+    
     init(session: MXSession,
          roomId: String) {
         self.session = session
         self.roomId = roomId
         session.threadingService.addDelegate(self)
     }
-
+    
     deinit {
         session.threadingService.removeDelegate(self)
         self.cancelOperations()
     }
-
+    
     // MARK: - Public
-
+    
     func process(viewAction: ThreadListViewAction) {
         switch viewAction {
         case .loadData:
@@ -88,42 +88,42 @@ final class ThreadListViewModel: ThreadListViewModelProtocol {
             coordinatorDelegate?.threadListViewModelDidCancel(self)
         }
     }
-
+    
     var numberOfThreads: Int {
         return threads.count
     }
-
+    
     func threadModel(at index: Int) -> ThreadModel? {
         guard index < threads.count else {
             return nil
         }
         return model(forThread: threads[index])
     }
-
+    
     var titleModel: ThreadRoomTitleModel {
         guard let room = session.room(withRoomId: roomId) else {
             return .empty
         }
-
+        
         let avatarViewData = AvatarViewData(matrixItemId: room.matrixItemId,
                                             displayName: room.displayName,
                                             avatarUrl: room.mxContentUri,
                                             mediaManager: room.mxSession.mediaManager,
                                             fallbackImage: AvatarFallbackImage.matrixItem(room.matrixItemId,
                                                                                           room.displayName))
-
+        
         let encrpytionBadge: UIImage?
         if let summary = room.summary, summary.isEncrypted, session.crypto != nil {
             encrpytionBadge = EncryptionTrustLevelBadgeImageHelper.roomBadgeImage(for: summary.roomEncryptionTrustLevel())
         } else {
             encrpytionBadge = nil
         }
-
+        
         return ThreadRoomTitleModel(roomAvatar: avatarViewData,
                                     roomEncryptionBadge: encrpytionBadge,
                                     roomDisplayName: room.displayName)
     }
-
+    
     private var emptyViewModel: ThreadListEmptyModel {
         switch selectedFilterType {
         case .all:
@@ -142,9 +142,9 @@ final class ThreadListViewModel: ThreadListViewModelProtocol {
                                         showAllThreadsButtonHidden: false)
         }
     }
-
+    
     // MARK: - Private
-
+    
     private func model(forThread thread: MXThreadProtocol) -> ThreadModel {
         let rootAvatarViewData: AvatarViewData?
         let rootMessageSender: MXUser?
@@ -153,11 +153,11 @@ final class ThreadListViewModel: ThreadListViewModelProtocol {
         let rootMessageText = rootMessageText(forThread: thread)
         let (lastMessageText, lastMessageTime) = lastMessageTextAndTime(forThread: thread)
         let notificationStatus = ThreadNotificationStatus(withThread: thread)
-
+        
         //  root message
         if let rootMessage = thread.rootMessage, let senderId = rootMessage.sender {
             rootMessageSender = session.user(withUserId: rootMessage.sender)
-
+            
             let fallbackImage = AvatarFallbackImage.matrixItem(senderId,
                                                                rootMessageSender?.displayname)
             rootAvatarViewData = AvatarViewData(matrixItemId: senderId,
@@ -169,11 +169,11 @@ final class ThreadListViewModel: ThreadListViewModelProtocol {
             rootAvatarViewData = nil
             rootMessageSender = nil
         }
-
+        
         //  last message
         if let lastMessage = thread.lastMessage, let senderId = lastMessage.sender {
             lastMessageSender = session.user(withUserId: lastMessage.sender)
-
+            
             let fallbackImage = AvatarFallbackImage.matrixItem(senderId,
                                                                lastMessageSender?.displayname)
             lastAvatarViewData = AvatarViewData(matrixItemId: senderId,
@@ -199,7 +199,7 @@ final class ThreadListViewModel: ThreadListViewModelProtocol {
                            summaryModel: summaryModel,
                            notificationStatus: notificationStatus)
     }
-
+    
     private func rootMessageText(forThread thread: MXThreadProtocol) -> NSAttributedString? {
         guard let eventFormatter = eventFormatter else {
             return nil
@@ -213,7 +213,7 @@ final class ThreadListViewModel: ThreadListViewModelProtocol {
                                                andLatestRoomState: nil,
                                                error: formatterError)?.vc_byRemovingLinks
     }
-
+    
     private func lastMessageTextAndTime(forThread thread: MXThreadProtocol) -> (NSAttributedString?, String?) {
         guard let eventFormatter = eventFormatter else {
             return (nil, nil)
@@ -230,12 +230,12 @@ final class ThreadListViewModel: ThreadListViewModelProtocol {
             eventFormatter.dateString(from: message, withTime: true)
         )
     }
-
+    
     private func resetData() {
         nextBatch = nil
         threads = []
     }
-
+    
     private func loadData(showLoading: Bool = true) {
         guard threads.isEmpty || nextBatch != nil else {
             return
@@ -246,14 +246,14 @@ final class ThreadListViewModel: ThreadListViewModelProtocol {
         }
 
         let onlyParticipated: Bool
-
+        
         switch selectedFilterType {
         case .all:
             onlyParticipated = false
         case .myThreads:
             onlyParticipated = true
         }
-
+        
         session.threadingService.allThreads(inRoom: roomId, from: nextBatch, onlyParticipated: onlyParticipated) { [weak self] response in
             guard let self = self else { return }
             switch response {
@@ -267,7 +267,7 @@ final class ThreadListViewModel: ThreadListViewModelProtocol {
             }
         }
     }
-
+    
     private func threadsLoaded() {
         if threads.isEmpty {
             viewState = .empty(emptyViewModel)
@@ -278,20 +278,20 @@ final class ThreadListViewModel: ThreadListViewModelProtocol {
               let room = session.room(withRoomId: roomId) else {
             //  go into loaded state
             self.viewState = .loaded
-
+            
             return
         }
-
+        
         room.state { [weak self] roomState in
             guard let self = self else { return }
             self.eventFormatter = eventFormatter
             self.roomState = roomState
-
+            
             //  go into loaded state
             self.viewState = .loaded
         }
     }
-
+    
     private func selectThread(_ index: Int) {
         guard index < threads.count else {
             return
@@ -299,7 +299,7 @@ final class ThreadListViewModel: ThreadListViewModelProtocol {
         let thread = threads[index]
         coordinatorDelegate?.threadListViewModelDidSelectThread(self, thread: thread)
     }
-
+    
     private func longPressThread(_ index: Int) {
         guard index < threads.count else {
             return
@@ -307,7 +307,7 @@ final class ThreadListViewModel: ThreadListViewModelProtocol {
         longPressedThread = threads[index]
         viewState = .showingLongPressActions(index)
     }
-
+    
     private func actionViewInRoom() {
         guard let thread = longPressedThread else {
             return
@@ -315,7 +315,7 @@ final class ThreadListViewModel: ThreadListViewModelProtocol {
         coordinatorDelegate?.threadListViewModelDidSelectThreadViewInRoom(self, thread: thread)
         longPressedThread = nil
     }
-
+    
     private func actionCopyLinkToThread() {
         guard let thread = longPressedThread else {
             return
@@ -327,7 +327,7 @@ final class ThreadListViewModel: ThreadListViewModelProtocol {
         }
         longPressedThread = nil
     }
-
+    
     private func actionShare() {
         guard let thread = longPressedThread,
               let index = threads.firstIndex(where: { thread.id == $0.id }) else {
@@ -339,16 +339,16 @@ final class ThreadListViewModel: ThreadListViewModelProtocol {
         }
         longPressedThread = nil
     }
-
+    
     private func cancelOperations() {
         self.currentOperation?.cancel()
     }
 }
 
 extension ThreadListViewModel: MXThreadingServiceDelegate {
-
+    
     func threadingServiceDidUpdateThreads(_ service: MXThreadingService) {
         loadData(showLoading: false)
     }
-
+    
 }

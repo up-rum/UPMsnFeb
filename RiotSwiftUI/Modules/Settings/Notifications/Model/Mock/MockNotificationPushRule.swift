@@ -1,4 +1,4 @@
-// 
+//
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,10 +16,12 @@
 
 import Foundation
 
-struct MockNotificationPushRule: NotificationPushRuleType {
+struct MockNotificationPushRule: NotificationPushRuleType, Equatable {
     var ruleId: String!
     var enabled: Bool
+    var ruleActions: NotificationActions? = NotificationStandardActions.notifyDefaultSound.actions
+    
     func matches(standardActions: NotificationStandardActions?) -> Bool {
-        return false
+        standardActions?.actions == ruleActions
     }
 }

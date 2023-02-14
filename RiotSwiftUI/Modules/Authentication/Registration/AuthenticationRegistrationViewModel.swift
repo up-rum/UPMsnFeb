@@ -14,13 +14,12 @@
 // limitations under the License.
 //
 
-import SwiftUI
 import Combine
+import SwiftUI
 
 typealias AuthenticationRegistrationViewModelType = StateStoreViewModel<AuthenticationRegistrationViewState, AuthenticationRegistrationViewAction>
 
 class AuthenticationRegistrationViewModel: AuthenticationRegistrationViewModelType, AuthenticationRegistrationViewModelProtocol {
-
     // MARK: - Properties
 
     // MARK: Public
@@ -48,10 +47,8 @@ class AuthenticationRegistrationViewModel: AuthenticationRegistrationViewModelTy
             Task { await enablePasswordValidation() }
         case .resetUsernameAvailability:
             Task { await resetUsernameAvailability() }
-        case .rebuildUsername:
-            Task { await rebuildUsername() }
         case .next:
-            Task { await callback?(.createAccount(username: state.bindings.username, password: state.bindings.password, email: state.bindings.email, phone:state.bindings.phoneNumber, firstName: state.bindings.firstName, lastName: state.bindings.lastName, subscribeEmailUpdates: state.bindings.subscribeEmailUpdates)) }
+            Task { await callback?(.createAccount(username: state.bindings.username, password: state.bindings.password)) }
         case .continueWithSSO(let provider):
             Task { await callback?(.continueWithSSO(provider)) }
         case .fallback:
@@ -98,18 +95,13 @@ class AuthenticationRegistrationViewModel: AuthenticationRegistrationViewModelTy
             state.bindings.alertInfo = AlertInfo(id: type)
         }
     }
-    public func isUsernameRegexValid() -> Bool {
-        let passwordRegex = "[^a-z0-9._/-]*"
-        return NSPredicate(format: "SELF MATCHES %@", passwordRegex).evaluate(with: self)
-    }
+    
     // MARK: - Private
     
     /// Validate the supplied username with the homeserver.
     @MainActor private func validateUsername() {
-        
         if !state.hasEditedUsername {
             state.hasEditedUsername = true
-            
         }
         
         callback?(.validateUsername(state.bindings.username))
@@ -125,8 +117,5 @@ class AuthenticationRegistrationViewModel: AuthenticationRegistrationViewModelTy
     @MainActor private func resetUsernameAvailability() {
         if case .unknown = state.usernameAvailability { return }
         state.usernameAvailability = .unknown
-    }
-    @MainActor private func rebuildUsername() {
-        state.bindings.username = state.bindings.firstName.lowercased() + "." + state.bindings.lastName.lowercased()
     }
 }

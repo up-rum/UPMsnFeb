@@ -45,7 +45,7 @@ enum {
 };
 
 
-@interface ManageSessionViewController ()
+@interface ManageSessionViewController () <UserVerificationCoordinatorBridgePresenterDelegate>
 {
     // The device to display
     MXDevice *device;
@@ -649,6 +649,7 @@ enum {
                                                                                                                                                             userId:self.mainSession.myUser.userId
                                                                                                                                                    userDisplayName:nil
                                                                                                                                                           deviceId:device.deviceId];
+    userVerificationCoordinatorBridgePresenter.delegate = self;
     [userVerificationCoordinatorBridgePresenter start];
     self.userVerificationCoordinatorBridgePresenter = userVerificationCoordinatorBridgePresenter;
 }
@@ -672,7 +673,7 @@ enum {
     NSString *title = [VectorL10n deviceDetailsDeletePromptTitle];
     NSString *message = [VectorL10n deviceDetailsDeletePromptMessage];
     
-    AuthenticatedEndpointRequest *deleteDeviceRequest = [[AuthenticatedEndpointRequest alloc] initWithPath:[NSString stringWithFormat:@"%@/devices/%@", kMXAPIPrefixPathR0, [MXTools encodeURIComponent:device.deviceId]] httpMethod:@"DELETE"];
+    AuthenticatedEndpointRequest *deleteDeviceRequest = [[AuthenticatedEndpointRequest alloc] initWithPath:[NSString stringWithFormat:@"%@/devices/%@", kMXAPIPrefixPathR0, [MXTools encodeURIComponent:device.deviceId]] httpMethod:@"DELETE" params:[[NSDictionary alloc] init]];
     
     ReauthenticationCoordinatorParameters *coordinatorParameters = [[ReauthenticationCoordinatorParameters alloc] initWithSession:self.mainSession presenter:self title:title message:message authenticatedEndpointRequest:deleteDeviceRequest];
     
@@ -699,6 +700,13 @@ enum {
     }];
     
     self.reauthenticationCoordinatorBridgePresenter = reauthenticationPresenter;
+}
+
+#pragma mark - UserVerificationCoordinatorBridgePresenterDelegate
+
+- (void)userVerificationCoordinatorBridgePresenterDelegateDidComplete:(UserVerificationCoordinatorBridgePresenter *)coordinatorBridgePresenter
+{
+    [self reloadDeviceWithCompletion:^{}];
 }
 
 @end

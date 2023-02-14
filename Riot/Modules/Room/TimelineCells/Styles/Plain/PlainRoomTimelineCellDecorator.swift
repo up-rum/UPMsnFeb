@@ -38,22 +38,8 @@ class PlainRoomTimelineCellDecorator: RoomTimelineCellDecorator {
         self.addTimestampLabel(toCell: cell, cellData: cellData)
     }
 
-    func addTimeLimitLabelIfNeeded(toCell cell: MXKRoomBubbleTableViewCell, cellData: RoomBubbleCellData) {
-
-        guard cellData.containsLastMessage && cellData.isCollapsableAndCollapsed == false else {
-            return
-        }
-
-        // Display timestamp of the last message
-        self.addTimeLimitLabel(toCell: cell, cellData: cellData)
-    }
-
     func addTimestampLabel(toCell cell: MXKRoomBubbleTableViewCell, cellData: RoomBubbleCellData) {
         cell.addTimestampLabel(forComponent: UInt(cellData.mostRecentComponentIndex))
-    }
-
-    func addTimeLimitLabel(toCell cell: MXKRoomBubbleTableViewCell, cellData: RoomBubbleCellData) {
-        cell.addTimeLimitLabel(forComponent: UInt(cellData.mostRecentComponentIndex))
     }
 
     func addURLPreviewView(_ urlPreviewView: URLPreviewView,

@@ -1,4 +1,4 @@
-// 
+//
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,18 +18,45 @@ import Foundation
 import XCTest
 
 extension XCUIApplication {
-    func goToScreenWithIdentifier(_ identifier: String) {
+    func goToScreenWithIdentifier(_ identifier: String, shouldUseSlowTyping: Bool = false) {
         // Search for the screen identifier
-        textFields["searchQueryTextField"].tap()
-        typeText(identifier)
+        let textField = textFields["searchQueryTextField"]
+        let button = buttons[identifier]
         
-        let button = self.buttons[identifier]
-        let footer = staticTexts["footerText"]
-        
-        while !button.isHittable && !footer.isHittable {
-            self.tables.firstMatch.swipeUp()
+        // This always fixes the stuck search issue, but makes the typing slower
+        if shouldUseSlowTyping {
+            textField.typeSlowly(identifier)
+        } else {
+            // Sometimes the search gets stuck without showing any results. Try to nudge it along
+            for _ in 0...10 {
+                textField.clearAndTypeText(identifier)
+                if button.exists {
+                    break
+                }
+            }
         }
         
         button.tap()
+    }
+}
+
+extension XCUIElement {
+    func clearAndTypeText(_ text: String) {
+        guard let stringValue = value as? String else {
+            XCTFail("Tried to clear and type text into a non string value")
+            return
+        }
+
+        tap()
+
+        let deleteString = String(repeating: XCUIKeyboardKey.delete.rawValue, count: stringValue.count)
+
+        typeText(deleteString)
+        typeText(text)
+    }
+    
+    func typeSlowly(_ text: String) {
+        tap()
+        text.forEach{ typeText(String($0)) }
     }
 }

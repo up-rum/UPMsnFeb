@@ -1,4 +1,4 @@
-// 
+//
 // Copyright 2022 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,6 @@ import SwiftUI
 
 /// The form shown to enter an email address.
 struct AuthenticationForgotPasswordForm: View {
-    
     // MARK: - Properties
     
     // MARK: Private
@@ -46,20 +45,20 @@ struct AuthenticationForgotPasswordForm: View {
     /// The title, message and icon at the top of the screen.
     var header: some View {
         VStack(spacing: 8) {
-//            OnboardingIconImage(image: Asset.Images.splashLogo)
-//                .padding(.bottom, 8)
+            OnboardingIconImage(image: Asset.Images.authenticationEmailIcon)
+                .padding(.bottom, 8)
             
-            Text("Password Reset")
+            Text(VectorL10n.authenticationForgotPasswordInputTitle)
                 .font(theme.fonts.title2B)
                 .multilineTextAlignment(.center)
                 .foregroundColor(theme.colors.primaryContent)
                 .accessibilityIdentifier("titleLabel")
             
-//            Text(viewModel.viewState.formHeaderMessage)
-//                .font(theme.fonts.body)
-//                .multilineTextAlignment(.center)
-//                .foregroundColor(theme.colors.secondaryContent)
-//                .accessibilityIdentifier("messageLabel")
+            Text(viewModel.viewState.formHeaderMessage)
+                .font(theme.fonts.body)
+                .multilineTextAlignment(.center)
+                .foregroundColor(theme.colors.secondaryContent)
+                .accessibilityIdentifier("messageLabel")
         }
     }
     
@@ -74,21 +73,19 @@ struct AuthenticationForgotPasswordForm: View {
             }
             
             Button(action: submit) {
-                Text(VectorL10n.submit)
+                Text(VectorL10n.next)
             }
-            .buttonStyle(PrimaryActionButtonStyle(customColor: Color("SColor"), customtextColor: Color.black))
+            .buttonStyle(PrimaryActionButtonStyle())
             .disabled(viewModel.viewState.hasInvalidAddress)
             .accessibilityIdentifier("nextButton")
-
         }
     }
     
     /// The text field, extracted for iOS 15 modifiers to be applied.
     var textField: some View {
-        UPRoundedBorderTextField(title: "Username", placeHolder:"john.doe", text: $viewModel.emailAddress, configuration: UIKitTextInputConfiguration(autocapitalizationType: .none, autocorrectionType: .no))
-//        {
-//            isEditingTextField = $0
-//        }
+        TextField(VectorL10n.authenticationForgotPasswordTextFieldPlaceholder, text: $viewModel.emailAddress) {
+            isEditingTextField = $0
+        }
         .textFieldStyle(BorderedInputFieldStyle(isEditing: isEditingTextField, isError: false))
         .keyboardType(.emailAddress)
         .autocapitalization(.none)

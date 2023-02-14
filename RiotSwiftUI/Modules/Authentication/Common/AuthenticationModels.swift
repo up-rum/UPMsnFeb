@@ -1,4 +1,4 @@
-// 
+//
 // Copyright 2022 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,6 @@ import Foundation
 enum AuthenticationFlow {
     case login
     case register
-    case uplogin
 }
 
 /// A value that represents the type of authentication used.
@@ -79,7 +78,7 @@ enum LoginError: String, Error {
     case resetPasswordNotStarted
 }
 
-@objcMembers 
+@objcMembers
 class HomeserverAddress: NSObject {
     /// Sanitizes a user entered homeserver address with the following rules
     /// - Trim any whitespace.

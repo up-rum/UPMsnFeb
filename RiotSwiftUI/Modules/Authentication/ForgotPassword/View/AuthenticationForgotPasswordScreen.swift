@@ -1,4 +1,4 @@
-// 
+//
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +17,6 @@
 import SwiftUI
 
 struct AuthenticationForgotPasswordScreen: View {
-
     // MARK: - Properties
     
     // MARK: Private
@@ -49,18 +48,7 @@ struct AuthenticationForgotPasswordScreen: View {
         }
         .background(background.ignoresSafeArea())
         .toolbar { toolbar }
-        .alert(isPresented: $viewModel.showingAlert) {
-                            Alert(title: Text("Unplugged"),
-                                  message: Text("Request successfully sent, please check your mail."),
-                                  dismissButton: .default(Text("OK")){
-                                viewModel.showingAlert = false
-                                viewModel.send(viewAction: .cancel)
-                                print("forgotpassword...")
-
-                            }
-                            )
-                        }
-//        .alert(item: $viewModel.alertInfo) { print("back===:::===") }
+        .alert(item: $viewModel.alertInfo) { $0.alert }
         .accentColor(theme.colors.accent)
     }
     
@@ -135,7 +123,6 @@ struct AuthenticationForgotPasswordScreen: View {
                     viewModel.send(viewAction: .cancel)
                 }
             }
-            .foregroundColor(Color("SColor"))
             .accessibilityIdentifier("cancelButton")
         }
     }

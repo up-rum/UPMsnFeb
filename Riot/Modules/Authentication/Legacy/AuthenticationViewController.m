@@ -146,7 +146,7 @@ static const CGFloat kAuthInputContainerViewMinHeightConstraintConstant = 150.0;
     
     [self.skipButton.layer setCornerRadius:5];
     self.skipButton.clipsToBounds = YES;
-    [self.skipButton setTitle:@"jhjhghj" forState:UIControlStateNormal];
+    [self.skipButton setTitle:[VectorL10n authSkip] forState:UIControlStateNormal];
     [self.skipButton setTitle:[VectorL10n authSkip] forState:UIControlStateHighlighted];
     self.skipButton.enabled = YES;
     

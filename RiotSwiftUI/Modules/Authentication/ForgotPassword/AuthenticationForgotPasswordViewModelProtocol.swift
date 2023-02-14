@@ -1,4 +1,4 @@
-// 
+//
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +17,6 @@
 import Foundation
 
 protocol AuthenticationForgotPasswordViewModelProtocol {
-    
     var callback: (@MainActor (AuthenticationForgotPasswordViewModelResult) -> Void)? { get set }
     var context: AuthenticationForgotPasswordViewModelType.Context { get }
     
@@ -26,8 +25,6 @@ protocol AuthenticationForgotPasswordViewModelProtocol {
 
     /// Goes back to the email form
     @MainActor func goBackToEnterEmailForm()
-
-    @MainActor func displayAlert()
     
     /// Display an error to the user.
     @MainActor func displayError(_ type: AuthenticationForgotPasswordErrorType)

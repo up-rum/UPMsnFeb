@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,50 +37,50 @@ import AnalyticsEvents
 /// 4. Make sure to commit `Podfile.lock` with the new commit hash.
 ///
 @objcMembers class Analytics: NSObject {
-
+    
     // MARK: - Properties
-
+    
     /// The singleton instance to be used within the Riot target.
     static let shared = Analytics()
-
+    
     /// The analytics client to send events with.
     private var client: AnalyticsClientProtocol = PostHogAnalyticsClient()
-
+    
     /// The monitoring client to track crashes, issues and performance
     private var monitoringClient = SentryMonitoringClient()
-
+    
     /// The service used to interact with account data settings.
     private var service: AnalyticsService?
-
+    
     private var viewRoomActiveSpace: AnalyticsViewRoomActiveSpace = .home
-
+    
     /// Whether or not the object is enabled and sending events to the server.
     var isRunning: Bool { client.isRunning }
-
+    
     /// Whether to show the user the analytics opt in prompt.
     var shouldShowAnalyticsPrompt: Bool {
         // Only show the prompt once, and when analytics are enabled in BuildSettings.
         !RiotSettings.shared.hasSeenAnalyticsPrompt && BuildSettings.analyticsConfiguration.isEnabled
     }
-
+    
     /// Indicates whether the user previously accepted Matomo analytics and should be shown the upgrade prompt.
     var promptShouldDisplayUpgradeMessage: Bool {
         RiotSettings.shared.hasAcceptedMatomoAnalytics
     }
-
+    
     /// Used to defined the trigger of the next potential `JoinedRoom` event
     var joinedRoomTrigger: AnalyticsJoinedRoomTrigger = .unknown
-
+    
     /// Used to defined the trigger of the next potential `ViewRoom` event
     var viewRoomTrigger: AnalyticsViewRoomTrigger = .unknown
-
+    
     /// Used to defined the actual space activated by the user.
     var activeSpace: MXSpace? {
         didSet {
             updateViewRoomActiveSpace()
         }
     }
-
+    
     /// Used to defined the currently visible space in explore rooms.
     var exploringSpace: MXSpace? {
         didSet {
@@ -89,57 +89,57 @@ import AnalyticsEvents
     }
 
     // MARK: - Private
-
+    
     /// keep an instance of `AnalyticsSpaceTracker` to track space metrics when space graph is built.
     private let spaceTracker: AnalyticsSpaceTracker = AnalyticsSpaceTracker()
-
+    
     // MARK: - Public
-
+    
     /// Opts in to analytics tracking with the supplied session.
     /// - Parameter session: An optional session to use to when reading/generating the analytics ID.
     ///  The session will be ignored if not running.
     func optIn(with session: MXSession?) {
         RiotSettings.shared.enableAnalytics = true
         startIfEnabled()
-
+        
         guard let session = session else { return }
         useAnalyticsSettings(from: session)
     }
-
+    
     /// Stops analytics tracking and calls `reset` to clear any IDs and event queues.
     func optOut() {
         RiotSettings.shared.enableAnalytics = false
-
+        
         // The order is important here. PostHog ignores the reset if stopped.
         reset()
         client.stop()
         monitoringClient.stop()
-
+        
         MXLog.debug("[Analytics] Stopped.")
     }
-
+    
     /// Starts the analytics client if the user has opted in, otherwise does nothing.
     func startIfEnabled() {
         guard RiotSettings.shared.enableAnalytics, !isRunning else { return }
-
+        
         client.start()
         monitoringClient.start()
-
+        
         // Sanity check in case something went wrong.
         guard client.isRunning else { return }
-
+        
         MXLog.debug("[Analytics] Started.")
-
+        
         if Bundle.main.isShareExtension {
             // Don't log crashes in the share extension
         } else {
             // Catch and log crashes
             MXLogger.logCrashes(true)
         }
-
+        
         MXLogger.setBuildVersion(AppInfo.current.buildInfo.readableBuildVersion)
     }
-
+    
     /// Use the analytics settings from the supplied session to configure analytics.
     /// For now this is only used for (pseudonymous) identification.
     /// - Parameter session: The session to read analytics settings from.
@@ -148,13 +148,13 @@ import AnalyticsEvents
             RiotSettings.shared.enableAnalytics,
             !RiotSettings.shared.isIdentifiedForAnalytics
         else { return }
-
+        
         let service = AnalyticsService(session: session)
         self.service = service
-
+        
         service.settings { [weak self] result in
             guard let self = self else { return }
-
+            
             switch result {
             case .success(let settings):
                 self.identify(with: settings)
@@ -165,7 +165,7 @@ import AnalyticsEvents
             }
         }
     }
-
+    
     /// Resets the any IDs and event queues in the analytics client. This method should
     /// be called on sign-out to maintain opt-in status, whilst ensuring the next
     /// account used isn't associated with the previous one.
@@ -175,20 +175,20 @@ import AnalyticsEvents
         monitoringClient.reset()
         MXLog.debug("[Analytics] Reset.")
         RiotSettings.shared.isIdentifiedForAnalytics = false
-
+        
         // Stop collecting crash logs
         MXLogger.logCrashes(false)
     }
-
+    
     /// Flushes the event queue in the analytics client, uploading all pending events.
     /// Normally events are sent in batches. Call this method when you need an event
     /// to be sent immediately.
     func forceUpload() {
         client.flush()
     }
-
+    
     // MARK: - Private
-
+    
     /// Identify (pseudonymously) any future events with the ID from the analytics account data settings.
     /// - Parameter settings: The settings to use for identification. The ID must be set *before* calling this method.
     private func identify(with settings: AnalyticsSettings) {
@@ -196,18 +196,18 @@ import AnalyticsEvents
             MXLog.error("[Analytics] identify(with:) called before an ID has been generated.")
             return
         }
-
+        
         client.identify(id: id)
         MXLog.debug("[Analytics] Identified.")
         RiotSettings.shared.isIdentifiedForAnalytics = true
     }
-
+    
     /// Capture an event in the `client`.
     /// - Parameter event: The event to capture.
     private func capture(event: AnalyticsEventProtocol) {
         client.capture(event)
     }
-
+    
     /// Update `viewRoomActiveSpace` property according to the current value of `exploringSpace` and `activeSpace` properties.
     private func updateViewRoomActiveSpace() {
         let space = exploringSpace ?? activeSpace
@@ -215,7 +215,7 @@ import AnalyticsEvents
             viewRoomActiveSpace = .home
             return
         }
-
+        
         spaceRoom.state { roomState in
             self.viewRoomActiveSpace = roomState?.isJoinRulePublic == true ? .public : .private
         }
@@ -227,7 +227,7 @@ import AnalyticsEvents
 // the `capture` method and the generated events cannot be bridged from Swift.
 extension Analytics {
     /// Updates any user properties to help with creating cohorts.
-    ///
+    /// 
     /// Only non-nil properties will be updated when calling this method.
     func updateUserProperties(ftueUseCase: UserSessionProperties.UseCase? = nil, numFavouriteRooms: Int? = nil, numSpaces: Int? = nil, allChatsActiveFilter: UserSessionProperties.AllChatsActiveFilter? = nil) {
         let userProperties = AnalyticsEvent.UserProperties(ftueUseCaseSelection: ftueUseCase?.analyticsName,
@@ -236,14 +236,14 @@ extension Analytics {
                                                            allChatsActiveFilter: allChatsActiveFilter?.analyticsName)
         client.updateUserProperties(userProperties)
     }
-
+    
     /// Track the registration of a new user.
     /// - Parameter authenticationType: The type of authentication that was used.
     func trackSignup(authenticationType: AnalyticsEvent.Signup.AuthenticationType) {
         let event = AnalyticsEvent.Signup(authenticationType: authenticationType)
         capture(event: event)
     }
-
+    
     /// Track the presentation of a screen
     /// - Parameters:
     ///   - screen: The screen that was shown.
@@ -252,13 +252,13 @@ extension Analytics {
         let event = AnalyticsEvent.MobileScreen(durationMs: milliseconds, screenName: screen.screenName)
         client.screen(event)
     }
-
+    
     /// The the presentation of a screen without including a duration
     /// - Parameter screen: The screen that was shown
     func trackScreen(_ screen: AnalyticsScreen) {
         trackScreen(screen, duration: nil)
     }
-
+    
     /// Track an element that has been interacted with
     /// - Parameters:
     ///   - uiElement: The element that was interacted with
@@ -268,14 +268,14 @@ extension Analytics {
         let event = AnalyticsEvent.Interaction(index: index, interactionType: interactionType, name: uiElement.name)
         client.capture(event)
     }
-
+    
     /// Track an element that has been tapped without including an index
     /// - Parameters:
     ///   - uiElement: The element that was tapped
     func trackInteraction(_ uiElement: AnalyticsUIElement) {
         trackInteraction(uiElement, interactionType: .Touch, index: nil)
     }
-
+    
     /// Track an E2EE error that occurred
     /// - Parameters:
     ///   - reason: The error that occurred.
@@ -284,7 +284,7 @@ extension Analytics {
         let event = AnalyticsEvent.Error(context: context, domain: .E2EE, name: reason.errorName)
         capture(event: event)
     }
-
+    
     /// Track when a user becomes unauthenticated without pressing the `sign out` button.
     /// - Parameters:
     ///   - softLogout: Wether it was a soft/hard logout that was triggered.
@@ -296,21 +296,21 @@ extension Analytics {
         let event = AnalyticsEvent.UnauthenticatedError(errorCode: errorCode, errorReason: errorReason, refreshTokenAuth: refreshTokenAuth, softLogout: softLogout)
         client.capture(event)
     }
-
+    
     /// Track whether the user accepted or declined the terms to an identity server.
     /// **Note** This method isn't currently implemented.
     /// - Parameter accepted: Whether the terms were accepted.
     func trackIdentityServerAccepted(_ accepted: Bool) {
         // Do we still want to track this?
     }
-
+    
     /// Track view room event triggered when the user changes rooms.
     /// - Parameters:
     ///   - room: the room being viewed
     func trackViewRoom(_ room: MXRoom) {
         trackViewRoom(asDM: room.isDirect, isSpace: room.summary?.roomType == .space)
     }
-
+    
     /// Track view room event triggered when the user changes rooms.
     /// - Parameters:
     ///   - isDM: Whether the room is a DM.
@@ -324,7 +324,7 @@ extension Analytics {
         viewRoomTrigger = .unknown
         capture(event: event)
     }
-
+    
     func trackCryptoSDKEnabled() {
         let event = AnalyticsEvent.CryptoSDKEnabled()
         capture(event: event)
@@ -338,49 +338,49 @@ extension Analytics: MXAnalyticsDelegate {
             MXLog.warning("[Analytics] Attempt to capture unknown profile task: \(name.rawValue)")
             return
         }
-
+        
         let event = AnalyticsEvent.PerformanceTimer(context: nil, itemCount: Int(units), name: analyticsName, timeMs: milliseconds)
         capture(event: event)
     }
-
+    
     func startDurationTracking(forName name: String, operation: String) -> StopDurationTracking {
         return monitoringClient.startPerformanceTracking(name: name, operation: operation)
     }
-
+    
     func trackCallStarted(withVideo isVideo: Bool, numberOfParticipants: Int, incoming isIncoming: Bool) {
         let event = AnalyticsEvent.CallStarted(isVideo: isVideo, numParticipants: numberOfParticipants, placed: !isIncoming)
         capture(event: event)
     }
-
+    
     func trackCallEnded(withDuration duration: Int, video isVideo: Bool, numberOfParticipants: Int, incoming isIncoming: Bool) {
         let event = AnalyticsEvent.CallEnded(durationMs: duration, isVideo: isVideo, numParticipants: numberOfParticipants, placed: !isIncoming)
         capture(event: event)
     }
-
+    
     func trackCallError(with reason: __MXCallHangupReason, video isVideo: Bool, numberOfParticipants: Int, incoming isIncoming: Bool) {
         let callEvent = AnalyticsEvent.CallError(isVideo: isVideo, numParticipants: numberOfParticipants, placed: !isIncoming)
         let event = AnalyticsEvent.Error(context: nil, domain: .VOIP, name: reason.errorName)
         capture(event: callEvent)
         capture(event: event)
     }
-
+    
     func trackCreatedRoom(asDM isDM: Bool) {
         let event = AnalyticsEvent.CreatedRoom(isDM: isDM)
         capture(event: event)
     }
-
+    
     func trackJoinedRoom(asDM isDM: Bool, isSpace: Bool, memberCount: UInt) {
         guard let roomSize = AnalyticsEvent.JoinedRoom.RoomSize(memberCount: memberCount) else {
             MXLog.warning("[Analytics] Attempt to capture joined room with invalid member count: \(memberCount)")
             return
         }
-
+        
         let event = AnalyticsEvent.JoinedRoom(isDM: isDM, isSpace: isSpace, roomSize: roomSize, trigger: joinedRoomTrigger.trigger)
         capture(event: event)
-
+        
         self.joinedRoomTrigger = .unknown
     }
-
+    
     /// **Note** This method isn't currently implemented.
     func trackContactsAccessGranted(_ granted: Bool) {
         // Do we still want to track this?

@@ -56,7 +56,6 @@ final class EnterPinCodeCoordinator: EnterPinCodeCoordinatorType {
     func toPresentable() -> UIViewController {
         return self.enterPinCodeViewController
     }
-    
 }
 
 // MARK: - EnterPinCodeViewModelCoordinatorDelegate
@@ -64,11 +63,6 @@ extension EnterPinCodeCoordinator: EnterPinCodeViewModelCoordinatorDelegate {
     
     func enterPinCodeViewModelDidComplete(_ viewModel: EnterPinCodeViewModelType) {
         self.delegate?.enterPinCodeCoordinatorDidComplete(self)
-    }
-
-    func enterPinCodeViewModelClearData(_ viewModel: EnterPinCodeViewModelType) {
-        
-        self.delegate?.enterPinCodeCoordinatorClearData(self)
     }
     
     func enterPinCodeViewModelDidCompleteWithReset(_ viewModel: EnterPinCodeViewModelType, dueToTooManyErrors: Bool) {

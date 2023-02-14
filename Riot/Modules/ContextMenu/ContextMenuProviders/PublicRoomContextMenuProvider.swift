@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2022 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,10 +19,10 @@ import Foundation
 /// Helper class `PublicRoomContextMenuProvider` that provides an instace of `UIContextMenuConfiguration` from an instance of `MXPublicRoom`
 @objcMembers
 class PublicRoomContextMenuProvider: NSObject {
-
+    
     weak var serviceDelegate: RoomContextActionServiceDelegate?
     private var currentService: RoomContextActionServiceProtocol?
-
+    
     @available(iOS 13.0, *)
     func contextMenuConfiguration(with publicRoom: MXPublicRoom, from cell: UIView, session: MXSession) -> UIContextMenuConfiguration? {
         if let room = session.room(withRoomId: publicRoom.roomId) {
@@ -36,15 +36,15 @@ class PublicRoomContextMenuProvider: NSObject {
                         return nil
                     }
                     roomViewController.isContextPreview = true
-
+                    
                     RoomPreviewDataSource.load(withRoomId: room.roomId, threadId: nil, andMatrixSession: session) { [weak roomViewController] roomDataSource in
                         guard let dataSource = roomDataSource as? RoomPreviewDataSource else {
                             return
                         }
-
+                        
                         dataSource.markTimelineInitialEvent = false
                         roomViewController?.displayRoom(dataSource)
-
+                        
                         // Give the data source ownership to the room view controller.
                         roomViewController?.hasRoomDataSourceOwnership = true
                     }
@@ -69,7 +69,7 @@ class PublicRoomContextMenuProvider: NSObject {
             }
         }
     }
-
+    
     func publicRoom(from identifier: NSCopying) -> MXPublicRoom? {
         guard let jsonString = identifier as? String, let data = jsonString.data(using: .utf8) else {
             return nil
@@ -77,7 +77,7 @@ class PublicRoomContextMenuProvider: NSObject {
 
         do {
             let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
-
+            
             guard let publicRoom = MXPublicRoom(fromJSON: json) else {
                 return nil
             }
