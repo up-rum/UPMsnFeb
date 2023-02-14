@@ -19,31 +19,26 @@ import SwiftUI
 struct UIKitTextInputConfiguration {
     var keyboardType: UIKeyboardType = .default
     var returnKeyType: UIReturnKeyType = .default
-    var isSecureTextEntry: Bool = false
+    var isSecureTextEntry = false
     var autocapitalizationType: UITextAutocapitalizationType = .sentences
     var autocorrectionType: UITextAutocorrectionType = .default
 }
 
 struct ThemableTextField: UIViewRepresentable {
-    
     // MARK: Properties
     
     @State var placeholder: String?
     @Binding var text: String
-    @State var configuration: UIKitTextInputConfiguration = UIKitTextInputConfiguration()
+    @State var configuration = UIKitTextInputConfiguration()
     @Binding var isSecureTextVisible: Bool
-    @Binding var usernameValidation: Bool
-    @Binding var tfCharValidation: String
     var onEditingChanged: ((_ edit: Bool) -> Void)?
-
-//    var shouldChange: ((_ regex: String) -> Void)?
     var onCommit: (() -> Void)?
 
     // MARK: Private
     
     @Environment(\.theme) private var theme: ThemeSwiftUI
 
-    private let textField: UITextField = UITextField()
+    private let textField = UITextField()
     private let internalParams = InternalParams()
     
     // MARK: Setup
@@ -52,20 +47,15 @@ struct ThemableTextField: UIViewRepresentable {
          text: Binding<String>,
          configuration: UIKitTextInputConfiguration = UIKitTextInputConfiguration(),
          isSecureTextVisible: Binding<Bool> = .constant(false),
-         usernameValidation: Binding<Bool> = .constant(false),
-         tfCharValidation: Binding<String> = .constant(""),
          onEditingChanged: ((_ edit: Bool) -> Void)? = nil,
-//         shouldChange: ((_ regex: String) -> Void)? = nil,
          onCommit: (() -> Void)? = nil) {
-        self._text = text
-        self._placeholder = State(initialValue: placeholder)
-        self._configuration = State(initialValue: configuration)
-        self._isSecureTextVisible = isSecureTextVisible
-        self._usernameValidation = usernameValidation
-        self._tfCharValidation = tfCharValidation
+        _text = text
+        _placeholder = State(initialValue: placeholder)
+        _configuration = State(initialValue: configuration)
+        _isSecureTextVisible = isSecureTextVisible
         self.onEditingChanged = onEditingChanged
-
         self.onCommit = onCommit
+
         ResponderManager.register(view: textField)
     }
     
@@ -77,8 +67,9 @@ struct ThemableTextField: UIViewRepresentable {
         textField.setContentHuggingPriority(.defaultLow, for: .horizontal)
         textField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         textField.text = text
+        
         textField.addTarget(context.coordinator, action: #selector(Coordinator.textFieldEditingChanged(sender:)), for: .editingChanged)
-
+                
         if internalParams.isFirstResponder {
             textField.becomeFirstResponder()
         }
@@ -89,17 +80,16 @@ struct ThemableTextField: UIViewRepresentable {
     func updateUIView(_ uiView: UITextField, context: Context) {
         uiView.backgroundColor = .clear
         uiView.font = UIFont.preferredFont(forTextStyle: .callout)
-        uiView.textColor = .white//UIColor(theme.colors.primaryContent)
+        uiView.textColor = UIColor(theme.colors.primaryContent)
         uiView.tintColor = UIColor(theme.colors.accent)
 
-        if uiView.text != self.text {
-            uiView.text = self.text
+        if uiView.text != text {
+            uiView.text = text
         }
         uiView.placeholder = placeholder
         
         uiView.keyboardType = configuration.keyboardType
         uiView.returnKeyType = configuration.returnKeyType
-
         uiView.isSecureTextEntry = configuration.isSecureTextEntry ? !isSecureTextVisible : false
         uiView.autocapitalizationType = configuration.autocapitalizationType
         uiView.autocorrectionType = configuration.autocorrectionType
@@ -112,17 +102,16 @@ struct ThemableTextField: UIViewRepresentable {
     // MARK: - Private
     
     private func replaceText(with newText: String) {
-        self.text = newText
+        text = newText
     }
     
     // MARK: - Coordinator
     
     func makeCoordinator() -> Coordinator {
-        return Coordinator(self)
+        Coordinator(self)
     }
     
     class Coordinator: NSObject, UITextFieldDelegate {
-        
         var parent: ThemableTextField
 
         init(_ parent: ThemableTextField) {
@@ -135,35 +124,6 @@ struct ThemableTextField: UIViewRepresentable {
         
         func textFieldDidEndEditing(_ textField: UITextField) {
             parent.onEditingChanged?(false)
-        }
-
-        func textField(_ textField: UITextField, shouldChangeCharactersIn range:
-            NSRange, replacementString string: String) -> Bool {
-//            return parent.shouldChange?("")
-
-            if  parent.tfCharValidation == "username"{
-                let pattern = "[^a-z0-9._/-]"
-                let predicate = NSPredicate(format: "self MATCHES [d] %@", pattern)
-                if predicate.evaluate(with: string){
-                    return false
-                }
-//                if string.range(of: "[^a-zA-Z0-9._/-]*", options: .regularExpression) != nil {
-//                    return false
-//                }
-                return true
-            }
-            else if  parent.tfCharValidation == "email"{
-                let pattern = "^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+$"
-                let predicate = NSPredicate(format: "self MATCHES [d] %@", pattern)
-                if predicate.evaluate(with: string){
-                    return false
-                }
-//                if string.range(of: "[^a-zA-Z0-9._/-]*", options: .regularExpression) != nil {
-//                    return false
-//                }
-                return true
-            }
-            return true
         }
         
         func textFieldShouldReturn(_ textField: UITextField) -> Bool {
@@ -184,14 +144,13 @@ struct ThemableTextField: UIViewRepresentable {
     private class InternalParams {
         var isFirstResponder = false
     }
-
 }
 
 // MARK: - modifiers
 
 extension ThemableTextField {
     func makeFirstResponder() -> ThemableTextField {
-        return makeFirstResponder(true)
+        makeFirstResponder(true)
     }
     
     func makeFirstResponder(_ isFirstResponder: Bool) -> ThemableTextField {
@@ -205,7 +164,7 @@ extension ThemableTextField {
     ///   - alignment: The vertical alignment of the button in the text field. Default to `center`
     @ViewBuilder
     func addButton(_ show: Bool, alignment: VerticalAlignment = .center) -> some View {
-        if show && configuration.isSecureTextEntry {
+        if show, configuration.isSecureTextEntry {
             modifier(PasswordButtonModifier(text: text,
                                             isSecureTextVisible: $isSecureTextVisible,
                                             alignment: alignment))

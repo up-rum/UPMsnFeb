@@ -15,16 +15,13 @@
 //
 
 import Foundation
-import MatrixSDK
-
-
 
 extension RoomDataSource {
     // MARK: - Private Constants
     private enum Constants {
         static let emoteMessageSlashCommandPrefix = String(format: "%@ ", kMXKSlashCmdEmote)
     }
-
+    
     // MARK: - NSAttributedString Sending
     /// Send a text message to the room.
     /// While sending, a fake event will be echoed in the messages list.
@@ -36,7 +33,7 @@ extension RoomDataSource {
     func sendAttributedTextMessage(_ attributedText: NSAttributedString,
                                    completion: @escaping (MXResponse<String?>) -> Void) {
         var localEcho: MXEvent?
-
+        
         let isEmote = isAttributedTextMessageAnEmote(attributedText)
         let sanitized = sanitizedAttributedMessageText(attributedText)
         let rawText: String
@@ -46,7 +43,7 @@ extension RoomDataSource {
         } else {
             rawText = sanitized.string
         }
-
+        
         if isEmote {
             room.sendEmote(rawText,
                            formattedText: html,
@@ -54,59 +51,44 @@ extension RoomDataSource {
                            localEcho: &localEcho,
                            completion: completion)
         } else {
-            self.sendTextMessage(rawText,
+            room.sendTextMessage(rawText,
                                  formattedText: html,
                                  threadId: self.threadId,
                                  localEcho: &localEcho,
                                  completion: completion)
         }
-
+        
         if localEcho != nil {
             self.queueEvent(forProcessing: localEcho, with: self.roomState, direction: .forwards)
             self.processQueuedEvents(nil)
         }
     }
-    //Rum
-    @nonobjc @discardableResult func sendTextMessage(_ text: String, formattedText: String? = nil, threadId: String? = nil, localEcho: inout MXEvent?, completion: @escaping (_ response: MXResponse<String?>) -> Void) -> MXHTTPOperation {
-        var msgContent: [String: Any]
-        if formattedText == nil {
-
-            var timeLimit: Int = (UserDefaults.standard.value(forKey: "timelimit") as? Int) ?? 0
-            var members = [MXRoomMember]()
-            members = self.roomState.members.joinedMembers;
-            MXLog.warning(members)
-            if ((members.count ?? 0) > 2) {
-                timeLimit = 0
-            }
-            // This is a simple text message
-            if timeLimit > 0 {
-                msgContent = [
-                    kMXMessageTypeKey: kMXMessageTypeText,
-                    kMXMessageBodyKey: text,
-                    "time_limit": timeLimit
-                ]
-            }
-            else {
-                msgContent = [
-                    kMXMessageTypeKey: kMXMessageTypeText,
-                    kMXMessageBodyKey: text
-                ]
-            }
-        }
-        else {
-            // Send the HTML formatted string
-            msgContent = [
-                kMXMessageTypeKey: kMXMessageTypeText,
-                kMXMessageBodyKey: text,
-                "formatted_body": formattedText,
-                "format": kMXRoomMessageFormatHTML
-            ]
-        }
-
-        return room.sendMessage(withContent: msgContent, threadId: threadId, localEcho: &localEcho) { response in
-
+    
+    // MARK: - NSAttributedString Sending
+    /// Send a text message to the room.
+    /// While sending, a fake event will be echoed in the messages list.
+    /// Once complete, this local echo will be replaced by the event saved by the homeserver.
+    ///
+    /// - Parameters:
+    ///   - rawText: the raw text to send
+    ///   - html: the formatted html to send
+    ///   - completion: http operation completion block
+    func sendFormattedTextMessage(_ rawText: String,
+                                  html: String,
+                                  completion: @escaping (MXResponse<String?>) -> Void) {
+        var localEcho: MXEvent?
+        room.sendTextMessage(rawText,
+                             formattedText: html,
+                             threadId: self.threadId,
+                             localEcho: &localEcho,
+                             completion: completion)
+        
+        if localEcho != nil {
+            self.queueEvent(forProcessing: localEcho, with: self.roomState, direction: .forwards)
+            self.processQueuedEvents(nil)
         }
     }
+    
     /// Send a reply to an event with text message to the room.
     ///
     /// While sending, a fake event will be echoed in the messages list.
@@ -119,8 +101,6 @@ extension RoomDataSource {
     func sendReply(to eventToReply: MXEvent,
                    withAttributedTextMessage attributedText: NSAttributedString,
                    completion: @escaping (MXResponse<String?>) -> Void) {
-        var localEcho: MXEvent?
-
         let sanitized = sanitizedAttributedMessageText(attributedText)
         let rawText: String
         let html: String? = htmlMessageFromSanitizedAttributedText(sanitized)
@@ -129,23 +109,29 @@ extension RoomDataSource {
         } else {
             rawText = sanitized.string
         }
-
-        let stringLocalizer: MXSendReplyEventStringLocalizerProtocol = MXKSendReplyEventStringLocalizer()
-
-        room.sendReply(to: eventToReply,
-                       textMessage: rawText,
-                       formattedTextMessage: html,
-                       stringLocalizer: stringLocalizer,
-                       threadId: self.threadId,
-                       localEcho: &localEcho,
-                       completion: completion)
-
-        if localEcho != nil {
-            self.queueEvent(forProcessing: localEcho, with: self.roomState, direction: .forwards)
-            self.processQueuedEvents(nil)
-        }
+        
+        handleFormattedSendReply(to: eventToReply, rawText: rawText, html: html, completion: completion)
     }
-
+    
+    /// Send a reply to an event with a html formatted  text message to the room.
+    ///
+    /// While sending, a fake event will be echoed in the messages list.
+    /// Once complete, this local echo will be replaced by the event saved by the homeserver.
+    ///
+    /// - Parameters:
+    ///   - eventToReply: the event to reply
+    ///   - rawText: the raw text to send
+    ///   - htmlText: the html text to send
+    ///   - completion: http operation completion block
+    func sendReply(to eventToReply: MXEvent,
+                   rawText: String,
+                   htmlText: String,
+                   completion: @escaping (MXResponse<String?>) -> Void) {
+        
+       handleFormattedSendReply(to: eventToReply, rawText: rawText, html: htmlText, completion: completion)
+    }
+    
+    
     /// Replace a text in an event.
     ///
     /// - Parameters:
@@ -165,29 +151,24 @@ extension RoomDataSource {
         } else {
             rawText = sanitized.string
         }
-
-        let eventBody = event.content[kMXMessageBodyKey] as? String
-        let eventFormattedBody = event.content["formatted_body"] as? String
-
-        if rawText != eventBody && (eventFormattedBody == nil || html != eventFormattedBody) {
-            self.mxSession.aggregations.replaceTextMessageEvent(
-                event,
-                withTextMessage: rawText,
-                formattedText: html,
-                localEcho: { localEcho in
-                    // Apply the local echo to the timeline
-                    self.updateEvent(withReplace: localEcho)
-
-                    // Integrate the replace local event into the timeline like when sending a message
-                    // This also allows to manage read receipt on this replace event
-                    self.queueEvent(forProcessing: localEcho, with: self.roomState, direction: .forwards)
-                    self.processQueuedEvents(nil)
-                },
-                success: success,
-                failure: failure)
-        } else {
-            failure(nil)
-        }
+        
+        handleReplaceFormattedMessage(for: event, rawText: rawText, html: html, success: success, failure: failure)
+    }
+    
+    /// Replace a formatted html text in an event
+    ///
+    /// - Parameters:
+    ///   - event: The event to replace
+    ///   - rawText: The new rawText
+    ///   - html: The new html text
+    ///   - success: A block object called when the operation succeeds. It returns the event id of the event generated on the homeserver
+    ///   - failure: A block object called when the operation fails
+    func replaceFormattedTextMessage( for event: MXEvent,
+                                      rawText: String,
+                                      html: String,
+                                      success: @escaping ((String?) -> Void),
+                                      failure: @escaping ((Error?) -> Void)) {
+        handleReplaceFormattedMessage(for: event, rawText: rawText, html: html, success: success, failure: failure)
     }
 
     /// Retrieve editable attributed text message from an event.
@@ -240,8 +221,10 @@ extension RoomDataSource {
 
         return editableTextMessage
     }
-
     
+    @objc func editableHtmlTextMessage(for event: MXEvent) -> String {
+        event.content["formatted_body"] as? String ?? event.content["body"] as? String ?? ""
+    }
 }
 
 // MARK: - Private Helpers
@@ -274,5 +257,55 @@ private extension RoomDataSource {
 
     func isAttributedTextMessageAnEmote(_ attributedText: NSAttributedString) -> Bool {
         return attributedText.string.starts(with: Constants.emoteMessageSlashCommandPrefix)
+    }
+    
+    func handleReplaceFormattedMessage(for event: MXEvent,
+                                                rawText: String,
+                                                html: String?,
+                                                success: @escaping ((String?) -> Void),
+                                                failure: @escaping ((Error?) -> Void)) {
+        let eventBody = event.content[kMXMessageBodyKey] as? String
+        let eventFormattedBody = event.content["formatted_body"] as? String
+        if rawText != eventBody && (eventFormattedBody == nil || html != eventFormattedBody) {
+            self.mxSession.aggregations.replaceTextMessageEvent(
+                event,
+                withTextMessage: rawText,
+                formattedText: html,
+                localEcho: { localEcho in
+                    // Apply the local echo to the timeline
+                    self.updateEvent(withReplace: localEcho)
+                    
+                    // Integrate the replace local event into the timeline like when sending a message
+                    // This also allows to manage read receipt on this replace event
+                    self.queueEvent(forProcessing: localEcho, with: self.roomState, direction: .forwards)
+                    self.processQueuedEvents(nil)
+                },
+                success: success,
+                failure: failure)
+        } else {
+            failure(nil)
+        }
+    }
+    
+    func handleFormattedSendReply(to eventToReply: MXEvent,
+                                          rawText: String,
+                                          html: String?,
+                                          completion: @escaping (MXResponse<String?>) -> Void) {
+        var localEcho: MXEvent?
+        
+        let stringLocalizer: MXSendReplyEventStringLocalizerProtocol = MXKSendReplyEventStringLocalizer()
+        
+        room.sendReply(to: eventToReply,
+                       textMessage: rawText,
+                       formattedTextMessage: html,
+                       stringLocalizer: stringLocalizer,
+                       threadId: self.threadId,
+                       localEcho: &localEcho,
+                       completion: completion)
+        
+        if localEcho != nil {
+            self.queueEvent(forProcessing: localEcho, with: self.roomState, direction: .forwards)
+            self.processQueuedEvents(nil)
+        }
     }
 }

@@ -25,8 +25,6 @@ protocol EnterPinCodeViewModelViewDelegate: AnyObject {
 }
 
 protocol EnterPinCodeViewModelCoordinatorDelegate: AnyObject {
-
-    func enterPinCodeViewModelClearData(_ viewModel: EnterPinCodeViewModelType)
     func enterPinCodeViewModelDidComplete(_ viewModel: EnterPinCodeViewModelType)
     func enterPinCodeViewModelDidCompleteWithReset(_ viewModel: EnterPinCodeViewModelType, dueToTooManyErrors: Bool)
     func enterPinCodeViewModel(_ viewModel: EnterPinCodeViewModelType, didCompleteWithPin pin: String)

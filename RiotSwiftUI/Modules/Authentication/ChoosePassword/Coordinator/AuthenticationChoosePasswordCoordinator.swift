@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-import SwiftUI
 import CommonKit
+import SwiftUI
 
 struct AuthenticationChoosePasswordCoordinatorParameters {
     let loginWizard: LoginWizard
@@ -29,7 +29,6 @@ enum AuthenticationChoosePasswordCoordinatorResult {
 }
 
 final class AuthenticationChoosePasswordCoordinator: Coordinator, Presentable {
-    
     // MARK: - Properties
     
     // MARK: Private
@@ -79,7 +78,7 @@ final class AuthenticationChoosePasswordCoordinator: Coordinator, Presentable {
     }
     
     func toPresentable() -> UIViewController {
-        return self.authenticationChoosePasswordHostingController
+        authenticationChoosePasswordHostingController
     }
     
     // MARK: - Private
@@ -139,7 +138,8 @@ final class AuthenticationChoosePasswordCoordinator: Coordinator, Presentable {
             if mxError.errcode == kMXErrCodeStringUnauthorized {
                 authenticationChoosePasswordViewModel.displayError(.emailNotVerified)
             } else {
-                authenticationChoosePasswordViewModel.displayError(.mxError(mxError.error))
+                let message = mxError.authenticationErrorMessage()
+                authenticationChoosePasswordViewModel.displayError(.mxError(message))
             }
             
             return

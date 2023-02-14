@@ -15,7 +15,7 @@
  */
 
 #import "DeactivateAccountViewController.h"
-#import <AFNetworking/AFNetworking.h>
+
 #import <SafariServices/SafariServices.h>
 #import "ThemeService.h"
 #import "GeneratedInterface-Swift.h"
@@ -304,65 +304,19 @@ static CGFloat const kTextFontSize = 15.0;
 
 - (IBAction)deactivateAccountButtonAction:(id)sender
 {
-//    [self startLoading];
-    // Api to delete account
-//    AFHTTPSessionManager *manager = [AFHTTPSessionManager manager];
-//    NSDictionary *parameters = @{};
-//    NSString *urlString = [NSString stringWithFormat:@"%saccounts/deactivate?erase=true","https://up-app-dev.unpluggedsystems.app/api/"];
-
-//    NSString *token = [NSString stringWithFormat:@"Bearer %@",[[NSUserDefaults standardUserDefaults] objectForKey:@"uptoken"]];
-//    NSLog(@"bearerr== token %@", token);
-//    AFURLSessionManager *manager = [[AFURLSessionManager alloc] initWithSessionConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration]];
-//
-//    //NSDictionary *headers = @{@"Authorization":[NSString stringWithFormat:@"Bearer %@",token], @"Content-Type": @"application/json"};
-//    NSMutableURLRequest *req = [[AFJSONRequestSerializer serializer] requestWithMethod:@"DELETE" URLString:urlString parameters:nil error:nil];
-//
-//    //req.timeoutInterval= 30;
-////    [req setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
-//    [req setValue:[NSString stringWithFormat:@"%@",token] forHTTPHeaderField:@"Authorization"];
-////    [req setHTTPBody:[jsonString dataUsingEncoding:NSUTF8StringEncoding]];
-//
-//    [[manager dataTaskWithRequest:req uploadProgress:^(NSProgress * _Nonnull uploadProgress) {
-//
-//        } downloadProgress:^(NSProgress * _Nonnull downloadProgress) {
-//
-//        } completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
-//            if (!error) {
-//                NSLog(@"JSON responseObject: %@ ",responseObject);
-//
-//            } else {
-//                NSLog(@"saveDataToServer Error: %@", [error localizedDescription]);
-//
-//                NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *) response;
-//
-//                          if (httpResponse.statusCode == 401)
-//                          {
-//
-//                          }
-//                          else {
-////                              [self showAlertController:[error localizedDescription]];
-//                          }
-//            }
-//        }] resume] ;
-//    [manager DELETE:urlString parameters:nil headers: @[@{@"Authorization" : token}] success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
-//        NSLog(@"%@", responseObject);
-//
-//    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
-//        NSLog(@"%@", [error localizedDescription]);
-//    }];
-//    return;
+    [self startLoading];
+    
     MXWeakify(self);
     [self.deactivateAccountService checkAuthenticationWithSuccess:^(enum DeactivateAccountAuthentication authentication, NSURL * _Nullable fallbackURL) {
         MXStrongifyAndReturnIfNil(self);
-
+        
         switch (authentication) {
             case DeactivateAccountAuthenticationAuthenticated:
                 MXLogDebug(@"[DeactivateAccountViewController] Deactivation endpoint has already been authenticated. Continuing deactivation.")
                 [self.deactivateAccountService deactivateWithEraseAccount:self.forgetMessageButton.isSelected];
                 break;
             case DeactivateAccountAuthenticationRequiresPassword:
-                [self.deactivateAccountService deactivateWithEraseAccount:self.forgetMessageButton.isSelected];
-//                [self presentPasswordPrompt];
+                [self presentPasswordPrompt];
                 break;
             case DeactivateAccountAuthenticationRequiresFallback:
                 if (fallbackURL) [self presentFallbackForURL:fallbackURL];
@@ -372,7 +326,6 @@ static CGFloat const kTextFontSize = 15.0;
         MXStrongifyAndReturnIfNil(self);
         [self handleError:error];
     }];
-    
 }
 
 #pragma mark - Password
@@ -426,6 +379,3 @@ static CGFloat const kTextFontSize = 15.0;
 }
 
 @end
-
-
-

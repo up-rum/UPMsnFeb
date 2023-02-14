@@ -44,7 +44,7 @@ class AuthenticationReCaptchaViewModel: AuthenticationReCaptchaViewModelType, Au
             Task { await callback?(.validate(response)) }
         }
     }
-
+    
     @MainActor func displayError(_ type: AuthenticationReCaptchaErrorType) {
         switch type {
         case .mxError(let message):

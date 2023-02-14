@@ -102,17 +102,17 @@ final class BuildSettings: NSObject {
     static let serverConfigDefaultHomeserverUrlString = "https://matrix.org"
     static let serverConfigDefaultIdentityServerUrlString = "https://vector.im"
     
-    static let serverConfigSygnalAPIUrlString = "https://sygnal.unpluggedsystems.app/_matrix/push/v1/notify"//"https://matrix.org/_matrix/push/v1/notify"
+    static let serverConfigSygnalAPIUrlString = "https://matrix.org/_matrix/push/v1/notify"
     
     
     // MARK: - Legal URLs
     
     // Note: Set empty strings to hide the related entry in application settings
-    static let applicationCopyrightUrlString = "https://unplugged.com/"
-    static let applicationPrivacyPolicyUrlString = "https://www.unplugged.com/privacy-policy"
-    static let applicationTermsConditionsUrlString = "https://unplugged.com/tos"
+    static let applicationCopyrightUrlString = "https://element.io/copyright"
+    static let applicationPrivacyPolicyUrlString = "https://element.io/privacy"
+    static let applicationTermsConditionsUrlString = "https://element.io/terms-of-service"
     static let applicationHelpUrlString =
-    "https://support.unplugged.com/"
+    "https://element.io/help"
     
     
     // MARK: - Permalinks
@@ -139,7 +139,7 @@ final class BuildSettings: NSObject {
     // This baseURL is used to generate permalinks within the app (E.g. timeline message permalinks).
     // Optional String that when set is used as permalink base, when nil matrix.to format is used.
     // Example value would be "https://www.example.com", note there is no trailing '/'.
-    static let clientPermalinkBaseUrl: String? =  "https://unplugged.com"//nil
+    static let clientPermalinkBaseUrl: String? = nil
     
     // MARK: - VoIP
     static var allowVoIPUsage: Bool {
@@ -180,13 +180,13 @@ final class BuildSettings: NSObject {
     
     #if DEBUG
     /// The configuration to use for analytics during development. Set `isEnabled` to false to disable analytics in debug builds.
-    static let analyticsConfiguration = AnalyticsConfiguration(isEnabled: BuildSettings.baseBundleIdentifier.starts(with: "com.unplugged.messenger"),
+    static let analyticsConfiguration = AnalyticsConfiguration(isEnabled: BuildSettings.baseBundleIdentifier.starts(with: "im.vector.app"),
                                                                host: "https://posthog.element.dev",
                                                                apiKey: "phc_VtA1L35nw3aeAtHIx1ayrGdzGkss7k1xINeXcoIQzXN",
                                                                termsURL: URL(string: "https://element.io/cookie-policy")!)
     #else
     /// The configuration to use for analytics. Set `isEnabled` to false to disable analytics.
-    static let analyticsConfiguration = AnalyticsConfiguration(isEnabled: BuildSettings.baseBundleIdentifier.starts(with: "com.unplugged.messenger"),
+    static let analyticsConfiguration = AnalyticsConfiguration(isEnabled: BuildSettings.baseBundleIdentifier.starts(with: "im.vector.app"),
                                                                host: "https://posthog.hss.element.io",
                                                                apiKey: "phc_Jzsm6DTm6V2705zeU5dcNvQDlonOR68XvX2sh1sEOHO",
                                                                termsURL: URL(string: "https://element.io/cookie-policy")!)
@@ -234,6 +234,8 @@ final class BuildSettings: NSObject {
     
     static let allowInviteExernalUsers: Bool = true
     
+    static let allowBackgroundAudioMessagePlayback: Bool = true
+    
     // MARK: - Side Menu
     static let enableSideMenu: Bool = true && !newAppLayoutEnabled
     static let sideMenuShowInviteFriends: Bool = true
@@ -265,7 +267,6 @@ final class BuildSettings: NSObject {
     static let homeScreenShowFavouritesTab: Bool = true
     static let homeScreenShowPeopleTab: Bool = true
     static let homeScreenShowRoomsTab: Bool = true
-    static let homeScreenShowCallHistoryTab: Bool = true
 
     // MARK: - General Settings Screen
     
@@ -293,7 +294,7 @@ final class BuildSettings: NSObject {
     static let settingsSecurityScreenShowDeleteBackup:Bool = true
     static let settingsSecurityScreenShowCryptographyInfo:Bool = true
     static let settingsSecurityScreenShowCryptographyExport:Bool = true
-    static let settingsSecurityScreenShowAdvancedUnverifiedDevices:Bool = false
+    static let settingsSecurityScreenShowAdvancedUnverifiedDevices:Bool = true
     /// A setting to enable the presence configuration settings section.
     static let settingsScreenPresenceAllowConfiguration: Bool = false
 
@@ -405,18 +406,18 @@ final class BuildSettings: NSObject {
     static let defaultTileServerMapStyleURL = URL(string: "https://api.maptiler.com/maps/streets/style.json?key=fU3vlMsMn4Jb6dnEIFsx")!
     
     static let locationSharingEnabled = true
-
+    
     // MARK: - Voice Broadcast
     static let voiceBroadcastChunkLength: Int = 120
     static let voiceBroadcastMaxLength: UInt = 14400 // 240min.
-    
+
     // MARK: - MXKAppSettings
     static let enableBotCreation: Bool = false
     static let maxAllowedMediaCacheSize: Int = 1073741824
     static let presenceColorForOfflineUser: Int = 15020851
     static let presenceColorForOnlineUser: Int = 3401011
     static let presenceColorForUnavailableUser: Int = 15066368
-    static let showAllEventsInRoomHistory: Bool = true//Rum
+    static let showAllEventsInRoomHistory: Bool = false
     static let showLeftMembersInRoomMemberList: Bool = false
     static let showRedactionsInRoomHistory: Bool = true
     static let showUnsupportedEventsInRoomHistory: Bool = false
@@ -424,5 +425,19 @@ final class BuildSettings: NSObject {
     static let syncLocalContacts: Bool = false
     
     // MARK: - New App Layout
-    static let newAppLayoutEnabled = false
+    static let newAppLayoutEnabled = true
+
+    // MARK: - QR Login
+    
+    /// Flag indicating whether the QR login enabled from login screen
+    static let qrLoginEnabledFromNotAuthenticated = true
+    /// Flag indicating whether the QR login enabled from Device Manager screen
+    static let qrLoginEnabledFromAuthenticated = false
+    /// Flag indicating whether displaying QRs enabled for the QR login screens
+    static let qrLoginEnableDisplayingQRs = false
+    
+    static let rendezvousServerBaseURL = URL(string: "https://rendezvous.lab.element.dev/")!
+    
+    // MARK: - Alerts
+    static let showUnverifiedSessionsAlert = true
 }

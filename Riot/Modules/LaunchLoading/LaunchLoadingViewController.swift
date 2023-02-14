@@ -21,10 +21,10 @@ class LaunchLoadingViewController: UIViewController, Reusable {
     
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
     
-    init() {
+    init(startupProgress: MXSessionStartupProgress?) {
         super.init(nibName: "LaunchLoadingViewController", bundle: nil)
         
-        let launchLoadingView = LaunchLoadingView.instantiate()
+        let launchLoadingView = LaunchLoadingView.instantiate(startupProgress: startupProgress)
         launchLoadingView.update(theme: ThemeService.shared().theme)
         view.vc_addSubViewMatchingParent(launchLoadingView)
         

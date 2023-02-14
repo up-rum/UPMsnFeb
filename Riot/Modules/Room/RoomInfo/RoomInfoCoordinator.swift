@@ -47,7 +47,7 @@ final class RoomInfoCoordinator: NSObject, RoomInfoCoordinatorType {
         let files = RoomFilesViewController()
         files.finalizeInit()
         files.screenTracker = AnalyticsScreenTracker(screen: .roomUploads)
-        MXKRoomDataSource.load(withRoomId: self.room.roomId, andMatrixSession: self.session) { (dataSource) in
+        MXKRoomDataSource.load(withRoomId: self.room.roomId, threadId: nil, andMatrixSession: self.session) { (dataSource) in
             guard let dataSource = dataSource as? MXKRoomDataSource else { return }
             dataSource.filterMessagesWithURL = true
             dataSource.finalizeInitialization()
@@ -163,15 +163,6 @@ final class RoomInfoCoordinator: NSObject, RoomInfoCoordinatorType {
             if let modularVC = IntegrationManagerViewController(for: session, inRoom: room.roomId, screen: kIntegrationManagerMainScreen, widgetId: nil) {
                 navigationRouter.present(modularVC, animated: true)
             }
-        case .timelimited:
-            let storyboard = UIStoryboard(name: "Main", bundle: Bundle.main)
-            guard let timeLimitedSettingViewController = storyboard.instantiateViewController(withIdentifier: "TimeLimitedSettingController") as? TimeLimitedSettingController else {
-                return 
-            }
-            navigationRouter.present(timeLimitedSettingViewController, animated: true)
-//            if let modularVC = IntegrationManagerViewController(for: session, inRoom: room.roomId, screen: kIntegrationManagerMainScreen, widgetId: nil) {
-//                navigationRouter.present(modularVC, animated: true)
-//            }
         case .search:
             MXKRoomDataSourceManager.sharedManager(forMatrixSession: session)?.roomDataSource(forRoom: self.room.roomId, create: false, onComplete: { (roomDataSource) in
                 guard let dataSource = roomDataSource else { return }
@@ -183,8 +174,15 @@ final class RoomInfoCoordinator: NSObject, RoomInfoCoordinatorType {
         case .notifications:
             let coordinator = createRoomNotificationSettingsCoordinator()
             coordinator.start()
-            self.add(childCoordinator: coordinator)
-            self.navigationRouter.push(coordinator, animated: true, popCompletion: nil)
+            push(coordinator: coordinator)
+        case .pollHistory:
+            let coordinator: PollHistoryCoordinator = .init(parameters: .init(mode: .active, room: room, navigationRouter: navigationRouter))
+            coordinator.start()
+            coordinator.completion = { [weak self] event in
+                guard let self else { return }
+                self.delegate?.roomInfoCoordinator(self, viewEventInTimeline: event)
+            }
+            push(coordinator: coordinator)
         default:
             guard let tabIndex = target.tabIndex else {
                 fatalError("No settings tab index for this target.")
@@ -196,6 +194,13 @@ final class RoomInfoCoordinator: NSObject, RoomInfoCoordinatorType {
             }
             
             navigationRouter.push(segmentedViewController, animated: animated, popCompletion: nil)
+        }
+    }
+    
+    private func push(coordinator: Coordinator & Presentable, animated: Bool = true) {
+        self.add(childCoordinator: coordinator)
+        navigationRouter.push(coordinator, animated: animated) {
+            self.remove(childCoordinator: coordinator)
         }
     }
 }

@@ -26,13 +26,11 @@ enum EnterPinCodeViewState {
     case notAllowedPin          //  creating pin for the first time, provided pin is not allowed
     case confirmPin             //  creating pin for the first time, confirm
     case pinsDontMatch          //  pins don't match
-    case clearPinSameAsUnlock
     case unlock                 //  after pin has been set, enter pin to unlock
     case wrongPin               //  after pin has been set, pin entered wrongly
     case wrongPinTooManyTimes   //  after pin has been set, pin entered wrongly too many times
     case forgotPin              //  after pin has been set, user tapped forgot pin
     case confirmPinToDisable    //  after pin has been set, confirm pin to disable pin
     case inactive               //  inactive state, only used when app is not active
-    case changePin
-    case clearData//  pin is set, user tapped change pin from settings
+    case changePin              //  pin is set, user tapped change pin from settings
 }

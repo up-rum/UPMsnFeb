@@ -63,7 +63,7 @@ class RegistrationWizard {
         self.client = client
         self.sessionCreator = sessionCreator
         
-        self.state = State()
+        state = State()
     }
     
     /// Call this method to get the possible registration flow of the current homeserver.
@@ -90,19 +90,7 @@ class RegistrationWizard {
     /// the homeserver. Ex: username with only digits may be rejected.
     /// - Parameter username: The desired username. Ex: "alice"
     func registrationAvailable(username: String) async throws -> Bool {
-//        try await APIServices.shared.checkUPUsername(username: username) { (responseDict, error) in
-//            guard let response = responseDict else{
-//                return
-//            }
-//            if let status = response["error"] as? String {
-//                print("username already exist")
-//
-//            }else{
-//                print(response["error"] ?? "")
-//
-//            }
-//        }
-        return try await client.isUsernameAvailable(username)
+        try await client.isUsernameAvailable(username)
     }
 
     /// This is the first method to call in order to create an account and start the registration process.
@@ -176,7 +164,7 @@ class RegistrationWizard {
     /// Send the code received by SMS to validate a msisdn.
     /// If the code is correct, the registration request will be executed to validate the msisdn.
     func handleValidateThreePID(code: String) async throws -> RegistrationResult {
-        return try await validateThreePid(code: code)
+        try await validateThreePid(code: code)
     }
 
     /// Useful to poll the homeserver when waiting for the email to be validated by the user.
@@ -208,7 +196,6 @@ class RegistrationWizard {
             MXLog.error("[RegistrationWizard] validateThreePid: The third party ID data doesn't contain a submitURL.")
             throw RegistrationError.missingThreePIDURL
         }
-        
         
         let validationBody = ThreePIDValidationCodeBody(clientSecret: state.clientSecret,
                                                         sessionID: threePIDData.registrationResponse.sessionID,
@@ -267,7 +254,7 @@ class RegistrationWizard {
         do {
             let response = try await client.register(parameters: parameters)
             let credentials = MXCredentials(loginResponse: response, andDefaultCredentials: client.credentials)
-            return .success(sessionCreator.createSession(credentials: credentials, client: client, removeOtherAccounts: false))
+            return await .success(sessionCreator.createSession(credentials: credentials, client: client, removeOtherAccounts: false))
         } catch {
             let nsError = error as NSError
             
@@ -290,7 +277,7 @@ class RegistrationWizard {
     /// Checks for a dummy stage and handles it automatically when possible.
     private func handleDummyStage(flowResult: FlowResult) async throws -> RegistrationResult {
         // If the dummy stage is mandatory, do the dummy stage now
-        guard flowResult.missingStages.contains(where: { $0.isDummy }) else { return .flowResponse(flowResult) }
+        guard flowResult.missingStages.contains(where: \.isDummy) else { return .flowResponse(flowResult) }
         return try await dummy()
     }
     

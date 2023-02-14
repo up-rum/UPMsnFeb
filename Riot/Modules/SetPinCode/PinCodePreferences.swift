@@ -31,7 +31,6 @@ final class PinCodePreferences: NSObject {
     
     private struct StoreKeys {
         static let pin: String = "pin"
-        static let clearPin: String = "clearPin"
         static let biometricsEnabled: String = "biometricsEnabled"
         static let canUseBiometricsToUnlock: String = "canUseBiometricsToUnlock"
         static let numberOfPinFailures: String = "numberOfPinFailures"
@@ -72,7 +71,15 @@ final class PinCodePreferences: NSObject {
     }
     
     var isBiometricsAvailable: Bool {
-        return LAContext().canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil)
+        var error: NSError?
+        let result = LAContext().canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error)
+        
+        // While in lockout they're still techincally available
+        if error?.code == LAError.Code.biometryLockout.rawValue {
+            return true
+        }
+        
+        return result
     }
     
     /// Allowed number of PIN trials before showing forgot help alert
@@ -90,10 +97,7 @@ final class PinCodePreferences: NSObject {
     var isPinSet: Bool {
         return pin != nil
     }
-    /// Is user has set a clear data pin
-    var isClearPinSet: Bool {
-        return clearPin != nil
-    }
+    
     /// Saved user PIN
     var pin: String? {
         get {
@@ -106,23 +110,6 @@ final class PinCodePreferences: NSObject {
         } set {
             do {
                 try store.set(newValue, forKey: StoreKeys.pin)
-            } catch let error {
-                MXLog.debug("[PinCodePreferences] Error when storing user pin to the store: \(error)")
-            }
-        }
-    }
-
-    var clearPin: String? {
-        get {
-            do {
-                return try store.string(forKey: StoreKeys.clearPin)
-            } catch let error {
-                MXLog.debug("[PinCodePreferences] Error when reading user pin from store: \(error)")
-                return nil
-            }
-        } set {
-            do {
-                try store.set(newValue, forKey: StoreKeys.clearPin)
             } catch let error {
                 MXLog.debug("[PinCodePreferences] Error when storing user pin to the store: \(error)")
             }
@@ -148,6 +135,10 @@ final class PinCodePreferences: NSObject {
     
     var canUseBiometricsToUnlock: Bool? {
         get {
+            guard isBiometricsAvailable == true else {
+                return false
+            }
+            
             do {
                 return try store.bool(forKey: StoreKeys.canUseBiometricsToUnlock)
             } catch let error {
@@ -238,7 +229,6 @@ final class PinCodePreferences: NSObject {
     /// Resets user PIN
     func reset() {
         pin = nil
-        clearPin = nil
         biometricsEnabled = nil
         canUseBiometricsToUnlock = nil
         resetCounters()

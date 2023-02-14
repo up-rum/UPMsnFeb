@@ -30,12 +30,13 @@ public class RecentsListService: NSObject, RecentsListServiceProtocol {
     public private(set) var query: String?
     public private(set) var space: MXSpace?
     private var fetchersCreated: Bool = false
+    private var uncompletedVoiceBroadcastCleaningDone: Bool = false
     
     //  MARK: - Fetchers
     
     private var invitedRoomListDataFetcher: MXRoomListDataFetcher? {
         switch mode {
-        case .home, .allChats:
+        case .home, .allChats, .roomInvites:
             return invitedRoomListDataFetcherForHome
         case .people:
             return invitedRoomListDataFetcherForPeople
@@ -87,6 +88,7 @@ public class RecentsListService: NSObject, RecentsListServiceProtocol {
         .favourites: [.favorited],
         .people: [.invited, .directPeople],
         .rooms: [.invited, .conversationRooms, .suggested],
+        .roomInvites: [.invited],
         .allChats: [.breadcrumbs, .favorited, .directHome, .invited, .allChats, .lowPriority, .serverNotice, .suggested]
     ]
     
@@ -131,7 +133,7 @@ public class RecentsListService: NSObject, RecentsListServiceProtocol {
         if let fetcher = conversationRoomListDataFetcherForRooms, fetcherTypes.contains(.conversationRooms) {
             result.append(fetcher)
         }
-        if let fetcher = lowPriorityRoomListDataFetcher, fetcherTypes.contains(.lowPriority) {
+        if let fetcher = lowPriorityRoomListDataFetcher, fetcherTypes.contains(.lowPriority), shouldShowLowPriority {
             result.append(fetcher)
         }
         if let fetcher = serverNoticeRoomListDataFetcher, fetcherTypes.contains(.serverNotice) {
@@ -140,7 +142,7 @@ public class RecentsListService: NSObject, RecentsListServiceProtocol {
         if space != nil, let fetcher = suggestedRoomListDataFetcher, fetcherTypes.contains(.suggested) {
             result.append(fetcher)
         }
-        if let fetcher = breadcrumbsRoomListDataFetcher, fetcherTypes.contains(.breadcrumbs) {
+        if let fetcher = breadcrumbsRoomListDataFetcher, fetcherTypes.contains(.breadcrumbs), shouldShowBreadcrumbs {
             result.append(fetcher)
         }
         if let fetcher = allChatsRoomListDataFetcher, fetcherTypes.contains(.allChats) {
@@ -481,7 +483,7 @@ public class RecentsListService: NSObject, RecentsListServiceProtocol {
     }
     
     private var shouldShowLowPriority: Bool {
-        return fetcherTypesForMode[mode]?.contains(.lowPriority) ?? false
+        return ((mode != .allChats) || !AllChatsLayoutSettingsManager.shared.hasAnActiveFilter) && fetcherTypesForMode[mode]?.contains(.lowPriority) ?? false
     }
     
     private var shouldShowServerNotice: Bool {
@@ -493,7 +495,7 @@ public class RecentsListService: NSObject, RecentsListServiceProtocol {
     }
     
     private var shouldShowBreadcrumbs: Bool {
-        return fetcherTypesForMode[mode]?.contains(.breadcrumbs) ?? false
+        return AllChatsLayoutSettingsManager.shared.allChatLayoutSettings.sections.contains(.recents) && (fetcherTypesForMode[mode]?.contains(.breadcrumbs) ?? false)
     }
     
     private var shouldShowAllChats: Bool {
@@ -637,6 +639,14 @@ public class RecentsListService: NSObject, RecentsListServiceProtocol {
         guard let session = session else {
             return
         }
+        guard session.state != .closed else {
+            MXLog.debug("[RecentsListService] createFetchers cancelled on closed session")
+            return
+        }
+        guard session.roomListDataManager != nil else {
+            MXLog.debug("[RecentsListService] createFetchers cancelled on race condition (session closing in progress)")
+            return
+        }
         guard session.isEventStreamInitialised else {
             return
         }
@@ -748,6 +758,7 @@ public class RecentsListService: NSObject, RecentsListServiceProtocol {
                                                                            forSection: section,
                                                                            totalCountsChanged: totalCountsChanged) }
         } else {
+            stopUncompletedVoiceBroadcastIfNeeded()
             multicastDelegate.invoke { $0.recentsListServiceDidChangeData?(self,
                                                                            totalCountsChanged: totalCountsChanged) }
         }
@@ -773,6 +784,31 @@ extension RecentsListService: MXRoomListDataFetcherDelegate {
         notifyDataChange(on: fetcher, totalCountsChanged: totalCountsChanged)
     }
     
+}
+
+// MARK: - VoiceBroadcast
+extension RecentsListService {
+    
+    private func stopUncompletedVoiceBroadcastIfNeeded() {
+        guard uncompletedVoiceBroadcastCleaningDone == false,
+              let breadcrumbsFetcher = breadcrumbsRoomListDataFetcher else {
+            return
+        }
+        // We limit for the moment the uncompleted voice broadcast cleaning to the breadcrumbs rooms list
+        stopUncompletedVoiceBroadcastIfNeeded(for: breadcrumbsFetcher)
+        uncompletedVoiceBroadcastCleaningDone = true
+    }
+    
+    private func stopUncompletedVoiceBroadcastIfNeeded(for fetcher: MXRoomListDataFetcher) {
+        fetcher.data?.rooms.forEach({ roomSummary in
+            guard let roomSummary = roomSummary as? MXRoomSummary,
+                  let room = roomSummary.room else {
+                return
+            }
+            
+            room.stopUncompletedVoiceBroadcastIfNeeded()
+        })
+    }
 }
 
 //  MARK: - FetcherTypes

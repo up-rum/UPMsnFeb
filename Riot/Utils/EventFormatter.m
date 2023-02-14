@@ -25,7 +25,6 @@
 #import "MXDecryptionResult.h"
 #import "DecryptionFailureTracker.h"
 
-#import "EventFormatter+DTCoreTextFix.h"
 #import <MatrixSDK/MatrixSDK.h>
 
 #pragma mark - Constants definitions
@@ -49,11 +48,6 @@ static NSString *const kEventFormatterTimeFormat = @"HH:mm";
 @end
 
 @implementation EventFormatter
-
-+ (void)load
-{
-    [self fixDTCoreTextFont];
-}
 
 - (void)initDateTimeFormatters
 {
@@ -88,7 +82,6 @@ static NSString *const kEventFormatterTimeFormat = @"HH:mm";
                                      displayPills:(BOOL)displayPills
                                             error:(MXKEventFormatterError *)error
 {
-    
     NSAttributedString *string = [self unsafeAttributedStringFromEvent:event
                                                          withRoomState:roomState
                                                     andLatestRoomState:latestRoomState
@@ -106,7 +99,9 @@ static NSString *const kEventFormatterTimeFormat = @"HH:mm";
         // If we cannot create attributed string, but the message is nevertheless meant for display, show generic error
         // instead of a missing message on a timeline.
         if ([self shouldDisplayEvent:event]) {
-            MXLogError(@"[EventFormatter]: Missing attributed string for message event: %@", event.eventId);
+            MXLogErrorDetails(@"[EventFormatter]: Missing attributed string for message event", @{
+                @"event_id": event.eventId ?: @"unknown"
+            });
             string = [[NSAttributedString alloc] initWithString:[VectorL10n noticeErrorUnformattableEvent] attributes:@{
                 NSFontAttributeName: [self encryptedMessagesTextFont]
             }];
@@ -168,21 +163,8 @@ static NSString *const kEventFormatterTimeFormat = @"HH:mm";
         if ((RiotSettings.shared.enableThreads && [mxSession.threadingService isEventThreadRoot:event])
             || self.settings.showRedactionsInRoomHistory)
         {
-
-//            NSLog(@"redactt=>>> %@",event.JSONDictionary);
-//            MXEvent *myEvents = event.JSONDictionary;
-//            myEvents.redactedBecause.
-            NSDictionary *contentDict = event.redactedBecause[@"content"];
-//            NSLog(@"redactt=>>> %@",contentDict);
-            NSAttributedString *result;
-            if (contentDict[@"reason"] != nil) {
-                result = [self redactedMessageTimeLimitedAttributedString];
-
-            }
-            else{
-                result = [self redactedMessageReplacementAttributedString];
-            }
-
+            NSAttributedString *result = [self redactedMessageReplacementAttributedString];
+            
             if (error)
             {
                 *error = MXKEventFormatterErrorNone;
@@ -193,95 +175,100 @@ static NSString *const kEventFormatterTimeFormat = @"HH:mm";
     }
     BOOL isEventSenderMyUser = [event.sender isEqualToString:mxSession.myUserId];
     
-    // Build strings for widget events
-    if (event.eventType == MXEventTypeCustom
-        && ([event.type isEqualToString:kWidgetMatrixEventTypeString]
-            || [event.type isEqualToString:kWidgetModularEventTypeString]))
-    {
-        NSString *displayText;
-
-        Widget *widget = [[Widget alloc] initWithWidgetEvent:event inMatrixSession:mxSession];
-        if (widget)
+    if (event.eventType == MXEventTypeCustom) {
+        
+        // Build strings for widget events
+        if ([event.type isEqualToString:kWidgetMatrixEventTypeString]
+                || [event.type isEqualToString:kWidgetModularEventTypeString])
         {
-            // Prepare the display name of the sender
-            NSString *senderDisplayName = roomState ? [self senderDisplayNameForEvent:event withRoomState:roomState] : event.sender;
-
-            if (widget.isActive)
+            NSString *displayText;
+            
+            Widget *widget = [[Widget alloc] initWithWidgetEvent:event inMatrixSession:mxSession];
+            if (widget)
             {
-                if ([widget.type isEqualToString:kWidgetTypeJitsiV1]
-                    || [widget.type isEqualToString:kWidgetTypeJitsiV2])
+                // Prepare the display name of the sender
+                NSString *senderDisplayName = roomState ? [self senderDisplayNameForEvent:event withRoomState:roomState] : event.sender;
+                
+                if (widget.isActive)
                 {
-                    // This is an alive jitsi widget
-                    if (isEventSenderMyUser)
+                    if ([widget.type isEqualToString:kWidgetTypeJitsiV1]
+                        || [widget.type isEqualToString:kWidgetTypeJitsiV2])
                     {
-                        displayText = [VectorL10n eventFormatterJitsiWidgetAddedByYou];
+                        // This is an alive jitsi widget
+                        if (isEventSenderMyUser)
+                        {
+                            displayText = [VectorL10n eventFormatterJitsiWidgetAddedByYou];
+                        }
+                        else
+                        {
+                            displayText = [VectorL10n eventFormatterJitsiWidgetAdded:senderDisplayName];
+                        }
                     }
                     else
                     {
-                        displayText = [VectorL10n eventFormatterJitsiWidgetAdded:senderDisplayName];
+                        if (isEventSenderMyUser)
+                        {
+                            displayText = [VectorL10n eventFormatterWidgetAddedByYou:(widget.name ? widget.name : widget.type)];
+                        }
+                        else
+                        {
+                            displayText = [VectorL10n eventFormatterWidgetAdded:(widget.name ? widget.name : widget.type) :senderDisplayName];
+                        }
                     }
                 }
                 else
                 {
-                    if (isEventSenderMyUser)
+                    // This is a closed widget
+                    // Check if it corresponds to a jitsi widget by looking at other state events for
+                    // this jitsi widget (widget id = event.stateKey).
+                    // Get all widgets state events in the room
+                    NSMutableArray<MXEvent*> *widgetStateEvents = [NSMutableArray arrayWithArray:[roomState stateEventsWithType:kWidgetMatrixEventTypeString]];
+                    [widgetStateEvents addObjectsFromArray:[roomState stateEventsWithType:kWidgetModularEventTypeString]];
+                    
+                    for (MXEvent *widgetStateEvent in widgetStateEvents)
                     {
-                        displayText = [VectorL10n eventFormatterWidgetAddedByYou:(widget.name ? widget.name : widget.type)];
-                    }
-                    else
-                    {
-                        displayText = [VectorL10n eventFormatterWidgetAdded:(widget.name ? widget.name : widget.type) :senderDisplayName];
-                    }
-                }
-            }
-            else
-            {
-                // This is a closed widget
-                // Check if it corresponds to a jitsi widget by looking at other state events for
-                // this jitsi widget (widget id = event.stateKey).
-                // Get all widgets state events in the room
-                NSMutableArray<MXEvent*> *widgetStateEvents = [NSMutableArray arrayWithArray:[roomState stateEventsWithType:kWidgetMatrixEventTypeString]];
-                [widgetStateEvents addObjectsFromArray:[roomState stateEventsWithType:kWidgetModularEventTypeString]];
-
-                for (MXEvent *widgetStateEvent in widgetStateEvents)
-                {
-                    if ([widgetStateEvent.stateKey isEqualToString:widget.widgetId])
-                    {
-                        Widget *activeWidget = [[Widget alloc] initWithWidgetEvent:widgetStateEvent inMatrixSession:mxSession];
-                        if (activeWidget.isActive)
+                        if ([widgetStateEvent.stateKey isEqualToString:widget.widgetId])
                         {
-                            if ([activeWidget.type isEqualToString:kWidgetTypeJitsiV1]
-                                || [activeWidget.type isEqualToString:kWidgetTypeJitsiV2])
+                            Widget *activeWidget = [[Widget alloc] initWithWidgetEvent:widgetStateEvent inMatrixSession:mxSession];
+                            if (activeWidget.isActive)
                             {
-                                // This was a jitsi widget
-                                return nil;
-                            }
-                            else
-                            {
-                                if (isEventSenderMyUser)
+                                if ([activeWidget.type isEqualToString:kWidgetTypeJitsiV1]
+                                    || [activeWidget.type isEqualToString:kWidgetTypeJitsiV2])
                                 {
-                                    displayText = [VectorL10n eventFormatterWidgetRemovedByYou:(activeWidget.name ? activeWidget.name : activeWidget.type)];
+                                    // This was a jitsi widget
+                                    return nil;
                                 }
                                 else
                                 {
-                                    displayText = [VectorL10n eventFormatterWidgetRemoved:(activeWidget.name ? activeWidget.name : activeWidget.type) :senderDisplayName];
+                                    if (isEventSenderMyUser)
+                                    {
+                                        displayText = [VectorL10n eventFormatterWidgetRemovedByYou:(activeWidget.name ? activeWidget.name : activeWidget.type)];
+                                    }
+                                    else
+                                    {
+                                        displayText = [VectorL10n eventFormatterWidgetRemoved:(activeWidget.name ? activeWidget.name : activeWidget.type) :senderDisplayName];
+                                    }
                                 }
+                                break;
                             }
-                            break;
                         }
                     }
                 }
             }
-        }
-
-        if (displayText)
-        {
-            if (error)
+        
+            if (displayText)
             {
-                *error = MXKEventFormatterErrorNone;
-            }
+                if (error)
+                {
+                    *error = MXKEventFormatterErrorNone;
+                }
 
-            // Build the attributed string with the right font and color for the events
-            return [self renderString:displayText forEvent:event];
+                // Build the attributed string with the right font and color for the events
+                return [self renderString:displayText forEvent:event];
+            }
+        } else if ([event.type isEqualToString:VoiceBroadcastSettings.voiceBroadcastInfoContentKeyType]) {
+            //  do not show voice broadcast info in the timeline
+            return nil;
         }
     }
     
@@ -366,7 +353,8 @@ static NSString *const kEventFormatterTimeFormat = @"HH:mm";
                                              attributes:@{
                                                           NSLinkAttributeName: linkActionString,
                                                           NSForegroundColorAttributeName: self.sendingTextColor,
-                                                          NSFontAttributeName: self.encryptedMessagesTextFont
+                                                          NSFontAttributeName: self.encryptedMessagesTextFont,
+                                                          NSUnderlineStyleAttributeName: [NSNumber numberWithInt:NSUnderlineStyleSingle] 
                                                           }]];
 
             [attributedStringWithRerequestMessage appendAttributedString:
@@ -391,48 +379,13 @@ static NSString *const kEventFormatterTimeFormat = @"HH:mm";
          [[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@" %@", [VectorL10n eventFormatterMessageEditedMention]]
                                          attributes:@{
                                                       NSLinkAttributeName: linkActionString,
-                                                      // NOTE: Color is curretly overidden by UIText.tintColor as we use `NSLinkAttributeName`.
-                                                      // If we use UITextView.linkTextAttributes to set link color we will also have the issue that color will be the same for all kind of links.
                                                       NSForegroundColorAttributeName: self.editionMentionTextColor,
                                                       NSFontAttributeName: self.editionMentionTextFont
                                                       }]];
         
         attributedString = attributedStringWithEditMention;
     }
-//    NSLog(@"====contrnt==>>>%@",event.content);
-    if (event.content[@"time_limit"] != nil) {
-        NSMutableAttributedString *attributedStringWithTimeLimited = [attributedString mutableCopy];
-        UIFont *font = self.defaultTextFont;
-        UIColor *color = ThemeService.shared.theme.colors.secondaryContent;
-//        NSInteger currentTS = [[NSDate date] timeIntervalSince1970] * 1000;
-//        NSInteger msgTS = event.originServerTs;
-//        NSInteger timeLimit = currentTS - msgTS;
-//
-//        NSInteger eventTime = [event.content[@"time_limit"] intValue] -  timeLimit;
-//        eventTime = eventTime/1000;
-//        // NSTimeInterval is defined as double
-////        NSNumber *timeStampObj = [NSNumber numberWithDouble: timeStamp];
-//
-//
-//        NSString *string = [NSString stringWithFormat:@" %ld ",(long)eventTime];
-//        NSAttributedString *attrString =
-//        [[NSAttributedString alloc] initWithString:string
-//                                                                         attributes:@{
-//                                                                             NSFontAttributeName: font,
-//                                                                             NSForegroundColorAttributeName: color
-//                                                                         }];
-//        [attributedStringWithTimeLimited appendAttributedString: attrString];
-        CGSize imageSize = CGSizeMake(10, 10);
-        NSTextAttachment *attachment = [[NSTextAttachment alloc] init];
-        attachment.image = [UIImage imageNamed:@"timeLimited"];//[[AssetImages.roomContextMenuDelete.image vc_resizedWith:imageSize] vc_tintedImageUsingColor:color];
-        attachment.bounds = CGRectMake(50, font.descender, imageSize.width, imageSize.height);
-        NSAttributedString *imageString = [NSAttributedString attributedStringWithAttachment:attachment];
-        NSMutableAttributedString *result = [[NSMutableAttributedString alloc] initWithString:@" "];
-        [attributedStringWithTimeLimited appendAttributedString:result];
-        [attributedStringWithTimeLimited appendAttributedString:imageString];
-        attributedString = attributedStringWithTimeLimited;
-    }
-    
+
     return attributedString;
 }
 
@@ -506,8 +459,8 @@ static NSString *const kEventFormatterTimeFormat = @"HH:mm";
     {
         calendar = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
         
-        // Use the secondary bg color to set the background color in the default CSS.
-        NSUInteger bgColor = [MXKTools rgbValueWithColor:ThemeService.shared.theme.headerBackgroundColor];
+        // Use the selected bg color to set the code block background color in the default CSS.
+        NSUInteger bgColor = [MXKTools rgbValueWithColor:ThemeService.shared.theme.selectedBackgroundColor];
         self.defaultCSS = [NSString stringWithFormat:@" \
                            pre,code { \
                            background-color: #%06lX; \
@@ -527,6 +480,7 @@ static NSString *const kEventFormatterTimeFormat = @"HH:mm";
         self.bingTextColor = ThemeService.shared.theme.noticeColor;
         self.encryptingTextColor = ThemeService.shared.theme.textPrimaryColor;
         self.sendingTextColor = ThemeService.shared.theme.textPrimaryColor;
+        self.linksColor = ThemeService.shared.theme.colors.links;
         self.errorTextColor = ThemeService.shared.theme.textPrimaryColor;
         self.showEditionMention = YES;
         self.editionMentionTextColor = ThemeService.shared.theme.textSecondaryColor;
@@ -586,6 +540,90 @@ static NSString *const kEventFormatterTimeFormat = @"HH:mm";
 }
 
 #pragma mark - MXRoomSummaryUpdating
+- (BOOL)session:(MXSession *)session updateRoomSummary:(MXRoomSummary *)summary withLastEvent:(MXEvent *)event eventState:(MXRoomState *)eventState roomState:(MXRoomState *)roomState
+{
+    // Do not display voice broadcast chunk in last message.
+    if (event.eventType == MXEventTypeRoomMessage && event.content[VoiceBroadcastSettings.voiceBroadcastContentKeyChunkType])
+    {
+        return NO;
+    }
+    
+    // Update last message if we have a voice broadcast in the room.
+    MXEvent *lastVoiceBroadcastInfoEvent = [self lastVoiceBroadcastInfoEventWithEvent:event roomState:roomState];
+    if (lastVoiceBroadcastInfoEvent != nil)
+    {
+        MXEvent *voiceBroadcastInfoStartedEvent = [self voiceBroadcastInfoStartedEventWithEvent:lastVoiceBroadcastInfoEvent
+                                                                                         roomId:summary.roomId
+                                                                                        session:session];
+        if (voiceBroadcastInfoStartedEvent != nil
+            && !(voiceBroadcastInfoStartedEvent.isRedactedEvent || [voiceBroadcastInfoStartedEvent.eventId isEqualToString:event.redacts]))
+        {
+            return [self session:session
+               updateRoomSummary:summary
+withVoiceBroadcastInfoStateEvent:lastVoiceBroadcastInfoEvent
+  voiceBroadcastInfoStartedEvent:voiceBroadcastInfoStartedEvent
+                       roomState:roomState];
+        }
+    }
+    
+    BOOL updated = [super session:session updateRoomSummary:summary withLastEvent:event eventState:eventState roomState:roomState];
+    
+    if (updated)
+    {
+        // Force the default text color for the last message (cancel highlighted message color)
+        NSMutableAttributedString *lastEventDescription = [[NSMutableAttributedString alloc] initWithAttributedString:summary.lastMessage.attributedText];
+        [lastEventDescription addAttribute:NSForegroundColorAttributeName value:ThemeService.shared.theme.textSecondaryColor
+                                     range:NSMakeRange(0, lastEventDescription.length)];
+        summary.lastMessage.attributedText = lastEventDescription;
+    }
+    
+    return updated;
+}
+
+
+- (MXEvent *)lastVoiceBroadcastInfoEventWithEvent:(MXEvent *)event roomState:(MXRoomState *)roomState
+{
+    MXEvent *voiceBroadcastInfoEvent = nil;
+    VoiceBroadcastInfo *info = nil;
+    if ([event.type isEqualToString:VoiceBroadcastSettings.voiceBroadcastInfoContentKeyType])
+    {
+        info = [VoiceBroadcastInfo modelFromJSON: event.content];
+        
+        if (info != nil)
+        {
+            voiceBroadcastInfoEvent = event;
+        }
+    }
+    else
+    {
+        MXEvent *stateEvent = [roomState stateEventsWithType:VoiceBroadcastSettings.voiceBroadcastInfoContentKeyType].lastObject;
+        if (stateEvent != nil)
+        {
+            info = [VoiceBroadcastInfo modelFromJSON: stateEvent.content];
+            if (info != nil && ![VoiceBroadcastInfo isStoppedFor:info.state])
+            {
+                voiceBroadcastInfoEvent = stateEvent;
+            }
+        }
+    }
+    
+    return voiceBroadcastInfoEvent;
+}
+
+- (MXEvent *)voiceBroadcastInfoStartedEventWithEvent:(MXEvent *)voiceBroadcastInfoEvent roomId:(NSString *)roomId session:(MXSession *)session
+{
+    VoiceBroadcastInfo *voiceBroadcastInfo = [VoiceBroadcastInfo modelFromJSON: voiceBroadcastInfoEvent.content];
+    if ([VoiceBroadcastInfo isStartedFor:voiceBroadcastInfo.state])
+    {
+        return voiceBroadcastInfoEvent;
+    }
+    else
+    {
+        // Search for the event only in the store to avoid network calls while updating the room summary (this a synchronous process and we cannot delay it).
+        return [mxSession.store eventWithEventId:voiceBroadcastInfo.voiceBroadcastId inRoom:roomId];
+    }
+}
+
 - (BOOL)session:(MXSession *)session updateRoomSummary:(MXRoomSummary *)summary withStateEvents:(NSArray<MXEvent *> *)stateEvents roomState:(MXRoomState *)roomState
 {
     BOOL updated = [super session:session updateRoomSummary:summary withStateEvents:stateEvents roomState:roomState];
@@ -600,13 +638,87 @@ static NSString *const kEventFormatterTimeFormat = @"HH:mm";
             // The stateEvents parameter contains state events that may change the room summary. If service members are found,
             // it's likely that something changed. As they aren't stored, the only reliable check would be to compute the
             // room name which we'll do twice more in updateRoomSummary:withServerRoomSummary:roomState: anyway.
-
+            //
             // So return YES and let that happen there.
             return YES;
         }
     }
     
     return updated;
+}
+
+- (BOOL)session:(MXSession *)session updateRoomSummary:(MXRoomSummary *)summary withVoiceBroadcastInfoStateEvent:(MXEvent *)stateEvent voiceBroadcastInfoStartedEvent:(MXEvent *)voiceBroadcastInfoStartedEvent roomState:(MXRoomState *)roomState
+{
+    BOOL isStoppedVoiceBroadcast = [VoiceBroadcastInfo isStoppedFor:[VoiceBroadcastInfo modelFromJSON: stateEvent.content].state];
+    
+    if ([summary.lastMessage.eventId isEqualToString:voiceBroadcastInfoStartedEvent.eventId])
+    {
+        if (!isStoppedVoiceBroadcast)
+        {
+            return NO;
+        }
+    }
+    else
+    {
+        [summary updateLastMessage:[[MXRoomLastMessage alloc] initWithEvent:voiceBroadcastInfoStartedEvent]];
+        if (summary.lastMessage.others == nil)
+        {
+            summary.lastMessage.others = [NSMutableDictionary dictionary];
+        }
+    }
+    
+    NSAttributedString *attachmentString = nil;
+    UIColor *textColor;
+    if (isStoppedVoiceBroadcast)
+    {
+        textColor = ThemeService.shared.theme.textSecondaryColor;
+        NSString *senderDisplayName;
+        if ([stateEvent.stateKey isEqualToString:session.myUser.userId])
+        {
+            summary.lastMessage.text = VectorL10n.noticeVoiceBroadcastEndedByYou;
+        }
+        else
+        {
+            senderDisplayName = [self senderDisplayNameForEvent:stateEvent withRoomState:roomState];
+            summary.lastMessage.text = [VectorL10n noticeVoiceBroadcastEnded:senderDisplayName];
+        }
+        summary.lastMessage.others[@"lastEventDate"] = [self dateStringFromEvent:stateEvent withTime:YES];
+    }
+    else
+    {
+        textColor = ThemeService.shared.theme.colors.alert;
+        UIImage *liveImage = AssetImages.voiceBroadcastLive.image;
+        
+        NSTextAttachment *attachment = [[NSTextAttachment alloc] init];
+        attachment.image = [liveImage imageWithTintColor:textColor renderingMode:UIImageRenderingModeAlwaysTemplate];
+        attachmentString = [NSAttributedString attributedStringWithAttachment:attachment];
+        
+        summary.lastMessage.text = VectorL10n.noticeVoiceBroadcastLive;
+        summary.lastMessage.others[@"lastEventDate"] = [self dateStringFromEvent:voiceBroadcastInfoStartedEvent withTime:YES];
+    }
+    
+    // Compute the attribute text message
+    NSMutableAttributedString *lastMessage;
+    if (attachmentString)
+    {
+        lastMessage = [[NSMutableAttributedString alloc] initWithAttributedString:attachmentString];
+        // Change base line
+        [lastMessage addAttribute:NSBaselineOffsetAttributeName value:@(-3.0f) range:NSMakeRange(0, attachmentString.length)];
+        
+        NSAttributedString *attributedText = [[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@" %@", summary.lastMessage.text]];
+        [lastMessage appendAttributedString:attributedText];
+        [lastMessage addAttribute:NSFontAttributeName value:self.defaultTextFont range:NSMakeRange(0, lastMessage.length)];
+    }
+    else
+    {
+        NSAttributedString *attributedText = [self renderString:summary.lastMessage.text forEvent:stateEvent];
+        lastMessage = [[NSMutableAttributedString alloc] initWithAttributedString:attributedText];
+    }
+    
+    [lastMessage addAttribute:NSForegroundColorAttributeName value:textColor range:NSMakeRange(0, lastMessage.length)];
+    summary.lastMessage.attributedText = lastMessage;
+    
+    return YES;
 }
 
 - (NSAttributedString *)redactedMessageReplacementAttributedString
@@ -623,28 +735,6 @@ static NSString *const kEventFormatterTimeFormat = @"HH:mm";
     CGSize imageSize = CGSizeMake(20, 20);
     NSTextAttachment *attachment = [[NSTextAttachment alloc] init];
     attachment.image = [[AssetImages.roomContextMenuDelete.image vc_resizedWith:imageSize] vc_tintedImageUsingColor:color];
-    attachment.bounds = CGRectMake(0, font.descender, imageSize.width, imageSize.height);
-    NSAttributedString *imageString = [NSAttributedString attributedStringWithAttachment:attachment];
-
-    NSMutableAttributedString *result = [[NSMutableAttributedString alloc] initWithAttributedString:imageString];
-    [result appendAttributedString:attrString];
-
-    return result;
-}
-- (NSAttributedString *)redactedMessageTimeLimitedAttributedString
-{
-    UIFont *font = self.defaultTextFont;
-    UIColor *color = ThemeService.shared.theme.colors.secondaryContent;
-    NSString *string = [NSString stringWithFormat:@" %@ (time expired)", VectorL10n.eventFormatterMessageDeleted];
-    NSAttributedString *attrString = [[NSAttributedString alloc] initWithString:string
-                                                                     attributes:@{
-                                                                         NSFontAttributeName: font,
-                                                                         NSForegroundColorAttributeName: color
-                                                                     }];
-
-    CGSize imageSize = CGSizeMake(20, 20);
-    NSTextAttachment *attachment = [[NSTextAttachment alloc] init];
-    attachment.image = [UIImage imageNamed:@"timeLimited"];//[[AssetImages.roomContextMenuDelete.image vc_resizedWith:imageSize] vc_tintedImageUsingColor:color];
     attachment.bounds = CGRectMake(0, font.descender, imageSize.width, imageSize.height);
     NSAttributedString *imageString = [NSAttributedString attributedStringWithAttachment:attachment];
 

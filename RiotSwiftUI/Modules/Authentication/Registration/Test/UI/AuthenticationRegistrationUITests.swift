@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-import XCTest
 import RiotSwiftUI
+import XCTest
 
 class AuthenticationRegistrationUITests: MockScreenTestCase {
     func testMatrixDotOrg() {
@@ -88,14 +88,9 @@ class AuthenticationRegistrationUITests: MockScreenTestCase {
         validateFallbackButtonIsShown(for: state)
     }
     
-    
     /// Checks that the username and password text fields are shown along with the next button.
     func validateRegistrationFormIsVisible(for state: String) {
         let usernameTextField = app.textFields.element
-        let fNameTextField = app.textFields.element
-        let lNameTextField = app.textFields.element
-        let upemailTextField = app.textFields.element
-        let phoneTextField = app.textFields.element
         let passwordTextField = app.secureTextFields.element
         let nextButton = app.buttons["nextButton"]
         

@@ -191,12 +191,6 @@ final class SideMenuCoordinator: NSObject, SideMenuCoordinatorType {
         // Push view controller and dismiss side menu
         self.sideMenuNavigationViewController.pushViewController(viewController, animated: true)
     }
-    private func showSupportScreen() {
-        let storyboard = UIStoryboard(name: "Main", bundle: Bundle.main)
-        let viewController = storyboard.instantiateViewController(withIdentifier: "helpsupport") as? HelpSupportViewController
-        // Push view controller and dismiss side menu
-        self.sideMenuNavigationViewController.pushViewController(viewController ?? HelpSupportViewController(), animated: true)
-    }
     
     private func showBugReport() {
         let bugReportViewController = BugReportViewController()
@@ -326,7 +320,9 @@ final class SideMenuCoordinator: NSObject, SideMenuCoordinatorType {
     
     func showSpaceInvite(spaceId: String, session: MXSession) {
         guard let space = session.spaceService.getSpace(withId: spaceId), let spaceRoom = space.room else {
-            MXLog.error("[SideMenuCoordinator] showSpaceInvite: failed to find space with id \(spaceId)")
+            MXLog.error("[SideMenuCoordinator] showSpaceInvite: failed to find space", context: [
+                "space_id": spaceId
+            ])
             return
         }
         
@@ -389,8 +385,6 @@ extension SideMenuCoordinator: SideMenuViewModelCoordinatorDelegate {
             self.showHelp()
         case .feedback:
             self.showBugReport()
-        case .support:
-            self.showSupportScreen()
         }
         
         self.delegate?.sideMenuCoordinator(self, didTapMenuItem: menuItem, fromSourceView: sourceView)

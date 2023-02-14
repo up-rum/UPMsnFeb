@@ -1,92 +1,60 @@
-# UP iOS Messenger Client
+# Element iOS
 
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/vector-im/element-ios)
+![badge-languages](https://img.shields.io/badge/languages-Swift%20%7C%20ObjC-orange.svg)
+[![Swift 5.x](https://img.shields.io/badge/Swift-5.x-orange)](https://developer.apple.com/swift)
+[![Build status](https://badge.buildkite.com/cc8f93e32da93fa7c1172398bd8af66254490567c7195a5f3f.svg?branch=develop)](https://buildkite.com/matrix-dot-org/element-ios/builds?branch=develop)
+[![Weblate](https://translate.riot.im/widgets/riot-ios/-/svg-badge.svg)](https://translate.riot.im/engage/riot-ios/?utm_source=widget)
+[![codecov](https://codecov.io/gh/vector-im/element-ios/branch/develop/graph/badge.svg?token=INNm5o6XWg)](https://codecov.io/gh/vector-im/element-ios)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=vector-im_element-ios&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=vector-im_element-ios)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=vector-im_element-ios&metric=bugs)](https://sonarcloud.io/summary/new_code?id=vector-im_element-ios)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=vector-im_element-ios&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=vector-im_element-ios)
+[![Element iOS Matrix room #element-ios:matrix.org](https://img.shields.io/matrix/element-ios:matrix.org.svg?label=%23element-ios:matrix.org&logo=matrix&server_fqdn=matrix.org)](https://matrix.to/#/#element-ios:matrix.org)
+![GitHub](https://img.shields.io/github/license/vector-im/element-ios)
+[![Twitter URL](https://img.shields.io/twitter/url?label=Element&url=https%3A%2F%2Ftwitter.com%2Felement_hq)](https://twitter.com/element_hq)
 
+Element iOS is an iOS [Matrix](https://matrix.org/) client provided by [Element](https://element.io/). It is based on [MatrixSDK](https://github.com/matrix-org/matrix-ios-sdk).
 
-## Getting started
+<p align="center">  
+  <a href=https://itunes.apple.com/us/app/element/id1083446067?mt=8>
+  <img alt="Download on the app store" src="https://linkmaker.itunes.apple.com/images/badges/en-us/badge_appstore-lrg.svg" width=160>
+  </a>
+</p>
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## Beta testing 
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+You can try last beta build by accessing our [TestFlight Public Link](https://testflight.apple.com/join/lCeTuDKM). For questions and feedback about latest TestFlight build, please access the Element iOS Matrix room: [#element-ios:matrix.org](https://matrix.to/#/#element-ios:matrix.org).
 
-## Add your files
+## Build instructions
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+If you have already everything installed, opening the project workspace in Xcode should be as easy as:
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/unplugged-systems/up_ios_messenger_client.git
-git branch -M main
-git push -uf origin main
+$ xcodegen                  # Create the xcodeproj with all project source files
+$ pod install               # Create the xcworkspace with all project dependencies
+$ open Riot.xcworkspace     # Open Xcode
 ```
 
-## Integrate with your tools
-
-- [ ] [Set up project integrations](https://gitlab.com/unplugged-systems/up_ios_messenger_client/-/settings/integrations)
-
-## Collaborate with your team
-
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Automatically merge when pipeline succeeds](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+Else, you can visit our [installation guide](./INSTALL.md). This guide also offers more details and advanced usage like using [MatrixSDK](https://github.com/matrix-org/matrix-ios-sdk) in its development version.
 
 ## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+If you want to contribute to Element iOS code or translations, go to the [contribution guide](CONTRIBUTING.md).
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+## Support
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+When you are experiencing an issue on Element iOS, please first search in [GitHub issues](https://github.com/vector-im/element-ios/issues)
+and then in [#element-ios:matrix.org](https://matrix.to/#/#element-ios:matrix.org).
+If after your research you still have a question, ask at [#element-ios:matrix.org](https://matrix.to/#/#element-ios:matrix.org). Otherwise feel free to create a GitHub issue if you encounter a bug or a crash, by explaining clearly in detail what happened. You can also perform bug reporting (Rageshake) from the Element application by shaking your phone or going to the application settings. This is especially recommended when you encounter a crash.
 
-## License
-For open source projects, say how it is licensed.
+## Copyright & License
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Copyright (c) 2014-2017 OpenMarket Ltd  
+Copyright (c) 2017 Vector Creations Ltd  
+Copyright (c) 2017-2021 New Vector Ltd
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this work except in compliance with the License. You may obtain a copy of the License in the [LICENSE](LICENSE) file, or at:
+
+[http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.

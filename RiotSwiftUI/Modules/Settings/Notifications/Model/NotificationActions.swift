@@ -1,4 +1,4 @@
-// 
+//
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +17,7 @@
 import Foundation
 
 /// The actions defined on a push rule, used in the static push rule definitions.
-struct NotificationActions {
+struct NotificationActions: Equatable {
     let notify: Bool
     let highlight: Bool
     let sound: String?

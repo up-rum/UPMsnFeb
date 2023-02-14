@@ -74,8 +74,6 @@ extern NSString *const kMXKRoomBubbleCellKeyVerificationIncomingRequestDeclinePr
  */
 - (void)addTimestampLabelForComponent:(NSUInteger)componentIndex;
 
-- (void)addTimeLimitLabelForComponent:(NSUInteger)componentIndex;
-
 /**
  Add timestamp label for a component in receiver.
  
@@ -85,8 +83,6 @@ extern NSString *const kMXKRoomBubbleCellKeyVerificationIncomingRequestDeclinePr
  @param displayOnLeft Indicate true to display label on left and false to display on right
  */
 - (void)addTimestampLabelForComponent:(NSUInteger)componentIndex
-                        displayOnLeft:(BOOL)displayOnLeft;
-- (void)addTimeLimitLabelForComponent:(NSUInteger)componentIndex
                         displayOnLeft:(BOOL)displayOnLeft;
 
 /**

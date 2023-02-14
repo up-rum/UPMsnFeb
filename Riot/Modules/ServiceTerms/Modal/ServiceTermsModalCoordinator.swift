@@ -2,13 +2,13 @@
 // $ createRootCoordinator.sh Modal ServiceTermsModal ServiceTermsModalScreen
 /*
  Copyright 2019 New Vector Ltd
-
+ 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
-
+ 
  http://www.apache.org/licenses/LICENSE-2.0
-
+ 
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,47 +20,47 @@ import UIKit
 
 @objcMembers
 final class ServiceTermsModalCoordinator: NSObject, ServiceTermsModalCoordinatorType {
-
+    
     // MARK: - Properties
-
+    
     // MARK: Private
-
+    
     private let navigationRouter: NavigationRouterType
     private let session: MXSession
     private let serviceTerms: MXServiceTerms
-
+    
     // MARK: Public
 
     // Must be used only internally
     var childCoordinators: [Coordinator] = []
-
+    
     weak var delegate: ServiceTermsModalCoordinatorDelegate?
-
+    
     // MARK: - Setup
     init(session: MXSession, baseUrl: String, serviceType: MXServiceType, accessToken: String) {
         self.navigationRouter = NavigationRouter(navigationController: RiotNavigationController())
         self.session = session
         self.serviceTerms = MXServiceTerms(baseUrl: baseUrl, serviceType: serviceType, matrixSession: session, accessToken: accessToken)
     }
-
+    
     // MARK: - Public methods
-
+    
     func start() {
         let rootCoordinator = self.createServiceTermsModalLoadTermsScreenCoordinator()
 
         rootCoordinator.start()
 
         self.add(childCoordinator: rootCoordinator)
-
+        
         self.toPresentable().presentationController?.delegate = self
 
         self.navigationRouter.setRootModule(rootCoordinator)
     }
-
+    
     func toPresentable() -> UIViewController {
         return self.navigationRouter.toPresentable()
     }
-
+    
     // MARK: - Private methods
 
     private func createServiceTermsModalLoadTermsScreenCoordinator() -> ServiceTermsModalScreenCoordinator {
@@ -87,11 +87,11 @@ final class ServiceTermsModalCoordinator: NSObject, ServiceTermsModalCoordinator
     @objc private func didTapCancelOnPolicyScreen() {
         self.removePolicyScreen()
     }
-
+    
     /// Removes the identity server from the `MXSession` and it's account data.
     private func disableIdentityServer() {
         MXLog.debug("[ServiceTermsModalCoordinator] IS Terms: User has declined the use of the default IS.")
-
+        
         // The user does not want to use the proposed IS.
         // Disable IS feature on user's account
         session.setIdentityServer(nil, andAccessToken: nil)
@@ -108,7 +108,7 @@ extension ServiceTermsModalCoordinator: ServiceTermsModalScreenCoordinatorDelega
         if serviceTerms.serviceType == MXServiceTypeIdentityService {
             Analytics.shared.trackIdentityServerAccepted(true)
         }
-
+        
         self.delegate?.serviceTermsModalCoordinatorDidAccept(self)
     }
 
@@ -121,7 +121,7 @@ extension ServiceTermsModalCoordinator: ServiceTermsModalScreenCoordinatorDelega
             Analytics.shared.trackIdentityServerAccepted(false)
             disableIdentityServer()
         }
-
+        
         self.delegate?.serviceTermsModalCoordinatorDidDecline(self)
     }
 }
@@ -132,7 +132,7 @@ extension ServiceTermsModalCoordinator: UIAdaptivePresentationControllerDelegate
         if serviceTerms.serviceType == MXServiceTypeIdentityService {
             Analytics.shared.trackIdentityServerAccepted(false)
         }
-
+        
         self.delegate?.serviceTermsModalCoordinatorDidDismissInteractively(self)
     }
 }

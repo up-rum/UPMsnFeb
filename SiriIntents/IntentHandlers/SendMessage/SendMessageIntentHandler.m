@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2022 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,7 +38,7 @@
     if (self = [super init]) {
         _contactResolver = contactResolver;
     }
-
+    
     return self;
 }
 
@@ -61,7 +61,7 @@
 - (void)confirmSendMessage:(INSendMessageIntent *)intent completion:(void (^)(INSendMessageIntentResponse * _Nonnull))completion
 {
     INSendMessageIntentResponse *response = nil;
-
+    
     MXKAccount *account = [MXKAccountManager sharedManager].activeAccounts.firstObject;
     if (account)
     {
@@ -73,7 +73,7 @@
         // User hasn't logged in
         response = [[INSendMessageIntentResponse alloc] initWithCode:INSendMessageIntentResponseCodeFailureRequiringAppLaunch userActivity:nil];
     }
-
+    
     completion(response);
 }
 
@@ -87,7 +87,7 @@
                                                                                      userActivity:userActivity];
         completion(response);
     };
-
+    
     INPerson *person = intent.recipients.firstObject;
     if (person && person.customIdentifier)
     {
@@ -95,7 +95,7 @@
         MXFileStore *fileStore = [[MXFileStore alloc] initWithCredentials:account.mxCredentials];
         [fileStore.roomSummaryStore fetchAllSummaries:^(NSArray<id<MXRoomSummaryProtocol>> * _Nonnull summaries) {
             NSString *roomID = person.customIdentifier;
-
+            
             BOOL isEncrypted = NO;
             for (id<MXRoomSummaryProtocol> summary in summaries)
             {
@@ -142,7 +142,7 @@
 
                 return;
             }
-
+            
             [account.mxRestClient sendTextMessageToRoom:roomID
                                                threadId:nil
                                                    text:intent.content
@@ -152,7 +152,7 @@
                                                 failure:^(NSError *error) {
                 completeWithCode(INSendMessageIntentResponseCodeFailure);
             }];
-
+            
         }];
     }
     else
