@@ -14,13 +14,13 @@
 // limitations under the License.
 //
 
+import SwiftUI
 import Combine
 import Mapbox
-import SwiftUI
 
-typealias LiveLocationSharingViewerViewModelType = StateStoreViewModel<LiveLocationSharingViewerViewState, LiveLocationSharingViewerViewAction>
-
+typealias LiveLocationSharingViewerViewModelType = StateStoreViewModel<LiveLocationSharingViewerViewState,LiveLocationSharingViewerViewAction>
 class LiveLocationSharingViewerViewModel: LiveLocationSharingViewerViewModelType, LiveLocationSharingViewerViewModelProtocol {
+
     // MARK: - Properties
 
     // MARK: Private
@@ -42,6 +42,7 @@ class LiveLocationSharingViewerViewModel: LiveLocationSharingViewerViewModelType
     // MARK: - Setup
     
     init(mapStyleURL: URL, service: LiveLocationSharingViewerServiceProtocol) {
+
         let viewState = LiveLocationSharingViewerViewState(mapStyleURL: mapStyleURL, annotations: [], highlightedAnnotation: nil, listItemsViewData: [])
         
         liveLocationSharingViewerService = service
@@ -54,8 +55,8 @@ class LiveLocationSharingViewerViewModel: LiveLocationSharingViewerViewModelType
             self.processError(error)
         }.store(in: &cancellables)
         
-        setupLocationSharingService()
-        setupScreenUpdateTimer()
+        self.setupLocationSharingService()
+        self.setupScreenUpdateTimer()
     }
     
     // MARK: - Public
@@ -67,7 +68,7 @@ class LiveLocationSharingViewerViewModel: LiveLocationSharingViewerViewModelType
         case .stopSharing:
             stopUserLocationSharing()
         case .tapListItem(let userId):
-            highlighAnnotation(with: userId)
+            self.highlighAnnotation(with: userId)
         case .share(let userLocationAnnotation):
             completion?(.share(userLocationAnnotation.coordinate))
         case .mapCreditsDidTap:
@@ -78,20 +79,20 @@ class LiveLocationSharingViewerViewModel: LiveLocationSharingViewerViewModelType
     // MARK: - Private
     
     private func setupLocationSharingService() {
-        updateUsersLiveLocation(highlightFirstLocation: true)
+        self.updateUsersLiveLocation(highlightFirstLocation: true)
         
         liveLocationSharingViewerService.didUpdateUsersLiveLocation = { [weak self] liveLocations in
             self?.update(with: liveLocations, highlightFirstLocation: false)
         }
-        liveLocationSharingViewerService.startListeningLiveLocationUpdates()
+        self.liveLocationSharingViewerService.startListeningLiveLocationUpdates()
     }
     
     private func updateUsersLiveLocation(highlightFirstLocation: Bool) {
-        update(with: liveLocationSharingViewerService.usersLiveLocation, highlightFirstLocation: highlightFirstLocation)
+        self.update(with: liveLocationSharingViewerService.usersLiveLocation, highlightFirstLocation: highlightFirstLocation)
     }
     
     private func setupScreenUpdateTimer() {
-        screenUpdateTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
+        self.screenUpdateTimer =  Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] timer in
             
             self?.updateUsersLiveLocation(highlightFirstLocation: false)
         }
@@ -110,7 +111,7 @@ class LiveLocationSharingViewerViewModel: LiveLocationSharingViewerViewModelType
          
             switch error {
             case .invalidLocationAuthorization:
-                if let applicationSettingsURL = URL(string: UIApplication.openSettingsURLString) {
+                if let applicationSettingsURL = URL(string:UIApplication.openSettingsURLString) {
                     UIApplication.shared.open(applicationSettingsURL)
                 } else {
                     self?.completion?(.done)
@@ -124,19 +125,21 @@ class LiveLocationSharingViewerViewModel: LiveLocationSharingViewerViewModelType
     }
     
     private func userLocationAnnotations(from usersLiveLocation: [UserLiveLocation]) -> [UserLocationAnnotation] {
-        usersLiveLocation.map { userLiveLocation in
-            UserLocationAnnotation(avatarData: userLiveLocation.avatarData, coordinate: userLiveLocation.coordinate)
+        
+        return usersLiveLocation.map { userLiveLocation in
+            return UserLocationAnnotation(avatarData: userLiveLocation.avatarData, coordinate: userLiveLocation.coordinate)
         }
     }
     
     private func currentUserLocationAnnotation(from annotations: [UserLocationAnnotation]) -> UserLocationAnnotation? {
         annotations.first { annotation in
-            liveLocationSharingViewerService.isCurrentUserId(annotation.userId)
+            return liveLocationSharingViewerService.isCurrentUserId(annotation.userId)
         }
     }
     
     private func getHighlightedAnnotation(from annotations: [UserLocationAnnotation]) -> UserLocationAnnotation? {
-        if let userAnnotation = currentUserLocationAnnotation(from: annotations) {
+        
+        if let userAnnotation = self.currentUserLocationAnnotation(from: annotations) {
             return userAnnotation
         } else {
             return annotations.first
@@ -144,22 +147,25 @@ class LiveLocationSharingViewerViewModel: LiveLocationSharingViewerViewModelType
     }
     
     private func listItemsViewData(from usersLiveLocation: [UserLiveLocation]) -> [LiveLocationListItemViewData] {
+        
         var listItemsViewData: [LiveLocationListItemViewData] = []
         
         let sortedUsersLiveLocation = usersLiveLocation.sorted { userLiveLocation1, userLiveLocation2 in
-            userLiveLocation1.displayName > userLiveLocation2.displayName
+            return userLiveLocation1.displayName > userLiveLocation2.displayName
         }
         
-        listItemsViewData = sortedUsersLiveLocation.map { userLiveLocation in
-            self.listItemViewData(from: userLiveLocation)
-        }
+        listItemsViewData = sortedUsersLiveLocation.map({ userLiveLocation in
+            return self.listItemViewData(from: userLiveLocation)
+        })
+        
         
         let currentUserIndex = listItemsViewData.firstIndex { viewData in
-            viewData.isCurrentUser
+            return viewData.isCurrentUser
         }
         
         // Move current user as first item
         if let currentUserIndex = currentUserIndex {
+            
             let currentUserViewData = listItemsViewData[currentUserIndex]
             listItemsViewData.remove(at: currentUserIndex)
             listItemsViewData.insert(currentUserViewData, at: 0)
@@ -169,39 +175,41 @@ class LiveLocationSharingViewerViewModel: LiveLocationSharingViewerViewModelType
     }
     
     private func listItemViewData(from userLiveLocation: UserLiveLocation) -> LiveLocationListItemViewData {
-        let isCurrentUser = liveLocationSharingViewerService.isCurrentUserId(userLiveLocation.userId)
         
-        let expirationDate = userLiveLocation.timestamp + userLiveLocation.timeout
+        let isCurrentUser =  self.liveLocationSharingViewerService.isCurrentUserId(userLiveLocation.userId)
+        
+        let expirationDate = userLiveLocation.timestamp +  userLiveLocation.timeout
                 
         return LiveLocationListItemViewData(userId: userLiveLocation.userId, isCurrentUser: isCurrentUser, avatarData: userLiveLocation.avatarData, displayName: userLiveLocation.displayName, expirationDate: expirationDate, lastUpdate: userLiveLocation.lastUpdate)
     }
     
     private func update(with usersLiveLocation: [UserLiveLocation], highlightFirstLocation: Bool) {
-        let annotations: [UserLocationAnnotation] = userLocationAnnotations(from: usersLiveLocation)
+        
+        let annotations: [UserLocationAnnotation] = self.userLocationAnnotations(from: usersLiveLocation)
         
         var highlightedAnnotation: LocationAnnotation?
         
         if highlightFirstLocation {
-            highlightedAnnotation = getHighlightedAnnotation(from: annotations)
+            highlightedAnnotation = self.getHighlightedAnnotation(from: annotations)
         }
         
-        if let highlightableAnnotation = getHighlightedAnnotation(from: annotations) {
-            lastHighlightableAnnotation = highlightableAnnotation
+        if let highlightableAnnotation = self.getHighlightedAnnotation(from: annotations) {
+            self.lastHighlightableAnnotation = highlightableAnnotation
         }
         
-        if let lastHighlightableAnnotation = lastHighlightableAnnotation, usersLiveLocation.isEmpty {
+        if let lastHighlightableAnnotation = self.lastHighlightableAnnotation, usersLiveLocation.isEmpty {
             highlightedAnnotation = InvisibleLocationAnnotation(coordinate: lastHighlightableAnnotation.coordinate)
         }
         
-        let listViewItems = listItemsViewData(from: usersLiveLocation)
+        let listViewItems = self.listItemsViewData(from: usersLiveLocation)
         
-        state.annotations = annotations
-        state.highlightedAnnotation = highlightedAnnotation
-        state.listItemsViewData = listViewItems
+        self.state.annotations = annotations
+        self.state.highlightedAnnotation = highlightedAnnotation
+        self.state.listItemsViewData = listViewItems
     }
     
     private func highlighAnnotation(with userId: String) {
-        let foundUserAnnotation = state.annotations.first { annotation in
+        let foundUserAnnotation = self.state.annotations.first { annotation in
             annotation.userId == userId
         }
         
@@ -209,19 +217,20 @@ class LiveLocationSharingViewerViewModel: LiveLocationSharingViewerViewModelType
             return
         }
         
-        state.highlightedAnnotation = foundUserAnnotation
+        self.state.highlightedAnnotation = foundUserAnnotation
     }
     
     private func stopUserLocationSharing() {
-        state.showLoadingIndicator = true
         
-        liveLocationSharingViewerService.stopUserLiveLocationSharing { result in
+        self.state.showLoadingIndicator = true
+        
+        self.liveLocationSharingViewerService.stopUserLiveLocationSharing { result in
             self.state.showLoadingIndicator = false
             
             switch result {
             case .success:
                 break
-            case .failure:
+            case.failure:
                 self.state.bindings.alertInfo = AlertInfo(id: .stopLocationSharingError,
                                                           title: VectorL10n.error,
                                                           message: VectorL10n.locationSharingLiveStopSharingError,

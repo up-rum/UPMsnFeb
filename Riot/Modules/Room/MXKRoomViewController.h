@@ -74,6 +74,11 @@ typedef NS_ENUM(NSUInteger, MXKRoomViewControllerJoinRoomResult) {
     MXKAttachment *currentSharedAttachment;
     
     /**
+     The potential text input placeholder is saved when it is replaced temporarily
+     */
+    NSString *savedInputToolbarPlaceholder;
+    
+    /**
      Tell whether the input toolbar required to run an animation indicator.
      */
     BOOL isInputToolbarProcessing;
@@ -214,14 +219,14 @@ typedef NS_ENUM(NSUInteger, MXKRoomViewControllerJoinRoomResult) {
 
 @property (weak, nonatomic) IBOutlet UITableView *bubblesTableView;
 @property (weak, nonatomic) IBOutlet UIView *roomTitleViewContainer;
-@property (strong, nonatomic) IBOutlet UIView *roomInputToolbarContainer;
+@property (weak, nonatomic) IBOutlet UIView *roomInputToolbarContainer;
 @property (weak, nonatomic) IBOutlet UIView *roomActivitiesContainer;
 
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *bubblesTableViewTopConstraint;
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *bubblesTableViewBottomConstraint;
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *roomActivitiesContainerHeightConstraint;
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *roomInputToolbarContainerHeightConstraint;
-@property (strong, nonatomic) IBOutlet NSLayoutConstraint *roomInputToolbarContainerBottomConstraint;
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *roomInputToolbarContainerBottomConstraint;
 
 #pragma mark - Class methods
 

@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-import RiotSwiftUI
 import XCTest
+import RiotSwiftUI
 
 class AuthenticationSoftLogoutUITests: MockScreenTestCase {
     func testEmptyPassword() {
@@ -185,4 +185,5 @@ class AuthenticationSoftLogoutUITests: MockScreenTestCase {
         
         XCTAssertFalse(app.staticTexts["messageLabel2"].exists, "The message 2 should not be shown.")
     }
+
 }

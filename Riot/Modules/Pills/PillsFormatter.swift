@@ -16,6 +16,7 @@
 
 import Foundation
 import UIKit
+import MatrixSDK
 
 /// Provides utilities funcs to handle Pills inside attributed strings.
 @available (iOS 15.0, *)
@@ -23,7 +24,7 @@ import UIKit
 class PillsFormatter: NSObject {
     // MARK: - Internal Properties
     /// UTType identifier for pills. Should be declared as Document type & Exported type identifier inside Info.plist
-    static let pillUTType: String = "im.vector.app.pills"
+    static let pillUTType: String = "com.unplugged.messenger.pills"
 
     // MARK: - Internal Enums
     /// Defines a replacement mode for converting Pills to plain text.
@@ -64,6 +65,23 @@ class PillsFormatter: NSObject {
                                                    isHighlighted: isHighlighted,
                                                    font: eventFormatter.defaultTextFont)
                 newAttr.replaceCharacters(in: range, with: attachmentString)
+            }
+            else {
+                MXLog.warning("userid-->> \(url.absoluteString)")
+                if let userId = userIdFromPermalink(url.absoluteString) {
+                    let _mxSession = AppDelegate.theDelegate().mxSessions.first as? MXSession
+
+                    let user_detail = _mxSession?.avatarInput(for: userId) ?? AvatarInput(mxContentUri: "", matrixItemId: userId, displayName: "")
+                    var display_name = user_detail.displayName ?? ""
+                    if display_name.count == 0 {
+                        display_name = user_detail.matrixItemId.replacingOccurrences(of: ServerURLs().upHomeServerUrl, with: "")
+                        display_name = display_name.replacingOccurrences(of: ":", with: "")
+                        display_name = display_name.replacingOccurrences(of: "@", with: "")
+                    }
+
+                    let attachmentString = mentionPill(withUserInfo: AvatarInput(mxContentUri: nil, matrixItemId: userId, displayName: display_name),andUrl: isEditMode ? nil : url, isHighlighted: false, font: eventFormatter.defaultTextFont)
+                    newAttr.replaceCharacters(in: range, with: attachmentString)
+                }
             }
         }
 
@@ -122,6 +140,23 @@ class PillsFormatter: NSObject {
         return string
     }
 
+    //Rum
+    static func mentionPill(withUserInfo userData: AvatarInput,
+                            andUrl url: URL? = nil,
+                            isHighlighted: Bool,
+                            font: UIFont) -> NSAttributedString {
+        guard let attachment = PillTextAttachment(withUserInfo: userData, isHighlighted: isHighlighted, font: font) else {
+            return NSAttributedString(string: userData.displayName ?? "")
+        }
+        let string = NSMutableAttributedString(attachment: attachment)
+        string.addAttribute(.font, value: font, range: .init(location: 0, length: string.length))
+        if let url = url {
+            string.addAttribute(.link, value: url, range: .init(location: 0, length: string.length))
+        }
+        return string
+    }
+    
+
     /// Update alpha of all `PillTextAttachment` contained in given attributed string.
     ///
     /// - Parameters:
@@ -160,7 +195,7 @@ private extension PillsFormatter {
     static func userIdFromPermalink(_ permalink: String) -> String? {
         let baseUrl: String
         if let clientBaseUrl = BuildSettings.clientPermalinkBaseUrl {
-            baseUrl = String(format: "%@/#/user/", clientBaseUrl)
+            baseUrl = String(format: "%@/#/", clientBaseUrl)
         } else {
             baseUrl = String(format: "%@/#/", kMXMatrixDotToUrl)
         }

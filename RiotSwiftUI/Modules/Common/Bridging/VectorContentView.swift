@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,7 @@ import SwiftUI
 ///
 /// Provides any app level configuration the SwiftUI hierarchy might need (E.g. to monitor theme changes).
 struct VectorContentModifier: ViewModifier {
+    
     @ObservedObject private var themePublisher = ThemePublisher.shared
     @Environment(\.layoutDirection) private var defaultLayoutDirection
     
@@ -38,6 +39,6 @@ struct VectorContentModifier: ViewModifier {
 
 extension View {
     func vectorContent() -> some View {
-        modifier(VectorContentModifier())
+        self.modifier(VectorContentModifier())
     }
 }

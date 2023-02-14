@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-import RiotSwiftUI
 import XCTest
+import RiotSwiftUI
 
 class OnboardingAvatarUITests: MockScreenTestCase {
     let userId = "@example:matrix.org"

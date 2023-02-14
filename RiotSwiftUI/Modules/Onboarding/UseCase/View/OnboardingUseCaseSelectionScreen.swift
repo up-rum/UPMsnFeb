@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@ import SwiftUI
 
 /// The screen shown to a new user to select their use case for the app.
 struct OnboardingUseCaseSelectionScreen: View {
+
     // MARK: - Properties
     
     // MARK: Private
@@ -78,7 +79,7 @@ struct OnboardingUseCaseSelectionScreen: View {
             
             OnboardingUseCaseButton(title: VectorL10n.onboardingUseCaseCommunityMessaging,
                                     image: theme.isDark ? Asset.Images.onboardingUseCaseCommunityDark : Asset.Images.onboardingUseCaseCommunity) {
-                viewModel.send(viewAction: .answer(.communityMessaging))
+                viewModel.send(viewAction: .validateUsername(.communityMessaging))
             }
             
             InlineTextButton(VectorL10n.onboardingUseCaseNotSureYet("%@"),

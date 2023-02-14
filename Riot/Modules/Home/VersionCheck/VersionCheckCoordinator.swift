@@ -52,29 +52,47 @@ class VersionCheckCoordinator: Coordinator, VersionCheckBannerViewDelegate, Vers
     func start() {
         let majorOSVersion = ProcessInfo().operatingSystemVersion.majorVersion
         
-        guard majorOSVersion <= Constants.osVersionToBeDropped else {
+//        guard majorOSVersion <= Constants.osVersionToBeDropped else {
+//            return
+//        }
+        
+//        let versionCheckNextDisplayDateTimeInterval = RiotSettings.shared.versionCheckNextDisplayDateTimeInterval
+//        if versionCheckNextDisplayDateTimeInterval > 0 {
+//            let nextDisplayDate = Date(timeIntervalSince1970: versionCheckNextDisplayDateTimeInterval)
+//            if nextDisplayDate > Date() {
+//                return
+//            }
+//        }
+
+        let gracePeriod = UserDefaults.standard.integer(forKey: "grace_period") ?? -1
+        MXLog.warning("gracePeriod \(gracePeriod)")
+        if gracePeriod <= 0 {
             return
         }
-        
-        let versionCheckNextDisplayDateTimeInterval = RiotSettings.shared.versionCheckNextDisplayDateTimeInterval
-        if versionCheckNextDisplayDateTimeInterval > 0 {
-            let nextDisplayDate = Date(timeIntervalSince1970: versionCheckNextDisplayDateTimeInterval)
-            if nextDisplayDate > Date() {
-                return
-            }
-        }
-        
         let versionCheckBannerView = VersionCheckBannerView.loadFromNib()
         versionCheckBannerView.delegate = self
         versionCheckBannerView.update(theme: themeService.theme)
         
         if Constants.hasOSVersionBeenDropped {
             versionCheckBannerView.configureWithDetails(VersionCheckBannerViewDetails(title: VectorL10n.versionCheckBannerTitleDeprecated(String(Constants.osVersionToBeDropped)),
-                                                                                      subtitle: VectorL10n.versionCheckBannerSubtitleDeprecated(AppInfo.current.displayName, String(Constants.osVersionToBeDropped), AppInfo.current.displayName)))
+                                                                                      subtitle: "We are no longer supporting this version on iOS. To continue using \(AppInfo.current.displayName) to its full potential, we advise you to upgrade your version of iOS."))
         } else {
-            versionCheckBannerView.configureWithDetails(VersionCheckBannerViewDetails(title: VectorL10n.versionCheckBannerTitleSupported(String(Constants.osVersionToBeDropped)),
-                                                                                      subtitle: VectorL10n.versionCheckBannerSubtitleSupported(AppInfo.current.displayName, String(Constants.osVersionToBeDropped), AppInfo.current.displayName)))
+            let grace_period = UserDefaults.standard.integer(forKey: "grace_period") ?? 0
+            var suffixStr = "days"
+            if grace_period == 1 {
+                suffixStr = "day"
+            }
+
+            versionCheckBannerView.configureWithDetails(VersionCheckBannerViewDetails(title: VectorL10n.versionCheckBannerTitleSupported("Update Available"),
+                                                                                      subtitle: "Mandatory version update required with in \(grace_period) \(suffixStr)."))
         }
+//        if Constants.hasOSVersionBeenDropped {
+//            versionCheckBannerView.configureWithDetails(VersionCheckBannerViewDetails(title: VectorL10n.versionCheckBannerTitleDeprecated(String(Constants.osVersionToBeDropped)),
+//                                                                                      subtitle: VectorL10n.versionCheckBannerSubtitleDeprecated(AppInfo.current.displayName, String(Constants.osVersionToBeDropped), AppInfo.current.displayName)))
+//        } else {
+//            versionCheckBannerView.configureWithDetails(VersionCheckBannerViewDetails(title: VectorL10n.versionCheckBannerTitleSupported(String(Constants.osVersionToBeDropped)),
+//                                                                                      subtitle: VectorL10n.versionCheckBannerSubtitleSupported(AppInfo.current.displayName, String(Constants.osVersionToBeDropped), AppInfo.current.displayName)))
+//        }
         
         bannerPresenter.presentBannerView(versionCheckBannerView, animated: true)
         self.versionCheckBannerView = versionCheckBannerView
@@ -96,8 +114,13 @@ class VersionCheckCoordinator: Coordinator, VersionCheckBannerViewDelegate, Vers
                                                                                                         subtitle: VectorL10n.versionCheckModalSubtitleDeprecated(AppInfo.current.displayName, AppInfo.current.displayName),
                                                                                                         actionButtonTitle: VectorL10n.versionCheckModalActionTitleDeprecated))
         } else {
+            let grace_period = UserDefaults.standard.integer(forKey: "grace_period") ?? 0
+            var suffixStr = "days"
+            if grace_period == 1 {
+                suffixStr = "day"
+            }
             versionCheckAlertViewController.configureWithDetails(VersionCheckAlertViewControllerDetails(title: VectorL10n.versionCheckModalTitleSupported(String(Constants.osVersionToBeDropped)),
-                                                                                                        subtitle: VectorL10n.versionCheckModalSubtitleSupported(AppInfo.current.displayName, AppInfo.current.displayName),
+                                                                                                        subtitle: "Mandatory version update required within \(grace_period) \(suffixStr).",
                                                                                                         actionButtonTitle: VectorL10n.versionCheckModalActionTitleSupported))
         }
         

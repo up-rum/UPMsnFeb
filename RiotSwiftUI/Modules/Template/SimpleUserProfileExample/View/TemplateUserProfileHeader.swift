@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,8 +17,13 @@
 import SwiftUI
 
 struct TemplateUserProfileHeader: View {
+    
+    // MARK: - Properties
+    
+    // MARK: Private
     @Environment(\.theme) private var theme: ThemeSwiftUI
-
+    
+    // MARK: Public
     let avatar: AvatarInputProtocol?
     let displayName: String?
     let presence: TemplateUserProfilePresence
@@ -27,9 +32,9 @@ struct TemplateUserProfileHeader: View {
         VStack {
             if let avatar = avatar {
                 AvatarImage(avatarData: avatar, size: .xxLarge)
-                    .padding(.vertical)
+                .padding(.vertical)
             }
-            VStack(spacing: 8) {
+            VStack(spacing: 8){
                 Text(displayName ?? "")
                     .font(theme.fonts.title3)
                     .accessibility(identifier: "displayNameText")
@@ -46,6 +51,6 @@ struct TemplateUserProfileHeader: View {
 struct TemplateUserProfileHeader_Previews: PreviewProvider {
     static var previews: some View {
         TemplateUserProfileHeader(avatar: MockAvatarInput.example, displayName: "Alice", presence: .online)
-            .environmentObject(AvatarViewModel.withMockedServices())
+            .addDependency(MockAvatarService.example)
     }
 }

@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-import RiotSwiftUI
 import XCTest
+import RiotSwiftUI
 
 class OnboardingCelebrationUITests: MockScreenTestCase {
     // Nothing to test as the view is completely static

@@ -26,57 +26,57 @@ struct AuthenticationVerifyMsisdnCoordinatorParameters {
 
 final class AuthenticationVerifyMsisdnCoordinator: Coordinator, Presentable {
     // MARK: - Properties
-    
+
     // MARK: Private
-    
+
     private let parameters: AuthenticationVerifyMsisdnCoordinatorParameters
     private let authenticationVerifyMsisdnHostingController: VectorHostingController
     private var authenticationVerifyMsisdnViewModel: AuthenticationVerifyMsisdnViewModelProtocol
-    
+
     private var indicatorPresenter: UserIndicatorTypePresenterProtocol
     private var loadingIndicator: UserIndicator?
-    
+
     /// The wizard used to handle the registration flow.
     private var registrationWizard: RegistrationWizard { parameters.registrationWizard }
-    
+
     private var currentTask: Task<Void, Error>? {
         willSet {
             currentTask?.cancel()
         }
     }
-    
+
     // MARK: Public
 
     // Must be used only internally
     var childCoordinators: [Coordinator] = []
     var callback: (@MainActor (AuthenticationRegistrationStageResult) -> Void)?
-    
+
     // MARK: - Setup
-    
+
     @MainActor init(parameters: AuthenticationVerifyMsisdnCoordinatorParameters) {
         self.parameters = parameters
-        
+
         let viewModel = AuthenticationVerifyMsisdnViewModel(homeserver: parameters.homeserver.viewData)
         let view = AuthenticationVerifyMsisdnScreen(viewModel: viewModel.context)
         authenticationVerifyMsisdnViewModel = viewModel
         authenticationVerifyMsisdnHostingController = VectorHostingController(rootView: view)
         authenticationVerifyMsisdnHostingController.vc_removeBackTitle()
         authenticationVerifyMsisdnHostingController.enableNavigationBarScrollEdgeAppearance = true
-        
+
         indicatorPresenter = UserIndicatorTypePresenter(presentingViewController: authenticationVerifyMsisdnHostingController)
     }
-    
+
     // MARK: - Public
-    
+
     func start() {
         MXLog.debug("[AuthenticationVerifyMsisdnCoordinator] did start.")
         Task { await setupViewModel() }
     }
-    
+
     func toPresentable() -> UIViewController {
         authenticationVerifyMsisdnHostingController
     }
-    
+
     // MARK: - Private
 
     /// Attempts to extract the country code from a given phone number. Throws `RegistrationError.invalidPhoneNumber` if cannot.
@@ -92,13 +92,13 @@ final class AuthenticationVerifyMsisdnCoordinator: Coordinator, Presentable {
             throw RegistrationError.invalidPhoneNumber
         }
     }
-    
+
     /// Set up the view model. This method is extracted from `start()` so it can run on the `MainActor`.
     @MainActor private func setupViewModel() {
         authenticationVerifyMsisdnViewModel.callback = { [weak self] result in
             guard let self = self else { return }
             MXLog.debug("[AuthenticationVerifyMsisdnCoordinator] AuthenticationVerifyMsisdnViewModel did complete with result: \(result).")
-            
+
             switch result {
             case .send(let phoneNumber):
                 self.sendSMS(phoneNumber)
@@ -113,31 +113,31 @@ final class AuthenticationVerifyMsisdnCoordinator: Coordinator, Presentable {
             }
         }
     }
-    
+
     /// Show an activity indicator whilst loading.
     @MainActor private func startLoading() {
         loadingIndicator = indicatorPresenter.present(.loading(label: VectorL10n.loading, isInteractionBlocking: true))
     }
-    
+
     /// Hide the currently displayed activity indicator.
     @MainActor private func stopLoading() {
         loadingIndicator = nil
     }
-    
+
     /// Sends a validation SMS to the entered phone number and then waits for an OTP.
     @MainActor private func sendSMS(_ phoneNumber: String) {
         startLoading()
-        
+
         currentTask = Task { [weak self] in
             do {
                 let countryCode = try countryCodeFromPhoneNumber(phoneNumber)
                 let threePID = RegisterThreePID.msisdn(msisdn: phoneNumber, countryCode: countryCode)
                 let result = try await registrationWizard.addThreePID(threePID: threePID)
-                
+
                 // Shouldn't be reachable but just in case, continue the flow.
-                
+
                 guard !Task.isCancelled else { return }
-                
+
                 self?.callback?(.completed(result))
                 self?.stopLoading()
             } catch RegistrationError.waitingForThreePIDValidation {
@@ -160,7 +160,7 @@ final class AuthenticationVerifyMsisdnCoordinator: Coordinator, Presentable {
         currentTask = Task { [weak self] in
             do {
                 let result = try await registrationWizard.handleValidateThreePID(code: otp)
-                
+
                 // Shouldn't be reachable but just in case, continue the flow.
 
                 guard !Task.isCancelled else { return }
@@ -175,19 +175,19 @@ final class AuthenticationVerifyMsisdnCoordinator: Coordinator, Presentable {
             }
         }
     }
-    
+
     /// Resends an SMS to the previously entered phone number and then waits for user input for an OTP.
     @MainActor private func resendSMS() {
         startLoading()
-        
+
         currentTask = Task { [weak self] in
             do {
                 let result = try await registrationWizard.sendAgainThreePID()
-                
+
                 // Shouldn't be reachable but just in case, continue the flow.
-                
+
                 guard !Task.isCancelled else { return }
-                
+
                 self?.callback?(.completed(result))
                 self?.stopLoading()
             } catch RegistrationError.waitingForThreePIDValidation {
@@ -200,7 +200,7 @@ final class AuthenticationVerifyMsisdnCoordinator: Coordinator, Presentable {
             }
         }
     }
-    
+
     /// Processes an error to either update the flow or display it to the user.
     @MainActor private func handleError(_ error: Error) {
         if let mxError = MXError(nsError: error as NSError) {

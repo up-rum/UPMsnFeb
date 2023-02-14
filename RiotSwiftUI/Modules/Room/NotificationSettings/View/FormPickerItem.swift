@@ -17,6 +17,7 @@
 import SwiftUI
 
 struct FormPickerItem: View {
+    
     typealias TapCallback = () -> Void
     
     @Environment(\.theme) var theme: ThemeSwiftUI
@@ -52,6 +53,7 @@ struct FormPickerItem: View {
 }
 
 struct FormPickerItem_Previews: PreviewProvider {
+    
     static let items = ["Item 1", "Item 2", "Item 3"]
     static var selected: String = items[0]
     static var previews: some View {

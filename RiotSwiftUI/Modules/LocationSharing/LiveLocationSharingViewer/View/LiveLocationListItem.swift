@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2022 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +17,7 @@
 import SwiftUI
 
 struct LiveLocationListItem: View {
+    
     // MARK: - Properties
     
     // MARK: Private
@@ -28,9 +29,10 @@ struct LiveLocationListItem: View {
     let viewData: LiveLocationListItemViewData
     
     var timeoutText: String {
+
         let timeLeftString: String
         
-        if let elapsedTimeString = elapsedTimeString(from: viewData.expirationDate, isPastDate: false) {
+        if let elapsedTimeString = self.elapsedTimeString(from: viewData.expirationDate, isPastDate: false) {
             timeLeftString = VectorL10n.locationSharingLiveListItemTimeLeft(elapsedTimeString)
         } else {
             timeLeftString = VectorL10n.locationSharingLiveListItemSharingExpired
@@ -40,9 +42,10 @@ struct LiveLocationListItem: View {
     }
     
     var lastUpdateText: String {
+                
         let timeLeftString: String
         
-        if let elapsedTimeString = elapsedTimeString(from: viewData.lastUpdate, isPastDate: true) {
+        if let elapsedTimeString = self.elapsedTimeString(from: viewData.lastUpdate, isPastDate: true) {
             timeLeftString = VectorL10n.locationSharingLiveListItemLastUpdate(elapsedTimeString)
         } else {
             timeLeftString = VectorL10n.locationSharingLiveListItemLastUpdateInvalid
@@ -52,12 +55,12 @@ struct LiveLocationListItem: View {
     }
     
     var displayName: String {
-        viewData.isCurrentUser ? VectorL10n.locationSharingLiveListItemCurrentUserDisplayName : viewData.displayName
+        return viewData.isCurrentUser ? VectorL10n.locationSharingLiveListItemCurrentUserDisplayName : viewData.displayName
     }
     
-    var onStopSharingAction: (() -> Void)?
+    var onStopSharingAction: (() -> (Void))? = nil
     
-    var onBackgroundTap: ((String) -> Void)?
+    var onBackgroundTap: ((String) -> (Void))? = nil
     
     // MARK: - Body
     
@@ -66,9 +69,9 @@ struct LiveLocationListItem: View {
             HStack(spacing: 18) {
                 AvatarImage(avatarData: viewData.avatarData, size: .medium)
                     .border()
-                VStack(alignment: .leading, spacing: 2) { Text(displayName)
-                    .font(theme.fonts.bodySB)
-                    .foregroundColor(theme.colors.primaryContent)
+                VStack(alignment: .leading, spacing: 2) {                    Text(displayName)
+                        .font(theme.fonts.bodySB)
+                        .foregroundColor(theme.colors.primaryContent)
                     Text(timeoutText)
                         .font(theme.fonts.caption1)
                         .foregroundColor(theme.colors.primaryContent)
@@ -94,6 +97,7 @@ struct LiveLocationListItem: View {
     // MARK: - Private
         
     private func elapsedTimeString(from timestamp: TimeInterval, isPastDate: Bool) -> String? {
+        
         let formatter = DateComponentsFormatter()
 
         formatter.unitsStyle = .abbreviated
@@ -117,16 +121,19 @@ struct LiveLocationListItem: View {
 }
 
 struct LiveLocationListPreview: View {
+    
     let liveLocationSharingViewerService: LiveLocationSharingViewerServiceProtocol = MockLiveLocationSharingViewerService()
         
     var viewDataList: [LiveLocationListItemViewData] {
-        listItemsViewData(from: liveLocationSharingViewerService.usersLiveLocation)
+        return self.listItemsViewData(from: liveLocationSharingViewerService.usersLiveLocation)
     }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             ForEach(viewDataList) { viewData in
-                LiveLocationListItem(viewData: viewData, onStopSharingAction: { }, onBackgroundTap: { _ in
+                LiveLocationListItem(viewData: viewData, onStopSharingAction: {
+                    
+                }, onBackgroundTap: { userId in
                     
                 })
             }
@@ -136,22 +143,24 @@ struct LiveLocationListPreview: View {
     }
     
     private func listItemsViewData(from usersLiveLocation: [UserLiveLocation]) -> [LiveLocationListItemViewData] {
+        
         var listItemsViewData: [LiveLocationListItemViewData] = []
         
         let sortedUsersLiveLocation = usersLiveLocation.sorted { userLiveLocation1, userLiveLocation2 in
-            userLiveLocation1.displayName > userLiveLocation2.displayName
+            return userLiveLocation1.displayName > userLiveLocation2.displayName
         }
         
-        listItemsViewData = sortedUsersLiveLocation.map { userLiveLocation in
-            self.listItemViewData(from: userLiveLocation)
-        }
+        listItemsViewData = sortedUsersLiveLocation.map({ userLiveLocation in
+            return self.listItemViewData(from: userLiveLocation)
+        })
         
         let currentUserIndex = listItemsViewData.firstIndex { viewData in
-            viewData.isCurrentUser
+            return viewData.isCurrentUser
         }
         
         // Move current user as first item
         if let currentUserIndex = currentUserIndex {
+            
             let currentUserViewData = listItemsViewData[currentUserIndex]
             listItemsViewData.remove(at: currentUserIndex)
             listItemsViewData.insert(currentUserViewData, at: 0)
@@ -161,9 +170,10 @@ struct LiveLocationListPreview: View {
     }
     
     private func listItemViewData(from userLiveLocation: UserLiveLocation) -> LiveLocationListItemViewData {
-        let isCurrentUser = liveLocationSharingViewerService.isCurrentUserId(userLiveLocation.userId)
         
-        let expirationDate = userLiveLocation.timestamp + userLiveLocation.timeout
+        let isCurrentUser =  self.liveLocationSharingViewerService.isCurrentUserId(userLiveLocation.userId)
+        
+        let expirationDate = userLiveLocation.timestamp +  userLiveLocation.timeout
                 
         return LiveLocationListItemViewData(userId: userLiveLocation.userId, isCurrentUser: isCurrentUser, avatarData: userLiveLocation.avatarData, displayName: userLiveLocation.displayName, expirationDate: expirationDate, lastUpdate: userLiveLocation.lastUpdate)
     }

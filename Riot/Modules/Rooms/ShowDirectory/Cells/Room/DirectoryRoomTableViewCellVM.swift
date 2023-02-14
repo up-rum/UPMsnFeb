@@ -27,7 +27,19 @@ struct DirectoryRoomTableViewCellVM {
 
     // TODO: Use AvatarView subclass in the cell view
     func setAvatar(in avatarImageView: MXKImageView) {
-        let (defaultAvatarImage, defaultAvatarImageContentMode) = avatarViewData.fallbackImageParameters() ?? (nil, .scaleAspectFill)
+        
+        let defaultAvatarImage: UIImage?
+        var defaultAvatarImageContentMode: UIView.ContentMode = .scaleAspectFill
+        
+        switch self.avatarViewData.fallbackImage {
+        case .matrixItem(let matrixItemId, let matrixItemDisplayName):
+            defaultAvatarImage = AvatarGenerator.generateAvatar(forMatrixItem: matrixItemId, withDisplayName: matrixItemDisplayName)
+        case .image(let image, let contentMode):
+            defaultAvatarImage = image
+            defaultAvatarImageContentMode = contentMode ?? .scaleAspectFill
+        case .none:
+            defaultAvatarImage = nil
+        }
         
         if let avatarUrl = self.avatarViewData.avatarUrl {
             avatarImageView.enableInMemoryCache = true

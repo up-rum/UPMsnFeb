@@ -14,14 +14,15 @@
 // limitations under the License.
 //
 
-import CommonKit
 import SwiftUI
+import CommonKit
 
 struct ChangePasswordCoordinatorParameters {
     let restClient: MXRestClient
 }
 
 final class ChangePasswordCoordinator: Coordinator, Presentable {
+    
     // MARK: - Properties
     
     // MARK: Private
@@ -76,7 +77,7 @@ final class ChangePasswordCoordinator: Coordinator, Presentable {
     }
     
     func toPresentable() -> UIViewController {
-        changePasswordHostingController
+        return self.changePasswordHostingController
     }
     
     // MARK: - Private
@@ -127,8 +128,7 @@ final class ChangePasswordCoordinator: Coordinator, Presentable {
     /// Processes an error to either update the flow or display it to the user.
     @MainActor private func handleError(_ error: Error) {
         if let mxError = MXError(nsError: error as NSError) {
-            let message = mxError.authenticationErrorMessage()
-            changePasswordViewModel.displayError(.mxError(message))
+            changePasswordViewModel.displayError(.mxError(mxError.error))
             return
         }
 

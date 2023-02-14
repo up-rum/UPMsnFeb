@@ -131,7 +131,7 @@
     UITableViewCell *cell = [super tableView:tableView cellForRowAtIndexPath:indexPath];
     
     // Finalize cell view customization here
-    if ([cell isKindOfClass:MXKRoomBubbleTableViewCell.class] && ![cell isKindOfClass:MXKRoomEmptyBubbleTableViewCell.class])
+    if ([cell isKindOfClass:MXKRoomBubbleTableViewCell.class])
     {
         MXKRoomBubbleTableViewCell *bubbleCell = (MXKRoomBubbleTableViewCell*)cell;
 
@@ -148,8 +148,7 @@
                 if (cellData.hasThreadRoot)
                 {
                     id<MXThreadProtocol> thread = cellData.bubbleComponents.firstObject.thread;
-                    ThreadSummaryView *threadSummaryView = [[ThreadSummaryView alloc] initWithThread:thread
-                                                                                             session:self.mxSession];
+                    ThreadSummaryView *threadSummaryView = [[ThreadSummaryView alloc] initWithThread:thread session:self.mxSession];
                     [bubbleCell.tmpSubviews addObject:threadSummaryView];
 
                     threadSummaryView.translatesAutoresizingMaskIntoConstraints = NO;

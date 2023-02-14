@@ -97,7 +97,7 @@ final class RoomReactionViewCell: UICollectionViewCell, NibReusable, Themable {
             reactionBackgroundColor = self.theme?.tintBackgroundColor
             reactionBackgroundBorderWidth = Constants.selectedBorderWidth
         } else {
-            reactionBackgroundColor = self.theme?.colors.system
+            reactionBackgroundColor = self.theme?.headerBackgroundColor
             reactionBackgroundBorderWidth = 0.0
         }
         

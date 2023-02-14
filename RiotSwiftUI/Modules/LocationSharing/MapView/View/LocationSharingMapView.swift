@@ -14,14 +14,15 @@
 // limitations under the License.
 //
 
+import SwiftUI
 import Combine
 import Mapbox
-import SwiftUI
 
 struct LocationSharingMapView: UIViewRepresentable {
+    
     // MARK: - Constants
     
-    private enum Constants {
+    private struct Constants {
         static let mapZoomLevel = 15.0
     }
     
@@ -40,10 +41,10 @@ struct LocationSharingMapView: UIViewRepresentable {
     let userAvatarData: AvatarInputProtocol?
     
     /// True to indicate to show and follow current user location
-    var showsUserLocation = false
+    var showsUserLocation: Bool = false
     
     /// True to indicate that a touch on user annotation can show a callout
-    var userAnnotationCanShowCallout = false
+    var userAnnotationCanShowCallout: Bool = false
 
     /// Last user location if `showsUserLocation` has been enabled
     @Binding var userLocation: CLLocationCoordinate2D?
@@ -63,7 +64,8 @@ struct LocationSharingMapView: UIViewRepresentable {
     // MARK: - UIViewRepresentable
     
     func makeUIView(context: Context) -> MGLMapView {
-        let mapView = makeMapView()
+        
+        let mapView = self.makeMapView()
         mapView.delegate = context.coordinator
         let panGesture = UIPanGestureRecognizer(target: context.coordinator, action: #selector(context.coordinator.didPan))
         panGesture.delegate = context.coordinator
@@ -72,14 +74,15 @@ struct LocationSharingMapView: UIViewRepresentable {
     }
     
     func updateUIView(_ mapView: MGLMapView, context: Context) {
-        mapView.vc_removeAllAnnotations()
-        mapView.addAnnotations(annotations)
         
-        if let highlightedAnnotation = highlightedAnnotation {
+        mapView.vc_removeAllAnnotations()
+        mapView.addAnnotations(self.annotations)
+        
+        if let highlightedAnnotation = self.highlightedAnnotation {
             mapView.setCenter(highlightedAnnotation.coordinate, zoomLevel: Constants.mapZoomLevel, animated: false)
         }
         
-        if showsUserLocation {
+        if self.showsUserLocation {
             mapView.showsUserLocation = true
             mapView.userTrackingMode = .follow
         } else {
@@ -105,22 +108,24 @@ struct LocationSharingMapView: UIViewRepresentable {
 }
 
 // MARK: - Coordinator
-
 extension LocationSharingMapView {
+    
     class Coordinator: NSObject, MGLMapViewDelegate, UIGestureRecognizerDelegate {
+        
         // MARK: - Properties
 
         var locationSharingMapView: LocationSharingMapView
         
         // MARK: - Setup
 
-        init(_ locationSharingMapView: LocationSharingMapView) {
-            self.locationSharingMapView = locationSharingMapView
-        }
+         init(_ locationSharingMapView: LocationSharingMapView) {
+             self.locationSharingMapView = locationSharingMapView
+         }
         
         // MARK: - MGLMapViewDelegate
         
         func mapView(_ mapView: MGLMapView, viewFor annotation: MGLAnnotation) -> MGLAnnotationView? {
+            
             if let userLocationAnnotation = annotation as? UserLocationAnnotation {
                 return LocationAnnotationView(userLocationAnnotation: userLocationAnnotation)
             } else if let pinLocationAnnotation = annotation as? PinLocationAnnotation {
@@ -163,7 +168,7 @@ extension LocationSharingMapView {
         // MARK: Callout
                 
         func mapView(_ mapView: MGLMapView, annotationCanShowCallout annotation: MGLAnnotation) -> Bool {
-            annotation is UserLocationAnnotation && locationSharingMapView.userAnnotationCanShowCallout
+            return annotation is UserLocationAnnotation && locationSharingMapView.userAnnotationCanShowCallout
         }
         
         func mapView(_ mapView: MGLMapView, calloutViewFor annotation: MGLAnnotation) -> MGLCalloutView? {
@@ -183,7 +188,7 @@ extension LocationSharingMapView {
         // MARK: UIGestureRecognizer
         
         func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-            gestureRecognizer is UIPanGestureRecognizer
+            return gestureRecognizer is UIPanGestureRecognizer
         }
         
         @objc
@@ -194,12 +199,12 @@ extension LocationSharingMapView {
 }
 
 // MARK: - MGLMapView convenient methods
-
 extension MGLMapView {
+    
     func vc_removeAllAnnotations() {
-        guard let annotations = annotations else {
+        guard let annotations = self.annotations else {
             return
         }
-        removeAnnotations(annotations)
+        self.removeAnnotations(annotations)
     }
 }

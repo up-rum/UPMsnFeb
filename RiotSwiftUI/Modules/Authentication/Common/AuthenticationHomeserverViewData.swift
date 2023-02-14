@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2022 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,8 +24,6 @@ struct AuthenticationHomeserverViewData: Equatable {
     let showLoginForm: Bool
     /// Whether or not to display the username and password text fields during registration.
     let showRegistrationForm: Bool
-    /// Whether or not to display the QR login button during login.
-    let showQRLogin: Bool
     /// The supported SSO login options.
     let ssoIdentityProviders: [SSOIdentityProvider]
 }
@@ -38,13 +36,12 @@ extension AuthenticationHomeserverViewData {
         AuthenticationHomeserverViewData(address: "matrix.org",
                                          showLoginForm: true,
                                          showRegistrationForm: true,
-                                         showQRLogin: false,
                                          ssoIdentityProviders: [
-                                             SSOIdentityProvider(id: "1", name: "Apple", brand: "apple", iconURL: nil),
-                                             SSOIdentityProvider(id: "2", name: "Facebook", brand: "facebook", iconURL: nil),
-                                             SSOIdentityProvider(id: "3", name: "GitHub", brand: "github", iconURL: nil),
-                                             SSOIdentityProvider(id: "4", name: "GitLab", brand: "gitlab", iconURL: nil),
-                                             SSOIdentityProvider(id: "5", name: "Google", brand: "google", iconURL: nil)
+                                            SSOIdentityProvider(id: "1", name: "Apple", brand: "apple", iconURL: nil),
+                                            SSOIdentityProvider(id: "2", name: "Facebook", brand: "facebook", iconURL: nil),
+                                            SSOIdentityProvider(id: "3", name: "GitHub", brand: "github", iconURL: nil),
+                                            SSOIdentityProvider(id: "4", name: "GitLab", brand: "gitlab", iconURL: nil),
+                                            SSOIdentityProvider(id: "5", name: "Google", brand: "google", iconURL: nil)
                                          ])
     }
     
@@ -53,7 +50,6 @@ extension AuthenticationHomeserverViewData {
         AuthenticationHomeserverViewData(address: "example.com",
                                          showLoginForm: true,
                                          showRegistrationForm: true,
-                                         showQRLogin: false,
                                          ssoIdentityProviders: [])
     }
     
@@ -62,7 +58,6 @@ extension AuthenticationHomeserverViewData {
         AuthenticationHomeserverViewData(address: "company.com",
                                          showLoginForm: false,
                                          showRegistrationForm: false,
-                                         showQRLogin: false,
                                          ssoIdentityProviders: [SSOIdentityProvider(id: "test", name: "SAML", brand: nil, iconURL: nil)])
     }
 
@@ -71,7 +66,7 @@ extension AuthenticationHomeserverViewData {
         AuthenticationHomeserverViewData(address: "company.com",
                                          showLoginForm: false,
                                          showRegistrationForm: false,
-                                         showQRLogin: false,
                                          ssoIdentityProviders: [])
     }
+
 }

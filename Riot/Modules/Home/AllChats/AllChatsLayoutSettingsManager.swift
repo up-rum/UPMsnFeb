@@ -61,8 +61,6 @@ final class AllChatsLayoutSettingsManager: NSObject {
         set {
             RiotSettings.defaults.set(newValue.rawValue, forKey: Constants.activeFiltersKey)
             
-            track(activeFilters: newValue)
-            
             DispatchQueue.main.async {
                 NotificationCenter.default.post(name: AllChatsLayoutSettingsManager.didUpdateActiveFilters, object: self)
             }
@@ -86,12 +84,6 @@ final class AllChatsLayoutSettingsManager: NSObject {
                 NotificationCenter.default.post(name: AllChatsLayoutSettingsManager.willUpdateSettings, object: self)
             }
             
-            if newValue.filters.isEmpty {
-                track(activeFilters: nil)
-            } else {
-                track(activeFilters: activeFilters)
-            }
-            
             guard let data = try? NSKeyedArchiver.archivedData(withRootObject: newValue, requiringSecureCoding: false) else {
                 MXLog.warning("[AllChatsLayoutSettingsManager] set allChatLayoutSettings: failed to archive settings")
                 return
@@ -102,33 +94,6 @@ final class AllChatsLayoutSettingsManager: NSObject {
             DispatchQueue.main.async {
                 NotificationCenter.default.post(name: AllChatsLayoutSettingsManager.didUpdateSettings, object: self)
             }
-        }
-    }
-    
-    /// `true` if filters are activated in the All Chats Layout screen and a filter other than `.all` is active
-    var hasAnActiveFilter: Bool {
-        return !allChatLayoutSettings.filters.isEmpty && !activeFilters.isEmpty && activeFilters != .all
-    }
-    
-    // MARK: - Private
-    
-    private func track(activeFilters: AllChatsLayoutFilterType?) {
-        guard let activeFilters = activeFilters else {
-            Analytics.shared.updateUserProperties(allChatsActiveFilter: nil)
-            return
-        }
-
-        switch activeFilters {
-        case [], .all:
-            Analytics.shared.updateUserProperties(allChatsActiveFilter: .all)
-        case .unreads:
-            Analytics.shared.updateUserProperties(allChatsActiveFilter: .unreads)
-        case .favourites:
-            Analytics.shared.updateUserProperties(allChatsActiveFilter: .favourites)
-        case .people:
-            Analytics.shared.updateUserProperties(allChatsActiveFilter: .people)
-        default:
-            Analytics.shared.updateUserProperties(allChatsActiveFilter: nil)
         }
     }
 }

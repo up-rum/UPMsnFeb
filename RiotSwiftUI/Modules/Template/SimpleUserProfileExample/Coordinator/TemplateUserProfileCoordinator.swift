@@ -25,14 +25,14 @@ final class TemplateUserProfileCoordinator: Coordinator, Presentable {
     private let parameters: TemplateUserProfileCoordinatorParameters
     private let templateUserProfileHostingController: UIViewController
     private var templateUserProfileViewModel: TemplateUserProfileViewModelProtocol
-    
+
     private var indicatorPresenter: UserIndicatorTypePresenterProtocol
     private var loadingIndicator: UserIndicator?
 
     // Must be used only internally
     var childCoordinators: [Coordinator] = []
     var completion: (() -> Void)?
-    
+
     init(parameters: TemplateUserProfileCoordinatorParameters) {
         self.parameters = parameters
         let viewModel = TemplateUserProfileViewModel.makeTemplateUserProfileViewModel(templateUserProfileService: TemplateUserProfileService(session: parameters.session))
@@ -40,12 +40,12 @@ final class TemplateUserProfileCoordinator: Coordinator, Presentable {
             .environmentObject(AvatarViewModel(avatarService: AvatarService(mediaManager: parameters.session.mediaManager)))
         templateUserProfileViewModel = viewModel
         templateUserProfileHostingController = VectorHostingController(rootView: view)
-        
+
         indicatorPresenter = UserIndicatorTypePresenter(presentingViewController: templateUserProfileHostingController)
     }
-    
+
     // MARK: - Public
-    
+
     func start() {
         MXLog.debug("[TemplateUserProfileCoordinator] did start.")
         templateUserProfileViewModel.completion = { [weak self] result in
@@ -57,13 +57,13 @@ final class TemplateUserProfileCoordinator: Coordinator, Presentable {
             }
         }
     }
-    
+
     func toPresentable() -> UIViewController {
         templateUserProfileHostingController
     }
-    
+
     // MARK: - Private
-    
+
     /// Show an activity indicator whilst loading.
     /// - Parameters:
     ///   - label: The label to show on the indicator.
@@ -71,7 +71,7 @@ final class TemplateUserProfileCoordinator: Coordinator, Presentable {
     private func startLoading(label: String = VectorL10n.loading, isInteractionBlocking: Bool = true) {
         loadingIndicator = indicatorPresenter.present(.loading(label: label, isInteractionBlocking: isInteractionBlocking))
     }
-    
+
     /// Hide the currently displayed activity indicator.
     private func stopLoading() {
         loadingIndicator = nil

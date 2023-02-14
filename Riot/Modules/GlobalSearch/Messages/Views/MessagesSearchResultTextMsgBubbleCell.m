@@ -30,6 +30,8 @@
     [self updateUserNameColor];
     
     self.roomNameLabel.textColor = ThemeService.shared.theme.textSecondaryColor;
+    
+    self.messageTextView.tintColor = ThemeService.shared.theme.tintColor;
 }
 
 - (void)render:(MXKCellData *)cellData

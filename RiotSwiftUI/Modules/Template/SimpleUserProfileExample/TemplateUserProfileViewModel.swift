@@ -14,18 +14,27 @@
 // limitations under the License.
 //
 
-import Combine
 import SwiftUI
+import Combine
 
-typealias TemplateUserProfileViewModelType = StateStoreViewModel<TemplateUserProfileViewState, TemplateUserProfileViewAction>
+typealias TemplateUserProfileViewModelType = StateStoreViewModel<TemplateUserProfileViewState,TemplateUserProfileViewAction>
 
 class TemplateUserProfileViewModel: TemplateUserProfileViewModelType, TemplateUserProfileViewModelProtocol {
+
+    // MARK: - Properties
+
+    // MARK: Private
+
     private let templateUserProfileService: TemplateUserProfileServiceProtocol
+
+    // MARK: Public
 
     var completion: ((TemplateUserProfileViewModelResult) -> Void)?
 
+    // MARK: - Setup
+
     static func makeTemplateUserProfileViewModel(templateUserProfileService: TemplateUserProfileServiceProtocol) -> TemplateUserProfileViewModelProtocol {
-        TemplateUserProfileViewModel(templateUserProfileService: templateUserProfileService)
+        return TemplateUserProfileViewModel(templateUserProfileService: templateUserProfileService)
     }
 
     private init(templateUserProfileService: TemplateUserProfileServiceProtocol) {
@@ -35,7 +44,7 @@ class TemplateUserProfileViewModel: TemplateUserProfileViewModelType, TemplateUs
     }
 
     private static func defaultState(templateUserProfileService: TemplateUserProfileServiceProtocol) -> TemplateUserProfileViewState {
-        TemplateUserProfileViewState(
+        return TemplateUserProfileViewState(
             avatar: templateUserProfileService.avatarData,
             displayName: templateUserProfileService.displayName,
             presence: templateUserProfileService.presenceSubject.value,

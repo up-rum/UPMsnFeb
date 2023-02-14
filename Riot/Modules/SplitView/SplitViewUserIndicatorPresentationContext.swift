@@ -19,28 +19,28 @@ import CommonKit
 
 class SplitViewUserIndicatorPresentationContext: UserIndicatorPresentationContext {
     private weak var splitViewController: UISplitViewController?
-    private weak var masterCoordinator: SplitViewMasterCoordinatorProtocol?
+    private weak var tabBarCoordinator: TabBarCoordinator?
     private weak var detailNavigationController: UINavigationController?
     
     init(
         splitViewController: UISplitViewController,
-        masterCoordinator: SplitViewMasterCoordinatorProtocol,
+        tabBarCoordinator: TabBarCoordinator,
         detailNavigationController: UINavigationController
     ) {
         self.splitViewController = splitViewController
-        self.masterCoordinator = masterCoordinator
+        self.tabBarCoordinator = tabBarCoordinator
         self.detailNavigationController = detailNavigationController
     }
     
     var indicatorPresentingViewController: UIViewController? {
         guard
             let splitViewController = splitViewController,
-            let masterCoordinator = masterCoordinator,
+            let tabBarCoordinator = tabBarCoordinator,
             let detailNavigationController = detailNavigationController
         else {
             MXLog.debug("[SplitViewCoordinator]: Missing tab bar or detail coordinator, cannot update user indicator presenter")
             return nil
         }
-        return splitViewController.isCollapsed ? masterCoordinator.toPresentable() : detailNavigationController
+        return splitViewController.isCollapsed ? tabBarCoordinator.toPresentable() : detailNavigationController
     }
 }

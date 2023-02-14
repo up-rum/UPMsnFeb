@@ -33,10 +33,4 @@ extension Publisher {
             Just($0).delay(for: .seconds(spacingDelay), scheduler: scheduler)
         }
     }
-    
-    func eraseOutput() -> AnyPublisher<Void, Failure> {
-        self
-            .map { _ in () }
-            .eraseToAnyPublisher()
-    }
 }

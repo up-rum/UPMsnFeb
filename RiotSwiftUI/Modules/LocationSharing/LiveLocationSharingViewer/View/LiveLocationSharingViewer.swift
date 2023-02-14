@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,10 +14,11 @@
 // limitations under the License.
 //
 
-import DSBottomSheet
 import SwiftUI
+import DSBottomSheet
 
 struct LiveLocationSharingViewer: View {
+
     // MARK: - Properties
     
     // MARK: Private
@@ -36,6 +37,7 @@ struct LiveLocationSharingViewer: View {
     
     var body: some View {
         ZStack(alignment: .bottom) {
+            
             if !viewModel.viewState.showMapLoadingError {
                 LocationSharingMapView(tileServerMapURL: viewModel.viewState.mapStyleURL,
                                        annotations: viewModel.viewState.annotations,
@@ -46,10 +48,10 @@ struct LiveLocationSharingViewer: View {
                                        userLocation: Binding.constant(nil),
                                        mapCenterCoordinate: Binding.constant(nil),
                                        onCalloutTap: { annotation in
-                                           if let userLocationAnnotation = annotation as? UserLocationAnnotation {
-                                               viewModel.send(viewAction: .share(userLocationAnnotation))
-                                           }
-                                       },
+                    if let userLocationAnnotation = annotation as? UserLocationAnnotation {
+                        viewModel.send(viewAction: .share(userLocationAnnotation))
+                    }
+                },
                                        errorSubject: viewModel.viewState.errorSubject)
                 
                 // Show map credits above collapsed bottom sheet height if bottom sheet is visible
@@ -59,7 +61,7 @@ struct LiveLocationSharingViewer: View {
                         MapCreditsView(action: {
                             viewModel.send(viewAction: .mapCreditsDidTap)
                         })
-                        .offset(y: -bottomSheetCollapsedHeight) // Put the copyright action above the collapsed bottom sheet
+                        .offset(y: -(bottomSheetCollapsedHeight)) // Put the copyright action above the collapsed bottom sheet
                         .padding(.bottom, 10)
                     }
                     .ignoresSafeArea()
@@ -110,7 +112,7 @@ struct LiveLocationSharingViewer: View {
         .background(theme.colors.system.ignoresSafeArea())
         .bottomSheet(sheet, if: viewModel.viewState.isBottomSheetVisible)
         .actionSheet(isPresented: $viewModel.showMapCreditsSheet) {
-            MapCreditsActionSheet(openURL: { url in
+            return MapCreditsActionSheet(openURL: { url in
                 openURL(url)
             }).sheet
         }
@@ -140,8 +142,8 @@ struct LiveLocationSharingViewer: View {
 }
 
 // MARK: - Bottom sheet
-
 extension LiveLocationSharingViewer {
+
     var sheetStyle: BottomSheetStyle {
         var bottomSheetStyle = BottomSheetStyle.standard
 
@@ -160,10 +162,9 @@ extension LiveLocationSharingViewer {
             isExpanded: $isBottomSheetExpanded,
             minHeight: .points(bottomSheetCollapsedHeight),
             maxHeight: .available,
-            style: sheetStyle
-        ) {
-            userLocationList
-        }
+            style: sheetStyle) {
+                userLocationList
+            }
     }
 }
 

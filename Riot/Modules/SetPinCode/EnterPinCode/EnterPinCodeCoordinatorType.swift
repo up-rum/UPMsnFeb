@@ -20,6 +20,7 @@ import Foundation
 
 protocol EnterPinCodeCoordinatorDelegate: AnyObject {
     func enterPinCodeCoordinatorDidComplete(_ coordinator: EnterPinCodeCoordinatorType)
+    func enterPinCodeCoordinatorClearData(_ coordinator: EnterPinCodeCoordinatorType)
     func enterPinCodeCoordinatorDidCompleteWithReset(_ coordinator: EnterPinCodeCoordinatorType, dueToTooManyErrors: Bool)
     func enterPinCodeCoordinator(_ coordinator: EnterPinCodeCoordinatorType, didCompleteWithPin pin: String)
     func enterPinCodeCoordinatorDidCancel(_ coordinator: EnterPinCodeCoordinatorType)

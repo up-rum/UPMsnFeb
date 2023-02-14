@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +17,7 @@
 import SwiftUI
 
 struct TimelinePollView: View {
+    
     // MARK: - Properties
     
     // MARK: Private
@@ -31,11 +32,6 @@ struct TimelinePollView: View {
         let poll = viewModel.viewState.poll
         
         VStack(alignment: .leading, spacing: 16.0) {
-            if poll.representsPollEndedEvent {
-                Text(VectorL10n.pollTimelineEndedText)
-                    .font(theme.fonts.footnote)
-                    .foregroundColor(theme.colors.tertiaryContent)
-            }
             
             Text(poll.question)
                 .font(theme.fonts.bodySB)
@@ -55,7 +51,6 @@ struct TimelinePollView: View {
             .fixedSize(horizontal: false, vertical: true)
             
             Text(totalVotesString)
-                .lineLimit(2)
                 .font(theme.fonts.footnote)
                 .foregroundColor(theme.colors.tertiaryContent)
         }
@@ -68,10 +63,6 @@ struct TimelinePollView: View {
     
     private var totalVotesString: String {
         let poll = viewModel.viewState.poll
-        
-        if poll.hasDecryptionError, poll.totalAnswerCount > 0 {
-            return VectorL10n.pollTimelineDecryptionError
-        }
         
         if poll.closed {
             if poll.totalAnswerCount == 1 {
@@ -86,12 +77,12 @@ struct TimelinePollView: View {
             return VectorL10n.pollTimelineTotalNoVotes
         case 1:
             return (poll.hasCurrentUserVoted || poll.type == .undisclosed ?
-                VectorL10n.pollTimelineTotalOneVote :
-                VectorL10n.pollTimelineTotalOneVoteNotVoted)
+                        VectorL10n.pollTimelineTotalOneVote :
+                        VectorL10n.pollTimelineTotalOneVoteNotVoted)
         default:
             return (poll.hasCurrentUserVoted || poll.type == .undisclosed ?
-                VectorL10n.pollTimelineTotalVotes(Int(poll.totalAnswerCount)) :
-                VectorL10n.pollTimelineTotalVotesNotVoted(Int(poll.totalAnswerCount)))
+                        VectorL10n.pollTimelineTotalVotes(Int(poll.totalAnswerCount)) :
+                        VectorL10n.pollTimelineTotalVotesNotVoted(Int(poll.totalAnswerCount)))
         }
     }
     

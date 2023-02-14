@@ -46,7 +46,6 @@ extension MXEvent {
             return self
         }
     }
-    
     @objc
     var isTimelinePollEvent: Bool {
         switch eventType {

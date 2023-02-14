@@ -18,9 +18,12 @@ import Foundation
 import Combine
 
 extension RiotSettings {
+    
+    @available(iOS 13.0, *)
     func publisher(for key: String) -> AnyPublisher<Notification, Never> {
-        NotificationCenter.default.publisher(for: .userDefaultValueUpdated)
+        return NotificationCenter.default.publisher(for: .userDefaultValueUpdated)
             .filter({ $0.object as? String == key })
             .eraseToAnyPublisher()
     }
+    
 }

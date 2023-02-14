@@ -66,6 +66,21 @@ class PillTextAttachment: NSTextAttachment {
         self.init(data: encodedData, ofType: PillsFormatter.pillUTType)
     }
 
+    //Rum
+    convenience init?(withUserInfo userData: AvatarInput,
+                      isHighlighted: Bool,
+                      font: UIFont) {
+        let data = PillTextAttachmentData(matrixItemId: userData.matrixItemId,
+                                          displayName: userData.displayName,
+                                          avatarUrl: userData.mxContentUri,
+                                          isHighlighted: isHighlighted,
+                                          alpha: 1.0,
+                                          font: font)
+
+        guard let encodedData = try? Self.serializationService.serialize(data) else { return nil }
+        self.init(data: encodedData, ofType: PillsFormatter.pillUTType)
+    }
+
     required init?(coder: NSCoder) {
         super.init(coder: coder)
 

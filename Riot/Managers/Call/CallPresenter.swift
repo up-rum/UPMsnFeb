@@ -496,12 +496,12 @@ class CallPresenter: NSObject {
         #if canImport(JitsiMeetSDK)
         JMCallKitProxy.removeListener(self)
         
-        guard let sessionInfo = sessions.first else {
+        guard let session = sessions.first else {
             return
         }
         
         if let widgetEventsListener = widgetEventsListener {
-            sessionInfo.removeListener(widgetEventsListener)
+            session.removeListener(widgetEventsListener)
         }
         widgetEventsListener = nil
         #endif
@@ -872,11 +872,11 @@ extension CallPresenter: JMCallKitListener {
         
     }
     
-    func providerDidActivateAudioSession(sessionInfo: AVAudioSession) {
+    func providerDidActivateAudioSession(session: AVAudioSession) {
         
     }
 
-    func providerDidDeactivateAudioSession(sessionInfo: AVAudioSession) {
+    func providerDidDeactivateAudioSession(session: AVAudioSession) {
         
     }
 

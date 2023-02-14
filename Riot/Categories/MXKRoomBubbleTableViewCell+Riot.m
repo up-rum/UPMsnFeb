@@ -57,6 +57,27 @@ NSString *const kMXKRoomBubbleCellKeyVerificationIncomingRequestDeclinePressed =
     
     [self addTimestampLabelForComponent:componentIndex displayOnLeft:displayLabelOnLeft];
 }
+- (void)addTimeLimitLabelForComponent:(NSUInteger)componentIndex
+{
+    BOOL isFirstDisplayedComponent = (componentIndex == 0);
+    BOOL isLastMessageMostRecentComponent = NO;
+
+    RoomBubbleCellData *roomBubbleCellData;
+
+    if ([bubbleData isKindOfClass:RoomBubbleCellData.class])
+    {
+        roomBubbleCellData = (RoomBubbleCellData*)bubbleData;
+        isFirstDisplayedComponent = (componentIndex == roomBubbleCellData.oldestComponentIndex);
+        isLastMessageMostRecentComponent = roomBubbleCellData.containsLastMessage && (componentIndex == roomBubbleCellData.mostRecentComponentIndex);
+    }
+
+    // Display timestamp on the left for selected component when it cannot overlap other UI elements like user's avatar
+    BOOL displayLabelOnLeft = roomBubbleCellData.displayTimestampForSelectedComponentOnLeftWhenPossible
+    && !isLastMessageMostRecentComponent
+    && (!isFirstDisplayedComponent || roomBubbleCellData.shouldHideSenderInformation);
+    displayLabelOnLeft = !displayLabelOnLeft;
+    [self addTimestampLabelForComponent:componentIndex displayOnLeft:displayLabelOnLeft];
+}
 
 - (void)addTimestampLabelForComponent:(NSUInteger)componentIndex
                         displayOnLeft:(BOOL)displayLabelOnLeft
@@ -82,6 +103,36 @@ NSString *const kMXKRoomBubbleCellKeyVerificationIncomingRequestDeclinePressed =
             isFirstDisplayedComponent = (componentIndex == roomBubbleCellData.oldestComponentIndex);
         }
         
+        [self addTimestampLabelForComponentIndex:componentIndex
+                       isFirstDisplayedComponent:isFirstDisplayedComponent
+                                         viewTag:componentIndex
+                                   displayOnLeft:displayLabelOnLeft];
+    }
+}
+- (void)addTimeLimitLabelForComponent:(NSUInteger)componentIndex
+                        displayOnLeft:(BOOL)displayLabelOnLeft
+{
+    MXKRoomBubbleComponent *component;
+
+    NSArray *bubbleComponents = bubbleData.bubbleComponents;
+
+    if (componentIndex < bubbleComponents.count)
+    {
+        component = bubbleComponents[componentIndex];
+    }
+
+    if (component && component.date)
+    {
+        BOOL isFirstDisplayedComponent = (componentIndex == 0);
+
+        RoomBubbleCellData *roomBubbleCellData;
+
+        if ([bubbleData isKindOfClass:RoomBubbleCellData.class])
+        {
+            roomBubbleCellData = (RoomBubbleCellData*)bubbleData;
+            isFirstDisplayedComponent = (componentIndex == roomBubbleCellData.oldestComponentIndex);
+        }
+
         [self addTimestampLabelForComponentIndex:componentIndex
                        isFirstDisplayedComponent:isFirstDisplayedComponent
                                          viewTag:componentIndex
@@ -623,10 +674,6 @@ NSString *const kMXKRoomBubbleCellKeyVerificationIncomingRequestDeclinePressed =
             selectedComponentHeight = roomBubbleTableViewCell.frame.size.height - selectedComponentPositionY;
         }
         
-        // Force the textView used underneath to layout its frame properly
-        [roomBubbleTableViewCell setNeedsLayout];
-        [roomBubbleTableViewCell layoutIfNeeded];
-        
         selectedComponenContentViewYOffset = roomBubbleTableViewCell.messageTextView.frame.origin.y;
     }
     
@@ -748,7 +795,11 @@ NSString *const kMXKRoomBubbleCellKeyVerificationIncomingRequestDeclinePressed =
                 [self addTickView:tickView atIndex:index];
             }
         }
-        
+//        if (component.event.content[@"time_limited"] != nil) {
+//        tickView = [[UIImageView alloc] initWithImage:AssetImages.errorMessageTick.image];
+//        [statusViews addObject:tickView];
+//        [self addTickView:tickView atIndex:index];
+//        }
         if (component.event.sentState == MXEventSentStateFailed)
         {
             tickView = [[UIImageView alloc] initWithImage:AssetImages.errorMessageTick.image];

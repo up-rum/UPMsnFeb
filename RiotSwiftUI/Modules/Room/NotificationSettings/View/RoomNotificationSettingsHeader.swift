@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +17,7 @@
 import SwiftUI
 
 struct RoomNotificationSettingsHeader: View {
+    
     @Environment(\.theme) var theme: ThemeSwiftUI
     var avatarData: AvatarInputProtocol
     var displayName: String?
@@ -43,6 +44,6 @@ struct RoomNotificationSettingsHeader_Previews: PreviewProvider {
     static let name = "Element"
     static var previews: some View {
         RoomNotificationSettingsHeader(avatarData: MockAvatarInput.example, displayName: name)
-            .environmentObject(AvatarViewModel.withMockedServices())
+            .addDependency(MockAvatarService.example)
     }
 }

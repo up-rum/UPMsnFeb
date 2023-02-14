@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,11 +14,12 @@
 // limitations under the License.
 //
 
-import CoreLocation
 import Foundation
+import CoreLocation
 import MatrixSDK
 
 class LocationSharingService: LocationSharingServiceProtocol {
+    
     // MARK: - Properties
     
     // MARK: Private
@@ -26,7 +27,7 @@ class LocationSharingService: LocationSharingServiceProtocol {
     private let session: MXSession
     
     private var userLocationService: UserLocationServiceProtocol? {
-        session.userLocationService
+        return self.session.userLocationService
     }
     
     // MARK: Public
@@ -40,7 +41,8 @@ class LocationSharingService: LocationSharingServiceProtocol {
     // MARK: - Public
     
     func requestAuthorization(_ handler: @escaping LocationAuthorizationHandler) {
-        guard let userLocationService = userLocationService else {
+        guard let userLocationService = self.userLocationService else {
+            
             MXLog.error("[LocationSharingService] No userLocationService found for the current session")
             handler(LocationAuthorizationStatus.unknown)
             return

@@ -160,7 +160,12 @@ final class OnboardingCoordinator: NSObject, OnboardingCoordinatorProtocol {
         
         switch result {
         case .register:
-            showUseCaseSelectionScreen()
+            if BuildSettings.onboardingEnableNewAuthenticationFlow {
+                beginAuthentication(with: .registration, onStart: coordinator.stop)
+            } else {
+                coordinator.stop()
+                showLegacyAuthenticationScreen()
+            }
         case .login:
             if BuildSettings.onboardingEnableNewAuthenticationFlow {
                 beginAuthentication(with: .login, onStart: coordinator.stop)
@@ -168,6 +173,8 @@ final class OnboardingCoordinator: NSObject, OnboardingCoordinatorProtocol {
                 coordinator.stop()
                 showLegacyAuthenticationScreen()
             }
+        case .uplogin:
+            showUseCaseSelectionScreen()
         }
     }
     
@@ -289,6 +296,11 @@ final class OnboardingCoordinator: NSObject, OnboardingCoordinatorProtocol {
             navigationRouter.popAllModules(animated: false)
 
             showSplashScreen()
+        case .uplogin:
+            navigationRouter.popAllModules(animated: false)
+
+            showSplashScreen()
+            showUseCaseSelectionScreen(animated: false)
         }
     }
     
@@ -624,6 +636,8 @@ extension OnboardingSplashScreenViewModelResult {
             return .login
         case .register:
             return .register
+        case .uplogin:
+            return .login
         }
     }
 }

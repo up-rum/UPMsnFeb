@@ -56,7 +56,7 @@ final class SplitViewCoordinator: NSObject, SplitViewCoordinatorType {
         return self.masterPresentable?.selectedNavigationRouter
     }
     
-    private weak var masterCoordinator: SplitViewMasterCoordinatorProtocol?
+    private weak var tabBarCoordinator: TabBarCoordinatorType?
     
     // Indicate if coordinator has been started once
     private var hasStartedOnce: Bool = false
@@ -93,29 +93,30 @@ final class SplitViewCoordinator: NSObject, SplitViewCoordinatorType {
             self.splitViewController.delegate = self
             
             // Create primary controller
-            let masterCoordinator: SplitViewMasterCoordinatorProtocol = BuildSettings.newAppLayoutEnabled ? self.createAllChatsCoordinator() : self.createTabBarCoordinator()
-            masterCoordinator.splitViewMasterPresentableDelegate = self
-            masterCoordinator.start(with: spaceId)
+            let tabBarCoordinator = self.createTabBarCoordinator()
+            tabBarCoordinator.delegate = self
+            tabBarCoordinator.splitViewMasterPresentableDelegate = self
+            tabBarCoordinator.start(with: spaceId)
             
             // Create secondary controller
             let placeholderDetailViewController = self.createPlaceholderDetailsViewController()
             let detailNavigationController = RiotNavigationController(rootViewController: placeholderDetailViewController)
             
             // Setup split view controller
-            self.splitViewController.viewControllers = [masterCoordinator.toPresentable(), detailNavigationController]
+            self.splitViewController.viewControllers = [tabBarCoordinator.toPresentable(), detailNavigationController]
             
             // Setup detail user indicator presenter
             let context = SplitViewUserIndicatorPresentationContext(
                 splitViewController: splitViewController,
-                masterCoordinator: masterCoordinator,
+                tabBarCoordinator: tabBarCoordinator,
                 detailNavigationController: detailNavigationController
             )
             detailUserIndicatorPresenter = UserIndicatorTypePresenter(presentationContext: context)
                     
-            self.add(childCoordinator: masterCoordinator)
+            self.add(childCoordinator: tabBarCoordinator)
             
-            self.masterCoordinator = masterCoordinator
-            self.masterPresentable = masterCoordinator
+            self.tabBarCoordinator = tabBarCoordinator
+            self.masterPresentable = tabBarCoordinator
             self.detailNavigationController = detailNavigationController
             self.detailNavigationRouter = NavigationRouter(navigationController: detailNavigationController)
             
@@ -126,7 +127,7 @@ final class SplitViewCoordinator: NSObject, SplitViewCoordinatorType {
             // Pop to home screen when selecting a new space
             self.popToHome(animated: true) {
                 // Update tabBarCoordinator selected space
-                self.masterCoordinator?.start(with: spaceId)
+                self.tabBarCoordinator?.start(with: spaceId)
             }
         }
     }
@@ -145,40 +146,32 @@ final class SplitViewCoordinator: NSObject, SplitViewCoordinatorType {
         self.resetDetailNavigationController(animated: animated)
 
         // Release the current selected item (room/contact/group...).
-        self.masterCoordinator?.releaseSelectedItems()
+        self.tabBarCoordinator?.releaseSelectedItems()
     }
     
     func popToHome(animated: Bool, completion: (() -> Void)?) {
         self.resetDetails(animated: animated)
 
         // Force back to the main screen if this is not the one that is displayed
-        self.masterCoordinator?.popToHome(animated: animated, completion: completion)
+        self.tabBarCoordinator?.popToHome(animated: animated, completion: completion)
     }
     
     func showErroIndicator(with error: Error) {
-        masterCoordinator?.showErroIndicator(with: error)
+        tabBarCoordinator?.showErroIndicator(with: error)
     }
     
     func hideAppStateIndicator() {
-        masterCoordinator?.hideAppStateIndicator()
+        tabBarCoordinator?.hideAppStateIndicator()
     }
     
     func showAppStateIndicator(with text: String, icon: UIImage?) {
-        masterCoordinator?.showAppStateIndicator(with: text, icon: icon)
+        tabBarCoordinator?.showAppStateIndicator(with: text, icon: icon)
     }
 
     // MARK: - Private methods
     
     private func createPlaceholderDetailsViewController() -> UIViewController {
         return PlaceholderDetailViewController.instantiate()
-    }
-    
-    private func createAllChatsCoordinator() -> AllChatsCoordinator {
-        let coordinatorParameters = AllChatsCoordinatorParameters(userSessionsService: self.parameters.userSessionsService, appNavigator: self.parameters.appNavigator)
-        
-        let coordinator = AllChatsCoordinator(parameters: coordinatorParameters)
-        coordinator.delegate = self
-        return coordinator
     }
     
     private func createTabBarCoordinator() -> TabBarCoordinator {
@@ -234,7 +227,7 @@ final class SplitViewCoordinator: NSObject, SplitViewCoordinatorType {
         }
 
         let existingRoomCoordinatorWithSameRoomId = self.detailModules.first { presentable -> Bool in
-            if let currentRoomCoordinator = presentable as? RoomCoordinatorProtocol, currentRoomCoordinator.threadId == nil {
+            if let currentRoomCoordinator = presentable as? RoomCoordinatorProtocol {
                 return currentRoomCoordinator.roomId == roomCoordinator.roomId
             }
             return false
@@ -347,8 +340,8 @@ extension SplitViewCoordinator: UISplitViewControllerDelegate {
 }
 
 // MARK: - TabBarCoordinatorDelegate
-extension SplitViewCoordinator: SplitViewMasterCoordinatorDelegate {
-    func splitViewMasterCoordinatorDidCompleteAuthentication(_ coordinator: SplitViewMasterCoordinatorProtocol) {
+extension SplitViewCoordinator: TabBarCoordinatorDelegate {
+    func tabBarCoordinatorDidCompleteAuthentication(_ coordinator: TabBarCoordinatorType) {
         self.delegate?.splitViewCoordinatorDidCompleteAuthentication(self)
     }
 }

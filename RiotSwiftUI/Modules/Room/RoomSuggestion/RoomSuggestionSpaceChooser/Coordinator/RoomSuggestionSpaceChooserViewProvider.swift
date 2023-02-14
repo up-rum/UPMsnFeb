@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +17,7 @@
 import SwiftUI
 
 class RoomSuggestionSpaceChooserViewProvider: MatrixItemChooserCoordinatorViewProvider {
+    
     private let navTitle: String?
     
     init(navTitle: String?) {
@@ -24,6 +25,6 @@ class RoomSuggestionSpaceChooserViewProvider: MatrixItemChooserCoordinatorViewPr
     }
     
     func view(with viewModel: MatrixItemChooserViewModelType.Context) -> AnyView {
-        AnyView(RoomSuggestionSpaceChooserSelector(viewModel: viewModel, navTitle: navTitle))
+        return AnyView(RoomSuggestionSpaceChooserSelector(viewModel: viewModel, navTitle: navTitle))
     }
 }

@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,13 +14,14 @@
 // limitations under the License.
 //
 
-import DesignKit
 import SwiftUI
+import DesignKit
 
 @available(iOS, introduced: 14.0, deprecated: 15.0, message: "Use Text with an AttributedString instead.")
 /// A `Text` view that renders attributed strings with their `.font` and `.foregroundColor` attributes.
 /// This view is a workaround for iOS 13/14 not supporting `AttributedString`.
 struct StyledText: View {
+    
     // MARK: - Properties
     
     // MARK: Private
@@ -30,8 +31,8 @@ struct StyledText: View {
     /// A string with a bold property.
     private struct StringComponent {
         let string: String
-        var font: Font?
-        var color: Color?
+        var font: Font? = nil
+        var color: Color? = nil
     }
     
     /// Internal representation of the string as composable parts.
@@ -46,7 +47,7 @@ struct StyledText: View {
         let range = NSRange(location: 0, length: attributedString.length)
         let string = attributedString.string as NSString
         
-        attributedString.enumerateAttributes(in: range, options: []) { attributes, range, _ in
+        attributedString.enumerateAttributes(in: range, options: []) { attributes, range, stop in
             let font = attributes[.font] as? UIFont
             let color = attributes[.foregroundColor] as? UIColor
             
@@ -65,7 +66,7 @@ struct StyledText: View {
     /// Creates a `StyledText` using a plain string.
     /// - Parameter string: The plain string to display
     init(_ string: String) {
-        components = [StringComponent(string: string, font: nil)]
+        self.components = [StringComponent(string: string, font: nil)]
     }
     
     // MARK: - Views
@@ -78,6 +79,7 @@ struct StyledText: View {
         }
     }
 }
+
 
 struct StyledText_Previews: PreviewProvider {
     static func prettyText() -> NSAttributedString {

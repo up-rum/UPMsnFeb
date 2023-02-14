@@ -102,10 +102,10 @@ Matrix session observer used to detect new opened sessions.
 - (void)didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken
 {
     MXLogDebug(@"[PushNotificationService][Push] didRegisterForRemoteNotificationsWithDeviceToken");
-    
+
     MXKAccountManager* accountManager = [MXKAccountManager sharedManager];
     [accountManager setApnsDeviceToken:deviceToken];
-    
+
     //  Resurrect old PushKit token to better kill it
     if (!accountManager.pushDeviceToken)
     {
@@ -114,27 +114,27 @@ Matrix session observer used to detect new opened sessions.
         if (pushDeviceToken)
         {
             MXLogDebug(@"[PushNotificationService][Push] didRegisterForRemoteNotificationsWithDeviceToken: Move PushKit token to user defaults");
-            
+
             // Set the token in standard user defaults, as MXKAccount will read it from there when removing the pusher.
             // This will allow to remove the PushKit pusher in the next step
             [[NSUserDefaults standardUserDefaults] setObject:pushDeviceToken forKey:@"pushDeviceToken"];
-            
+
             [MXKAppSettings.standardAppSettings.sharedUserDefaults removeObjectForKey:@"pushDeviceToken"];
             [MXKAppSettings.standardAppSettings.sharedUserDefaults removeObjectForKey:@"pushOptions"];
         }
     }
-    
+
     //  If we already have pushDeviceToken or recovered it in above step, remove its PushKit pusher
     if (accountManager.pushDeviceToken)
     {
         MXLogDebug(@"[PushNotificationService][Push] didRegisterForRemoteNotificationsWithDeviceToken: A PushKit pusher still exists. Remove it");
-        
+
         //  Attempt to remove PushKit pushers explicitly
         [self clearPushNotificationToken];
     }
 
     _isPushRegistered = YES;
-    
+
     if (!_pushNotificationStore.pushKitToken)
     {
         [self configurePushKit];
@@ -184,7 +184,7 @@ Matrix session observer used to detect new opened sessions.
 
 - (void)applicationDidEnterBackground
 {
-    
+
 }
 
 - (void)applicationDidBecomeActive
@@ -200,13 +200,13 @@ Matrix session observer used to detect new opened sessions.
 - (void)checkPushKitPushersInSession:(MXSession*)session
 {
     [session.matrixRestClient pushers:^(NSArray<MXPusher *> *pushers) {
-        
+
         MXLogDebug(@"[PushNotificationService][Push] checkPushKitPushers: %@ has %@ pushers:", session.myUserId, @(pushers.count));
-        
+
         for (MXPusher *pusher in pushers)
         {
             MXLogDebug(@"   - %@", pusher.appId);
-            
+
             // We do not want anymore PushKit pushers the app used to use
             if ([pusher.appId isEqualToString:BuildSettings.pushKitAppIdProd]
                 || [pusher.appId isEqualToString:BuildSettings.pushKitAppIdDev])
@@ -225,9 +225,9 @@ Matrix session observer used to detect new opened sessions.
 - (void)setShouldReceiveVoIPPushes:(BOOL)shouldReceiveVoIPPushes
 {
     _shouldReceiveVoIPPushes = shouldReceiveVoIPPushes;
-    
+
     MXLogDebug(@"[PushNotificationService] setShouldReceiveVoIPPushes: %u", _shouldReceiveVoIPPushes)
-    
+
     if (_shouldReceiveVoIPPushes && _pushNotificationStore.pushKitToken)
     {
         MXSession *session = [AppDelegate theDelegate].mxSessions.firstObject;
@@ -244,7 +244,7 @@ Matrix session observer used to detect new opened sessions.
             self.matrixSessionStateObserver = [[NSNotificationCenter defaultCenter] addObserverForName:kMXSessionStateDidChangeNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *notif) {
                 MXStrongifyAndReturnIfNil(self);
                 MXSession *mxSession = (MXSession*)notif.object;
-                
+
                 if ([[AppDelegate theDelegate].mxSessions containsObject:mxSession]
                     && mxSession.state >= MXSessionStateStoreDataReady
                     && self->_shouldReceiveVoIPPushes)
@@ -273,7 +273,7 @@ Matrix session observer used to detect new opened sessions.
         _pushNotificationStore.pushKitToken = token;
         MXLogDebug(@"[PushNotificationService] configurePushKit: Restored pushKit token")
     }
-    
+
     _pushRegistry.delegate = self;
     _pushRegistry.desiredPushTypes = [NSSet setWithObject:PKPushTypeVoIP];
 }
@@ -281,14 +281,14 @@ Matrix session observer used to detect new opened sessions.
 - (void)deconfigurePushKit
 {
     MXLogDebug(@"[PushNotificationService] deconfigurePushKit")
-    
+
     _pushRegistry.delegate = nil;
 }
 
 - (void)removePusher:(MXPusher*)pusher inSession:(MXSession*)session
 {
     MXLogDebug(@"[PushNotificationService][Push] removePusher: %@", pusher.appId);
-    
+
     // Shortcut MatrixKit and its complex logic and call directly the API
     [session.matrixRestClient setPusherWithPushkey:pusher.pushkey
                                               kind:[NSNull null]    // This is how we remove a pusher
@@ -301,11 +301,11 @@ Matrix session observer used to detect new opened sessions.
                                             append:NO
                                            success:^{
         MXLogDebug(@"[PushNotificationService][Push] removePusher: Success");
-        
+
         // Brute clean remaining MatrixKit data
         [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"pushDeviceToken"];
         [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"pushOptions"];
-        
+
     } failure:^(NSError *error) {
         MXLogDebug(@"[PushNotificationService][Push] removePusher: Error: %@", error);
     }];
@@ -443,7 +443,7 @@ Matrix session observer used to detect new opened sessions.
                 mxSession = account.mxSession;
             }
         };
-        
+
         if (account.mxSession.state >= MXSessionStateStoreDataReady)
         {
             storeDataReadyBlock();
@@ -455,7 +455,7 @@ Matrix session observer used to detect new opened sessions.
         else
         {
             dispatch_group_enter(dispatchGroupSession);
-            
+
             //  wait for session state to be store data ready
             id sessionStateObserver = nil;
             sessionStateObserver = [[NSNotificationCenter defaultCenter] addObserverForName:kMXSessionStateDidChangeNotification object:account.mxSession queue:nil usingBlock:^(NSNotification * _Nonnull note) {
@@ -464,7 +464,7 @@ Matrix session observer used to detect new opened sessions.
                     [[NSNotificationCenter defaultCenter] removeObserver:sessionStateObserver];
                     return;
                 }
-                
+
                 if (account.mxSession.state >= MXSessionStateStoreDataReady)
                 {
                     [[NSNotificationCenter defaultCenter] removeObserver:sessionStateObserver];
@@ -474,7 +474,7 @@ Matrix session observer used to detect new opened sessions.
             }];
         }
     }
-    
+
     dispatch_group_notify(dispatchGroupSession, dispatch_get_main_queue(), ^{
         if (mxSession == nil)
         {
@@ -531,7 +531,7 @@ Matrix session observer used to detect new opened sessions.
 - (void)clearPushNotificationToken
 {
     MXLogDebug(@"[PushNotificationService][Push] clearPushNotificationToken: Clear existing token");
-    
+
     // Clear existing pushkit token registered on the HS
     MXKAccountManager* accountManager = [MXKAccountManager sharedManager];
     [accountManager setPushDeviceToken:nil withPushOptions:nil];
@@ -592,13 +592,13 @@ Matrix session observer used to detect new opened sessions.
 - (void)pushRegistry:(PKPushRegistry *)registry didReceiveIncomingPushWithPayload:(PKPushPayload *)payload forType:(PKPushType)type withCompletionHandler:(void (^)(void))completion
 {
     MXLogDebug(@"[PushNotificationService] didReceiveIncomingPushWithPayload: %@", payload.dictionaryPayload);
-    
+
     NSString *roomId = payload.dictionaryPayload[@"room_id"];
     NSString *eventId = payload.dictionaryPayload[@"event_id"];
-    
+
     [[UNUserNotificationCenter currentNotificationCenter] removeUnwantedNotifications];
     [[UNUserNotificationCenter currentNotificationCenter] removeCallNotificationsFor:roomId];
-    
+
     if (@available(iOS 13.0, *))
     {
         //  for iOS 13, we'll just report the incoming call in the same runloop. It means we cannot call an async API here.
@@ -608,14 +608,14 @@ Matrix session observer used to detect new opened sessions.
         MXSession *session = [AppDelegate theDelegate].mxSessions.firstObject;
         //  when we have a VoIP push while the application is killed, session.callManager will not be ready yet. Configure it.
         [[AppDelegate theDelegate] configureCallManagerIfRequiredForSession:session];
-        
+
         MXLogDebug(@"[PushNotificationService] didReceiveIncomingPushWithPayload: iOS 13+, callInvite: %@", callInvite);
-        
+
         if (callInvite)
         {
             //  We're using this dispatch_group to continue event stream after cache fully processed.
             dispatch_group_t dispatchGroup = dispatch_group_create();
-            
+
             dispatch_group_enter(dispatchGroup);
             session.spaceService.graphUpdateEnabled = NO;
             //  Not continuing in completion block here, because PushKit mandates reporting a new call in the same run loop.
@@ -624,7 +624,7 @@ Matrix session observer used to detect new opened sessions.
                 session.spaceService.graphUpdateEnabled = YES;
                 dispatch_group_leave(dispatchGroup);
             }];
-            
+
             if (callInvite.eventType == MXEventTypeCallInvite)
             {
                 //  process the call invite synchronously
@@ -635,7 +635,7 @@ Matrix session observer used to detect new opened sessions.
                 {
                     [session.callManager.callKitAdapter reportIncomingCall:call];
                     MXLogDebug(@"[PushNotificationService] didReceiveIncomingPushWithPayload: Reporting new call in room %@ for the event: %@", roomId, eventId);
-                    
+
                     //  Wait for the sync response in cache to be processed for data integrity.
                     dispatch_group_notify(dispatchGroup, dispatch_get_main_queue(), ^{
                         //  After reporting the call, we can continue async. Launch a background sync to handle call answers/declines on other devices of the user.
@@ -675,11 +675,11 @@ Matrix session observer used to detect new opened sessions.
             completion();
             return;
         }
-        
+
         //  below iOS 13, we can call an async API. After background sync, we'll hopefully fetch the call invite and report a new call to the CallKit.
         [self launchBackgroundSync];
     }
-    
+
     completion();
 }
 

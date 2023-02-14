@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,7 @@ public enum RoomSuggestionSpaceChooserItemsProcessorError: Int, Error {
 }
 
 class RoomSuggestionSpaceChooserItemsProcessor: MatrixItemChooserProcessorProtocol {
+    
     // MARK: Private
     
     private let roomId: String
@@ -34,7 +35,7 @@ class RoomSuggestionSpaceChooserItemsProcessor: MatrixItemChooserProcessorProtoc
     init(roomId: String, session: MXSession) {
         self.roomId = roomId
         self.session = session
-        dataSource = MatrixItemChooserRoomDirectParentsDataSource(roomId: roomId, preselectionMode: .suggestedRoom)
+        self.dataSource = MatrixItemChooserRoomDirectParentsDataSource(roomId: roomId, preselectionMode: .suggestedRoom)
     }
     
     deinit {
@@ -42,7 +43,6 @@ class RoomSuggestionSpaceChooserItemsProcessor: MatrixItemChooserProcessorProtoc
             NotificationCenter.default.removeObserver(observer)
         }
     }
-
     // MARK: MatrixItemChooserSelectionProcessorProtocol
     
     private(set) var dataSource: MatrixItemChooserDataSource
@@ -53,11 +53,11 @@ class RoomSuggestionSpaceChooserItemsProcessor: MatrixItemChooserProcessorProtoc
         let unselectedItems: [String]
         let selectedItems: [String]
         if let preselectedItems = dataSource.preselectedItemIds {
-            unselectedItems = preselectedItems.compactMap { itemId in
-                !itemsIds.contains(itemId) ? itemId : nil
-            }
+            unselectedItems = preselectedItems.compactMap({ itemId in
+                return !itemsIds.contains(itemId) ? itemId : nil
+            })
             selectedItems = itemsIds.compactMap { itemId in
-                !preselectedItems.contains(itemId) ? itemId : nil
+                return !preselectedItems.contains(itemId) ? itemId : nil
             }
         } else {
             unselectedItems = []
@@ -78,7 +78,7 @@ class RoomSuggestionSpaceChooserItemsProcessor: MatrixItemChooserProcessorProtoc
                 if let firstError = self.computationErrorList.first {
                     completion(.failure(firstError))
                 } else {
-                    self.didBuildSpaceGraphObserver = NotificationCenter.default.addObserver(forName: MXSpaceService.didBuildSpaceGraph, object: nil, queue: OperationQueue.main) { [weak self] _ in
+                    self.didBuildSpaceGraphObserver = NotificationCenter.default.addObserver(forName: MXSpaceService.didBuildSpaceGraph, object: nil, queue: OperationQueue.main) { [weak self] notification in
                         guard let self = self else { return }
                         
                         if let observer = self.didBuildSpaceGraphObserver {
@@ -93,8 +93,8 @@ class RoomSuggestionSpaceChooserItemsProcessor: MatrixItemChooserProcessorProtoc
         }
     }
     
-    func isItemIncluded(_ item: MatrixListItemData) -> Bool {
-        true
+    func isItemIncluded(_ item: (MatrixListItemData)) -> Bool {
+        return true
     }
     
     // MARK: - Private

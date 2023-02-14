@@ -1,4 +1,4 @@
-// 
+//
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,8 +46,7 @@ class HTMLFormatter: NSObject {
         }
 
         var options: [AnyHashable: Any] = [
-            DTUseiOS6Attributes: true,
-            DTDefaultFontDescriptor: font.fontDescriptor,
+            DTUseiOS6Attributes: true, DTDefaultFontDescriptor: font.fontDescriptor,
             DTDefaultLinkDecoration: false,
             DTDefaultLinkColor: ThemeService.shared().theme.colors.links,
             DTWillFlushBlockCallBack: sanitizeCallback
@@ -61,11 +60,11 @@ class HTMLFormatter: NSObject {
         let mutableString = NSMutableAttributedString(attributedString: string)
         MXKTools.removeDTCoreTextArtifacts(mutableString)
         postFormatOperations?(mutableString)
-        
+
         // Remove CTForegroundColorFromContext attribute to fix the iOS 16 black link color issue
         // REF: https://github.com/Cocoanetics/DTCoreText/issues/792
         mutableString.removeAttribute(NSAttributedString.Key("CTForegroundColorFromContext"), range: NSRange(location: 0, length: mutableString.length))
-        
+
         return mutableString
     }
 
@@ -78,10 +77,10 @@ class HTMLFormatter: NSObject {
     static func format(_ string: String, with link: String, using url: URL) -> NSAttributedString {
         let baseString = NSMutableAttributedString(string: string)
         let attributedLink = NSAttributedString(string: link, attributes: [.link: url])
-        
+
         let linkRange = (baseString.string as NSString).range(of: "%@")
         baseString.replaceCharacters(in: linkRange, with: attributedLink)
-        
+
         return baseString
     }
 }

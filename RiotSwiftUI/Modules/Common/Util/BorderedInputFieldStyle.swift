@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,19 +15,20 @@
 //
 
 import Foundation
-import Introspect
 import SwiftUI
+import Introspect
 
 /// A bordered style of text input
 ///
 /// As defined in:
 /// https://www.figma.com/file/X4XTH9iS2KGJ2wFKDqkyed/Compound?node-id=2039%3A26415
 struct BorderedInputFieldStyle: TextFieldStyle {
+    
     @Environment(\.theme) private var theme: ThemeSwiftUI
     @Environment(\.isEnabled) private var isEnabled: Bool
     
-    var isEditing = false
-    var isError = false
+    var isEditing: Bool = false
+    var isError: Bool = false
     
     private var borderColor: Color {
         if isError {
@@ -54,18 +55,18 @@ struct BorderedInputFieldStyle: TextFieldStyle {
     }
     
     private var backgroundColor: Color {
-        if !isEnabled, theme.identifier == ThemeIdentifier.dark {
+        if !isEnabled && (theme.identifier == ThemeIdentifier.dark) {
             return theme.colors.quinaryContent
         }
         return theme.colors.background
     }
     
     private var placeholderColor: Color {
-        theme.colors.tertiaryContent
+        return theme.colors.tertiaryContent
     }
         
     private var borderWidth: CGFloat {
-        isEditing || isError ? 2.0 : 1.5
+        return isEditing || isError ? 2.0 : 1.5
     }
     
     func _body(configuration: TextField<_Label>) -> some View {

@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-import Combine
 import Foundation
+import Combine
 
 protocol TemplateRoomChatServiceProtocol {
     var roomInitializationStatus: CurrentValueSubject<TemplateRoomChatRoomInitializationStatus, Never> { get }

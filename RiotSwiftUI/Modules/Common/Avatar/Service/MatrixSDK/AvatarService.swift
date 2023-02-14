@@ -29,13 +29,13 @@ class AvatarService: AvatarServiceProtocol {
         static let mimeType = "image/jpeg"
         static let thumbnailMethod = MXThumbnailingMethodCrop
     }
-    
+
     private let mediaManager: MXMediaManager
-    
+
     init(mediaManager: MXMediaManager) {
         self.mediaManager = mediaManager
     }
-    
+
     /// Given an mxContentUri, this function returns a Future of UIImage.
     ///
     /// If possible it will retrieve the image from network or cache, otherwise it will error.
@@ -51,14 +51,14 @@ class AvatarService: AvatarServiceProtocol {
             toFitViewSize: avatarSize.size,
             with: Constants.thumbnailMethod
         )
-        
+
         return Future<UIImage, Error> { promise in
             if let image = MXMediaManager.loadThroughCache(withFilePath: cachePath),
                let imageUp = Self.orientImageUp(image: image) {
                 // Already cached return avatar
                 promise(.success(imageUp))
             }
-        
+
             self.mediaManager.downloadThumbnail(
                 fromMatrixContentURI: mxContentUri,
                 withType: Constants.mimeType,
@@ -70,7 +70,7 @@ class AvatarService: AvatarServiceProtocol {
                     promise(.failure(AvatarServiceError.pathNotfound))
                     return
                 }
-                
+
                 guard let image = MXMediaManager.loadThroughCache(withFilePath: path),
                       let imageUp = Self.orientImageUp(image: image) else {
                     promise(.failure(AvatarServiceError.loadingImageFailed(nil)))
@@ -82,7 +82,7 @@ class AvatarService: AvatarServiceProtocol {
             }
         }
     }
-    
+
     private static func orientImageUp(image: UIImage) -> UIImage? {
         guard let image = image.cgImage else { return nil }
         return UIImage(cgImage: image, scale: 1.0, orientation: .up)

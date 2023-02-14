@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,7 @@ enum AuthenticationRegistrationViewModelResult: CustomStringConvertible {
     /// Validate the supplied username with the homeserver.
     case validateUsername(String)
     /// Create an account using the supplied credentials.
-    case createAccount(username: String, password: String)
+    case createAccount(username: String, password: String, email: String, phone: String, firstName: String, lastName: String, subscribeEmailUpdates: Bool)
     /// Continue using the supplied SSO provider.
     case continueWithSSO(SSOIdentityProvider)
     /// Continue using a fallback
@@ -62,7 +62,7 @@ struct AuthenticationRegistrationViewState: BindableState {
     /// Data about the selected homeserver.
     var homeserver: AuthenticationHomeserverViewData
     /// Whether a new homeserver is currently being loaded.
-    var isLoading = false
+    var isLoading: Bool = false
     /// View state that can be bound to from SwiftUI.
     var bindings: AuthenticationRegistrationBindings
     /// Whether or not the username field has been edited yet.
@@ -81,15 +81,21 @@ struct AuthenticationRegistrationViewState: BindableState {
     var usernameFooterMessage: String {
         switch usernameAvailability {
         case .unknown:
-            return VectorL10n.authenticationRegistrationUsernameFooter
+            return ""//VectorL10n.authenticationRegistrationUsernameFooter
         case .invalid(let errorMessage):
             return errorMessage
         case .available:
             // https is never shown to the user but http is, so strip the scheme.
             let domain = homeserver.address.replacingOccurrences(of: "http://", with: "")
             let userID = "@\(bindings.username):\(domain)"
-            return VectorL10n.authenticationRegistrationUsernameFooterAvailable(userID)
+            return "" //VectorL10n.authenticationRegistrationUsernameFooterAvailable(userID)
         }
+    }
+    var confirmPasswordFooterMessage: String {
+        if passwordNotMatched {
+            return "Password and confirm password not match"
+        }
+        return ""
     }
     
     /// Whether to show any SSO buttons.
@@ -108,25 +114,37 @@ struct AuthenticationRegistrationViewState: BindableState {
     
     /// Whether the current `password` is invalid.
     var isPasswordInvalid: Bool {
-        bindings.password.count < 8
+        bindings.password.count < 1
+    }
+
+    var passwordNotMatched: Bool {
+        bindings.password != bindings.confirmPassword
     }
     
     /// `true` if it is possible to continue, otherwise `false`.
     var hasValidCredentials: Bool {
-        !isUsernameInvalid && !isPasswordInvalid
+        !isUsernameInvalid && !isPasswordInvalid && bindings.acceptTerms && (bindings.password == bindings.confirmPassword)
     }
     
     /// `true` if valid credentials have been entered and the homeserver is loaded.
     var canSubmit: Bool {
-        hasValidCredentials && !isLoading
+        hasValidCredentials && bindings.email.contains("@") && !isLoading
     }
 }
 
 struct AuthenticationRegistrationBindings {
     /// The username input by the user.
+    var firstName = ""
+    var lastName = ""
+    var email = ""
+    var phoneNumber = ""
+    var subscribeEmailUpdates = false
     var username = ""
     /// The password input by the user.
     var password = ""
+    var confirmPassword = ""
+    var acceptTerms = false
+
     /// Information describing the currently displayed alert.
     var alertInfo: AlertInfo<AuthenticationRegistrationErrorType>?
 }
@@ -140,6 +158,8 @@ enum AuthenticationRegistrationViewAction {
     case enablePasswordValidation
     /// Clear any availability messages being shown in the username text field footer.
     case resetUsernameAvailability
+
+    case rebuildUsername
     /// Continue using the input username and password.
     case next
     /// Continue using the supplied SSO provider.

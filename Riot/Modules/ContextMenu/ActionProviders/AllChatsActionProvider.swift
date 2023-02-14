@@ -28,7 +28,7 @@ class AllChatsActionProvider {
     // MARK: - RoomActionProviderProtocol
     
     var menu: UIMenu {
-        return UIMenu(title: "", children: [
+        return UIMenu(title: VectorL10n.allChatsEditLayout, children: [
             self.recentsAction,
             self.filtersAction,
             UIMenu(title: "", options: .displayInline, children: [
@@ -50,7 +50,6 @@ class AllChatsActionProvider {
                                                                      filters: settings.filters,
                                                                      sorting: settings.sorting)
                             AllChatsLayoutSettingsManager.shared.allChatLayoutSettings = newSettings
-                            Analytics.shared.trackInteraction(action.state == .on ? .allChatsRecentsDisabled : .allChatsRecentsEnabled)
                         }
     }
     
@@ -63,7 +62,6 @@ class AllChatsActionProvider {
                                                                      filters: action.state == .on ? [] : [.unreads, .favourites, .people],
                                                                      sorting: settings.sorting)
                             AllChatsLayoutSettingsManager.shared.allChatLayoutSettings = newSettings
-                            Analytics.shared.trackInteraction(action.state == .on ? .allChatsFiltersDisabled : .allChatsFiltersEnabled)
                         }
     }
     

@@ -15,15 +15,20 @@
 //
 
 import SwiftUI
+import MatrixSDK
 
-typealias AuthenticationLoginViewModelType = StateStoreViewModel<AuthenticationLoginViewState, AuthenticationLoginViewAction>
+typealias AuthenticationLoginViewModelType = StateStoreViewModel<AuthenticationLoginViewState,AuthenticationLoginViewAction>
 
 class AuthenticationLoginViewModel: AuthenticationLoginViewModelType, AuthenticationLoginViewModelProtocol {
+    
+
     // MARK: - Properties
 
     // MARK: Public
 
     var callback: (@MainActor (AuthenticationLoginViewModelResult) -> Void)?
+    var callback2: (@MainActor (AuthenticationServerSelectionViewModelResult) -> Void)?
+
 
     // MARK: - Setup
 
@@ -39,20 +44,34 @@ class AuthenticationLoginViewModel: AuthenticationLoginViewModelType, Authentica
     override func process(viewAction: AuthenticationLoginViewAction) {
         switch viewAction {
         case .selectServer:
-            Task { await callback?(.selectServer) }
+            Task { await callback2?(.confirm(homeserverAddress: "matrix.unpluggedsystems.app")) }
+//            Task { await callback?(.selectServer) }
         case .parseUsername:
             Task { await callback?(.parseUsername(state.bindings.username)) }
         case .forgotPassword:
             Task { await callback?(.forgotPassword) }
         case .next:
-            Task { await callback?(.login(username: state.bindings.username, password: state.bindings.password)) }
+            Task { await self.upLoginApi(username: state.bindings.username, password: state.bindings.password)}
+//            Task { await callback?(.login(username: state.bindings.username, password: state.bindings.password)) }
+        case .poptoroot:
+            Task { await callback?(.gotoroot) }
         case .fallback:
             Task { await callback?(.fallback) }
         case .continueWithSSO(let provider):
-            Task { await callback?(.continueWithSSO(provider)) }
-        case .qrLogin:
-            Task { await callback?(.qrLogin) }
+            Task { await callback?(.continueWithSSO(provider))}
         }
+    }
+
+    @MainActor func upLoginApi(username:String, password:String) {
+        APIServices.shared.callCreateLogin(queryItems: nil, parameters: ["username": username, "password": password], success: { result in
+            MXLog.warning("resultt === >> \(result)")
+            UserDefaults.standard.set(result?.token, forKey: "uptoken")
+            self.callback?(.login(username: username, password: password))
+
+        }, failure: { failureMsg in
+            self.displayError(AuthenticationLoginErrorType.mxError("Incorrect username or password"))
+        })
+
     }
     
     @MainActor func update(isLoading: Bool) {

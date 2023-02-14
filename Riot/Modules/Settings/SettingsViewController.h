@@ -20,6 +20,5 @@
 
 + (instancetype)instantiate;
 
-- (void)showUserSessionsFlow;
 @end
 

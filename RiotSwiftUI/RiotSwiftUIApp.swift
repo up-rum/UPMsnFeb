@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,17 +29,28 @@ struct RiotSwiftUIApp: App {
         default:
             ThemePublisher.configure(themeId: .light)
         }
+
     }
     
     var body: some Scene {
+//        WindowGroup {
+//            ScreenList(screens: MockAppScreens.appScreens)
+//        }
+        
         WindowGroup {
-            ScreenList(screens: MockAppScreens.appScreens)
+            if authentication.isValidated {
+                ContentView()
+                    .environmentObject(authentication)
+            } else {
+                LoginView()
+                    .environmentObject(authentication)
+            }
         }
     }
 }
 
 class RiotSwiftUIAppDelegate: NSObject, UIApplicationDelegate {
-    func application(_ application: UIApplication, willFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
+    func application(_ application: UIApplication, willFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         if ProcessInfo.processInfo.environment["IS_RUNNING_UI_TESTS"] == "1" {
             UIView.setAnimationsEnabled(false)
         }

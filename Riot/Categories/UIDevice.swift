@@ -35,7 +35,7 @@ import UIKit
     }
     
     var initialDisplayName: String {
-        VectorL10n.userSessionsDefaultSessionDisplayName(AppInfo.current.displayName)
+        isPhone ? VectorL10n.loginMobileDevice : VectorL10n.loginTabletDevice
     }
     
 }

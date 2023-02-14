@@ -14,10 +14,11 @@
 // limitations under the License.
 //
 
-import CoreLocation
 import SwiftUI
+import CoreLocation
 
 struct LocationSharingView: View {
+    
     // MARK: - Properties
     
     // MARK: Private
@@ -38,6 +39,7 @@ struct LocationSharingView: View {
                 }
                 
                 VStack(spacing: 0) {
+                    
                     if context.viewState.showMapLoadingError {
                         MapLoadingErrorView()
                     } else {
@@ -48,7 +50,7 @@ struct LocationSharingView: View {
                         })
                         .padding(.bottom, 10.0)
                         .actionSheet(isPresented: $context.showMapCreditsSheet) {
-                            MapCreditsActionSheet(openURL: { url in
+                            return MapCreditsActionSheet(openURL: { url in
                                 openURL(url)
                             }).sheet
                         }
@@ -97,8 +99,8 @@ struct LocationSharingView: View {
                                        mapCenterCoordinate: $context.pinLocation,
                                        errorSubject: context.viewState.errorSubject,
                                        userDidPan: {
-                                           context.send(viewAction: .userDidPan)
-                                       })
+                    context.send(viewAction: .userDidPan)
+                })
                 if context.viewState.isPinDropSharing {
                     LocationSharingMarkerView(backgroundColor: theme.colors.accent) {
                         Image(uiImage: Asset.Images.locationPinIcon.image)

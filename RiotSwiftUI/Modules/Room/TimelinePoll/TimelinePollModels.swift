@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +17,7 @@
 import Foundation
 import SwiftUI
 
-typealias TimelinePollViewModelCallback = (TimelinePollViewModelResult) -> Void
+typealias TimelinePollViewModelCallback = ((TimelinePollViewModelResult) -> Void)
 
 enum TimelinePollViewAction {
     case selectAnswerOptionWithIdentifier(String)
@@ -30,11 +30,6 @@ enum TimelinePollViewModelResult {
 enum TimelinePollType {
     case disclosed
     case undisclosed
-}
-
-enum TimelinePollEventType {
-    case started
-    case ended
 }
 
 struct TimelinePollAnswerOption: Identifiable {
@@ -62,20 +57,31 @@ extension MutableCollection where Element == TimelinePollAnswerOption {
 }
 
 struct TimelinePollDetails {
-    var id: String
     var question: String
     var answerOptions: [TimelinePollAnswerOption]
     var closed: Bool
-    var startDate: Date
     var totalAnswerCount: UInt
     var type: TimelinePollType
-    var eventType: TimelinePollEventType
     var maxAllowedSelections: UInt
-    var hasBeenEdited: Bool
-    var hasDecryptionError: Bool
+    var hasBeenEdited: Bool = true
+    
+    init(question: String, answerOptions: [TimelinePollAnswerOption],
+         closed: Bool,
+         totalAnswerCount: UInt,
+         type: TimelinePollType,
+         maxAllowedSelections: UInt,
+         hasBeenEdited: Bool) {
+        self.question = question
+        self.answerOptions = answerOptions
+        self.closed = closed
+        self.totalAnswerCount = totalAnswerCount
+        self.type = type
+        self.maxAllowedSelections = maxAllowedSelections
+        self.hasBeenEdited = hasBeenEdited
+    }
     
     var hasCurrentUserVoted: Bool {
-        answerOptions.contains(where: \.selected)
+        answerOptions.filter { $0.selected == true}.count > 0
     }
     
     var shouldDiscloseResults: Bool {
@@ -85,13 +91,7 @@ struct TimelinePollDetails {
             return type == .disclosed && totalAnswerCount > 0 && hasCurrentUserVoted
         }
     }
-    
-    var representsPollEndedEvent: Bool {
-        eventType == .ended
-    }
 }
-
-extension TimelinePollDetails: Identifiable { }
 
 struct TimelinePollViewState: BindableState {
     var poll: TimelinePollDetails

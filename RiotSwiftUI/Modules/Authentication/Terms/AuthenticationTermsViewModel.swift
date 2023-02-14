@@ -46,7 +46,7 @@ class AuthenticationTermsViewModel: AuthenticationTermsViewModelType, Authentica
             Task { await callback?(.cancel) }
         }
     }
-    
+
     @MainActor func displayError(_ type: AuthenticationTermsErrorType) {
         switch type {
         case .mxError(let message):

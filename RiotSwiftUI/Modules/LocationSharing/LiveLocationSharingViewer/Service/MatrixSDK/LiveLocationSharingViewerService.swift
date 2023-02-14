@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,11 +14,12 @@
 // limitations under the License.
 //
 
-import CoreLocation
 import Foundation
+import CoreLocation
 import MatrixSDK
 
 class LiveLocationSharingViewerService: LiveLocationSharingViewerServiceProtocol {
+    
     // MARK: - Properties
     
     private(set) var usersLiveLocation: [UserLiveLocation] = []
@@ -39,17 +40,17 @@ class LiveLocationSharingViewerService: LiveLocationSharingViewerServiceProtocol
         self.session = session
         self.roomId = roomId
         
-        updateUsersLiveLocation(notifyUpdate: false)
+        self.updateUsersLiveLocation(notifyUpdate: false)
     }
     
     // MARK: - Public
     
     func isCurrentUserId(_ userId: String) -> Bool {
-        session.myUserId == userId
+        return self.session.myUserId == userId
     }
     
     func startListeningLiveLocationUpdates() {
-        beaconInfoSummaryListener = session.aggregations.beaconAggregations.listenToBeaconInfoSummaryUpdateInRoom(withId: roomId) { [weak self] _ in
+        self.beaconInfoSummaryListener = self.session.aggregations.beaconAggregations.listenToBeaconInfoSummaryUpdateInRoom(withId: self.roomId) { [weak self] _ in
 
             self?.updateUsersLiveLocation(notifyUpdate: true)
         }
@@ -57,17 +58,17 @@ class LiveLocationSharingViewerService: LiveLocationSharingViewerServiceProtocol
     
     func stopListeningLiveLocationUpdates() {
         if let listener = beaconInfoSummaryListener {
-            session.aggregations.removeListener(listener)
-            beaconInfoSummaryListener = nil
+            self.session.aggregations.removeListener(listener)
+            self.beaconInfoSummaryListener = nil
         }
     }
     
     func stopUserLiveLocationSharing(completion: @escaping (Result<Void, Error>) -> Void) {
-        session.locationService.stopUserLocationSharing(inRoomWithId: roomId) { response in
+        self.session.locationService.stopUserLocationSharing(inRoomWithId: roomId) { response in
             
             switch response {
             case .success:
-                completion(.success(()))
+                completion(.success(Void()))
             case .failure(let error):
                 completion(.failure(error))
             }
@@ -77,16 +78,17 @@ class LiveLocationSharingViewerService: LiveLocationSharingViewerServiceProtocol
     // MARK: - Private
     
     private func updateUsersLiveLocation(notifyUpdate: Bool) {
-        let beaconInfoSummaries = session.locationService.getDisplayableBeaconInfoSummaries(inRoomWithId: roomId)
-        usersLiveLocation = Self.usersLiveLocation(fromBeaconInfoSummaries: beaconInfoSummaries, session: session)
+        let beaconInfoSummaries = self.session.locationService.getDisplayableBeaconInfoSummaries(inRoomWithId: roomId)
+        self.usersLiveLocation = Self.usersLiveLocation(fromBeaconInfoSummaries: beaconInfoSummaries, session: session)
         
         if notifyUpdate {
-            didUpdateUsersLiveLocation?(usersLiveLocation)
+            self.didUpdateUsersLiveLocation?(self.usersLiveLocation)
         }
     }
     
-    private class func usersLiveLocation(fromBeaconInfoSummaries beaconInfoSummaries: [MXBeaconInfoSummaryProtocol], session: MXSession) -> [UserLiveLocation] {
-        beaconInfoSummaries.compactMap { beaconInfoSummary in
+    class private func usersLiveLocation(fromBeaconInfoSummaries beaconInfoSummaries: [MXBeaconInfoSummaryProtocol], session: MXSession) -> [UserLiveLocation] {
+        
+        return beaconInfoSummaries.compactMap { beaconInfoSummary in
             
             let beaconInfo = beaconInfoSummary.beaconInfo
             
@@ -96,9 +98,9 @@ class LiveLocationSharingViewerService: LiveLocationSharingViewerServiceProtocol
             
             let avatarData = session.avatarInput(for: beaconInfoSummary.userId)
             
-            let timestamp = TimeInterval(beaconInfo.timestamp / 1000)
-            let timeout = TimeInterval(beaconInfo.timeout / 1000)
-            let lastUpdate = TimeInterval(lastBeacon.timestamp / 1000)
+            let timestamp = TimeInterval(beaconInfo.timestamp/1000)
+            let timeout = TimeInterval(beaconInfo.timeout/1000)
+            let lastUpdate = TimeInterval(lastBeacon.timestamp/1000)
             
             let coordinate = CLLocationCoordinate2D(latitude: lastBeacon.location.latitude, longitude: lastBeacon.location.longitude)
             

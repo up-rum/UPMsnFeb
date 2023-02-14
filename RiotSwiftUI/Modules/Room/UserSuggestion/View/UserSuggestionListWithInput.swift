@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,10 +18,11 @@ import SwiftUI
 
 struct UserSuggestionListWithInputViewModel {
     let listViewModel: UserSuggestionViewModel
-    let callback: (String) -> Void
+    let callback: (String)->()
 }
 
 struct UserSuggestionListWithInput: View {
+    
     // MARK: - Properties
     
     // MARK: Private
@@ -29,14 +30,14 @@ struct UserSuggestionListWithInput: View {
     // MARK: Public
     
     var viewModel: UserSuggestionListWithInputViewModel
-    @State private var inputText = ""
+    @State private var inputText: String = ""
     
     var body: some View {
         VStack(spacing: 0.0) {
             UserSuggestionList(viewModel: viewModel.listViewModel.context)
             TextField("Search for user", text: $inputText)
                 .background(Color.white)
-                .onChange(of: inputText, perform: viewModel.callback)
+                .onChange(of: inputText, perform:viewModel.callback)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding([.leading, .trailing])
                 .onAppear {

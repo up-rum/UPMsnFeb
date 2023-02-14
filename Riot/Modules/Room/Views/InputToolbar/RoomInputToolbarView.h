@@ -20,7 +20,6 @@
 
 @class RoomActionsBar;
 @class RoomInputToolbarView;
-@class LinkActionWrapper;
 
 /**
  Destination of the message in the composer
@@ -29,21 +28,9 @@ typedef NS_ENUM(NSUInteger, RoomInputToolbarViewSendMode)
 {
     RoomInputToolbarViewSendModeSend,
     RoomInputToolbarViewSendModeReply,
-    RoomInputToolbarViewSendModeEdit,
-    RoomInputToolbarViewSendModeCreateDM
+    RoomInputToolbarViewSendModeEdit
 };
 
-
-@protocol RoomInputToolbarViewProtocol
-
-@property (nonatomic, strong) NSString *eventSenderDisplayName;
-@property (nonatomic, assign) RoomInputToolbarViewSendMode sendMode;
-@property (nonatomic, assign) BOOL isEncryptionEnabled;
-- (void)setVoiceMessageToolbarView:(UIView *)voiceMessageToolbarView;
-- (CGFloat)toolbarHeight;
-
-
-@end
 
 @protocol RoomInputToolbarViewDelegate <MXKRoomInputToolbarViewDelegate>
 
@@ -52,7 +39,7 @@ typedef NS_ENUM(NSUInteger, RoomInputToolbarViewSendMode)
  
  @param toolbarView the room input toolbar view
  */
-- (void)roomInputToolbarViewDidTapCancel:(MXKRoomInputToolbarView<RoomInputToolbarViewProtocol>*)toolbarView;
+- (void)roomInputToolbarViewDidTapCancel:(RoomInputToolbarView*)toolbarView;
 
 /**
  Inform the delegate that the text message has changed.
@@ -76,17 +63,13 @@ typedef NS_ENUM(NSUInteger, RoomInputToolbarViewSendMode)
  */
 - (void)roomInputToolbarView:(RoomInputToolbarView *)toolbarView sendAttributedTextMessage:(NSAttributedString *)attributedTextMessage;
 
-- (void)didChangeMaximisedState: (BOOL) isMaximised;
-
-- (void)didSendLinkAction: (LinkActionWrapper *)linkAction;
-
 @end
 
 /**
  `RoomInputToolbarView` instance is a view used to handle all kinds of available inputs
  for a room (message composer, attachments selection...).
  */
-@interface RoomInputToolbarView : MXKRoomInputToolbarView<RoomInputToolbarViewProtocol>
+@interface RoomInputToolbarView : MXKRoomInputToolbarView
 
 /**
  The delegate notified when inputs are ready.

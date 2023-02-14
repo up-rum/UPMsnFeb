@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,15 +18,17 @@ import SwiftUI
 
 /// Renders an input field and a collection of chips.
 struct ChipsInput: View {
+    
     @Environment(\.theme) var theme: ThemeSwiftUI
     @Environment(\.isEnabled) var isEnabled
     
-    @State private var chipText = ""
+    @State private var chipText: String = ""
     
     let titles: [String]
     let didAddChip: (String) -> Void
     let didDeleteChip: (String) -> Void
-    var placeholder = ""
+    var placeholder: String = ""
+    
     
     var body: some View {
         VStack(spacing: 16) {
@@ -53,5 +55,6 @@ struct ChipsInput_Previews: PreviewProvider {
             chips.remove(chip)
         }
         .disabled(true)
+
     }
 }

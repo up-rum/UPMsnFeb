@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-import RiotSwiftUI
 import XCTest
+import RiotSwiftUI
 
 /// XCTestCase subclass to ease testing of `MockScreenState`.
 /// Launches the app with an environment variable used to disable animations.
@@ -26,7 +26,7 @@ import XCTest
 class MockScreenTestCase: XCTestCase {
     let app = XCUIApplication()
     
-    override open func setUpWithError() throws {
+    open override func setUpWithError() throws {
         app.launchEnvironment = ["IS_RUNNING_UI_TESTS": "1"]
         app.launch()
     }

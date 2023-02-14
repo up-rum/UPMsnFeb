@@ -13,9 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+
 import SwiftUI
 
 struct ScreenList: View {
+    
     private let allStates: [ScreenStateInfo]
     
     @State private var searchQuery = ""
@@ -23,9 +25,8 @@ struct ScreenList: View {
     
     init(screens: [MockScreenState.Type]) {
         let states = screens
-            // swiftformat:disable:next preferKeyPath
             .map { $0.stateRenderer }
-            .flatMap(\.states)
+            .flatMap { $0.states }
         
         allStates = states
         filteredStates = states
@@ -36,7 +37,6 @@ struct ScreenList: View {
             VStack {
                 TextField("Search", text: $searchQuery)
                     .textFieldStyle(.roundedBorder)
-                    .autocorrectionDisabled()
                     .padding(.horizontal)
                     .accessibilityIdentifier("searchQueryTextField")
                     .onChange(of: searchQuery, perform: search)

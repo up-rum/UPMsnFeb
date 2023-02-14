@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-import Combine
 import Foundation
+import Combine
 
 class MockNotificationSettingsService: NotificationSettingsServiceType, ObservableObject {
     static let example = MockNotificationSettingsService()
@@ -44,11 +44,7 @@ class MockNotificationSettingsService: NotificationSettingsServiceType, Observab
         keywords.remove(keyword)
     }
     
-    func updatePushRuleActions(for ruleId: String, enabled: Bool, actions: NotificationActions?) async throws {
-        guard let ruleIndex = rules.firstIndex(where: { $0.ruleId == ruleId }) else {
-            return
-        }
+    func updatePushRuleActions(for ruleId: String, enabled: Bool, actions: NotificationActions?) {
         
-        rules[ruleIndex] = MockNotificationPushRule(ruleId: ruleId, enabled: enabled, ruleActions: actions)
     }
 }

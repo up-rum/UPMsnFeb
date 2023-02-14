@@ -21,26 +21,33 @@ struct TemplateRoomChatCoordinatorParameters {
 }
 
 final class TemplateRoomChatCoordinator: Coordinator, Presentable {
+    
+    // MARK: - Properties
+    
+    // MARK: Private
+    
     private let parameters: TemplateRoomChatCoordinatorParameters
     private let templateRoomChatHostingController: UIViewController
     private var templateRoomChatViewModel: TemplateRoomChatViewModelProtocol
+    
+    // MARK: Public
 
     // Must be used only internally
     var childCoordinators: [Coordinator] = []
     var callback: (() -> Void)?
     
+    // MARK: - Setup
+    
     init(parameters: TemplateRoomChatCoordinatorParameters) {
         self.parameters = parameters
         let viewModel = TemplateRoomChatViewModel(templateRoomChatService: TemplateRoomChatService(room: parameters.room))
         let view = TemplateRoomChat(viewModel: viewModel.context)
-            .environmentObject(AvatarViewModel(avatarService: AvatarService(mediaManager: parameters.room.mxSession.mediaManager)))
-
+            .addDependency(AvatarService.instantiate(mediaManager: parameters.room.mxSession.mediaManager))
         templateRoomChatViewModel = viewModel
         templateRoomChatHostingController = VectorHostingController(rootView: view)
     }
     
     // MARK: - Public
-
     func start() {
         MXLog.debug("[TemplateRoomChatCoordinator] did start.")
         templateRoomChatViewModel.callback = { [weak self] result in
@@ -49,11 +56,12 @@ final class TemplateRoomChatCoordinator: Coordinator, Presentable {
             switch result {
             case .done:
                 self.callback?()
+            break
             }
         }
     }
     
     func toPresentable() -> UIViewController {
-        templateRoomChatHostingController
+        return self.templateRoomChatHostingController
     }
 }

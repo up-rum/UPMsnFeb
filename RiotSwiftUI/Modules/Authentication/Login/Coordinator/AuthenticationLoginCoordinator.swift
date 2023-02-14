@@ -14,9 +14,9 @@
 // limitations under the License.
 //
 
+import SwiftUI
 import CommonKit
 import MatrixSDK
-import SwiftUI
 
 struct AuthenticationLoginCoordinatorParameters {
     let navigationRouter: NavigationRouterType
@@ -30,8 +30,6 @@ enum AuthenticationLoginCoordinatorResult: CustomStringConvertible {
     case continueWithSSO(SSOIdentityProvider)
     /// Login was successful with the associated session created.
     case success(session: MXSession, password: String)
-    /// Login was successful with the associated session created.
-    case loggedInWithQRCode(session: MXSession, securityCompleted: Bool)
     /// Login requested a fallback
     case fallback
     
@@ -42,8 +40,6 @@ enum AuthenticationLoginCoordinatorResult: CustomStringConvertible {
             return "continueWithSSO: \(provider)"
         case .success:
             return "success"
-        case .loggedInWithQRCode:
-            return "loggedInWithQRCode"
         case .fallback:
             return "fallback"
         }
@@ -51,10 +47,12 @@ enum AuthenticationLoginCoordinatorResult: CustomStringConvertible {
 }
 
 final class AuthenticationLoginCoordinator: Coordinator, Presentable {
+    
     // MARK: - Properties
     
     // MARK: Private
-    
+    private let parameServer: AuthenticationServerSelectionCoordinatorParameters
+
     private let parameters: AuthenticationLoginCoordinatorParameters
     private let authenticationLoginHostingController: VectorHostingController
     private var authenticationLoginViewModel: AuthenticationLoginViewModelProtocol
@@ -83,10 +81,13 @@ final class AuthenticationLoginCoordinator: Coordinator, Presentable {
     
     // MARK: - Setup
     
-    @MainActor init(parameters: AuthenticationLoginCoordinatorParameters) {
+    @MainActor init(parameters: AuthenticationLoginCoordinatorParameters, paramServer: AuthenticationServerSelectionCoordinatorParameters) {
+
+        self.parameServer = paramServer
         self.parameters = parameters
-        
+
         let homeserver = parameters.authenticationService.state.homeserver
+
         let viewModel = AuthenticationLoginViewModel(homeserver: homeserver.viewData)
         authenticationLoginViewModel = viewModel
         
@@ -96,10 +97,10 @@ final class AuthenticationLoginCoordinator: Coordinator, Presentable {
         authenticationLoginHostingController.enableNavigationBarScrollEdgeAppearance = true
         
         indicatorPresenter = UserIndicatorTypePresenter(presentingViewController: authenticationLoginHostingController)
+        self.useHomeserver("matrix.unpluggedsystems.app")
     }
     
     // MARK: - Public
-
     func start() {
         MXLog.debug("[AuthenticationLoginCoordinator] did start.")
         Task { await setupViewModel() }
@@ -119,19 +120,20 @@ final class AuthenticationLoginCoordinator: Coordinator, Presentable {
             
             switch result {
             case .selectServer:
-                self.presentServerSelectionScreen()
+                self.useHomeserver("matrix.unpluggedsystems.app")
+//                self.presentServerSelectionScreen()
             case .parseUsername(let username):
                 self.parseUsername(username)
             case .forgotPassword:
                 self.showForgotPasswordScreen()
             case .login(let username, let password):
                 self.login(username: username, password: password)
+            case .gotoroot:
+                self.popToRootVC()
             case .continueWithSSO(let identityProvider):
                 self.callback?(.continueWithSSO(identityProvider))
             case .fallback:
                 self.callback?(.fallback)
-            case .qrLogin:
-                self.showQRLoginScreen()
             }
         }
     }
@@ -144,7 +146,30 @@ final class AuthenticationLoginCoordinator: Coordinator, Presentable {
             authenticationLoginViewModel.update(isLoading: true)
         }
     }
-    
+    @MainActor private func useHomeserver(_ homeserverAddress: String) {
+        startLoading(isInteractionBlocking: true)
+
+        let homeserverAddress = HomeserverAddress.sanitized(homeserverAddress)
+
+        Task {
+            do {
+                try await authenticationService.startFlow(parameServer.flow, for: homeserverAddress)
+                self.stopLoading()
+
+//                callback?(.updated)
+            } catch {
+                self.stopLoading()
+//
+//                if let error = error as? RegistrationError {
+//                    authenticationServerSelectionViewModel.displayError(.footerMessage(error.localizedDescription))
+//                } else {
+//                    // Show the MXError message if possible otherwise use a generic server error
+//                    let message = MXError(nsError: error)?.error ?? VectorL10n.authenticationServerSelectionGenericError
+//                    authenticationServerSelectionViewModel.displayError(.footerMessage(message))
+//                }
+            }
+        }
+    }
     /// Hide the currently displayed activity indicator.
     @MainActor private func stopLoading() {
         authenticationLoginViewModel.update(isLoading: false)
@@ -153,6 +178,7 @@ final class AuthenticationLoginCoordinator: Coordinator, Presentable {
     
     /// Login with the supplied username and password.
     @MainActor private func login(username: String, password: String) {
+
         guard let loginWizard = loginWizard else {
             MXLog.failure("[AuthenticationLoginCoordinator] The login wizard was requested before getting the login flow.")
             return
@@ -180,8 +206,7 @@ final class AuthenticationLoginCoordinator: Coordinator, Presentable {
     /// Processes an error to either update the flow or display it to the user.
     @MainActor private func handleError(_ error: Error) {
         if let mxError = MXError(nsError: error as NSError) {
-            let message = mxError.authenticationErrorMessage()
-            authenticationLoginViewModel.displayError(.mxError(message))
+            authenticationLoginViewModel.displayError(.mxError(mxError.error))
             return
         }
         
@@ -254,6 +279,9 @@ final class AuthenticationLoginCoordinator: Coordinator, Presentable {
             self?.remove(childCoordinator: coordinator)
         }
     }
+    @MainActor private func popToRootVC() {
+        navigationRouter.popToRootModule(animated: true)
+    }
 
     /// Shows the forgot password screen.
     @MainActor private func showForgotPasswordScreen() {
@@ -286,35 +314,7 @@ final class AuthenticationLoginCoordinator: Coordinator, Presentable {
         add(childCoordinator: coordinator)
 
         modalRouter.setRootModule(coordinator)
-
         navigationRouter.present(modalRouter, animated: true)
-    }
-
-    /// Shows the QR login screen.
-    @MainActor private func showQRLoginScreen() {
-        MXLog.debug("[AuthenticationLoginCoordinator] showQRLoginScreen")
-
-        let service = QRLoginService(client: parameters.authenticationService.client,
-                                     mode: .notAuthenticated)
-        let parameters = AuthenticationQRLoginStartCoordinatorParameters(navigationRouter: navigationRouter,
-                                                                         qrLoginService: service)
-        let coordinator = AuthenticationQRLoginStartCoordinator(parameters: parameters)
-        coordinator.callback = { [weak self, weak coordinator] callback in
-            guard let self = self, let coordinator = coordinator else { return }
-            switch callback {
-            case .done(let session, let securityCompleted):
-                self.callback?(.loggedInWithQRCode(session: session, securityCompleted: securityCompleted))
-            }
-            
-            self.remove(childCoordinator: coordinator)
-        }
-
-        coordinator.start()
-        add(childCoordinator: coordinator)
-
-        navigationRouter.push(coordinator, animated: true) { [weak self] in
-            self?.remove(childCoordinator: coordinator)
-        }
     }
     
     /// Updates the view model to reflect any changes made to the homeserver.

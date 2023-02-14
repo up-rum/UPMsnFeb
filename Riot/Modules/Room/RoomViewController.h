@@ -33,8 +33,6 @@
 @class RoomDisplayConfiguration;
 @class ThreadsCoordinatorBridgePresenter;
 @class LiveLocationSharingBannerView;
-@class VoiceBroadcastService;
-@class ComposerLinkActionBridgePresenter;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -47,10 +45,6 @@ extern NSNotificationName const RoomCallTileTappedNotification;
  Notification string used to indicate group call tile tapped in a room. Notification object will be the `RoomBubbleCellData` object.
  */
 extern NSNotificationName const RoomGroupCallTileTappedNotification;
-/**
- Duration for the composer resize animation.
- */
-extern NSTimeInterval const kResizeComposerAnimationDuration;
 
 @interface RoomViewController : MXKRoomViewController
 
@@ -61,7 +55,6 @@ extern NSTimeInterval const kResizeComposerAnimationDuration;
 // The preview header
 @property (weak, nonatomic, nullable) IBOutlet UIView *previewHeaderContainer;
 @property (weak, nonatomic, nullable) IBOutlet NSLayoutConstraint *previewHeaderContainerHeightConstraint;
-@property (weak, nonatomic, nullable) IBOutlet NSLayoutConstraint *userSuggestionContainerHeightConstraint;
 
 // The jump to last unread banner
 @property (weak, nonatomic, nullable) IBOutlet UIView *jumpToLastUnreadBannerContainer;
@@ -73,7 +66,6 @@ extern NSTimeInterval const kResizeComposerAnimationDuration;
 @property (weak, nonatomic, nullable) IBOutlet UIView *inputBackgroundView;
 @property (weak, nonatomic, nullable) IBOutlet UIButton *scrollToBottomButton;
 @property (weak, nonatomic, nullable) IBOutlet BadgeLabel *scrollToBottomBadgeLabel;
-@property (nonatomic, strong) IBOutlet UIView *overlayContainerView;
 
 // Remove Jitsi widget container
 @property (weak, nonatomic, nullable) IBOutlet UIView *removeJitsiWidgetContainer;
@@ -114,18 +106,6 @@ extern NSTimeInterval const kResizeComposerAnimationDuration;
 // The customized room data source for Vector
 @property (nonatomic, nullable) RoomDataSource *customizedRoomDataSource;
 
-// The voice broadcast service
-@property (nonatomic, nullable) VoiceBroadcastService *voiceBroadcastService;
-
-@property (strong, nonatomic) IBOutletCollection(NSLayoutConstraint) NSArray<NSLayoutConstraint*> *toolbarContainerConstraints;
-
-@property (strong, nonatomic, nullable) UIView* maximisedToolbarDimmingView;
-
-@property (nonatomic) CGFloat wysiwygTranslation;
-
-@property (nonatomic, strong, nullable) ComposerLinkActionBridgePresenter *composerLinkActionBridgePresenter;
-
-
 /**
  Retrieve the live data source in cases where the timeline is not live.
 
@@ -146,19 +126,6 @@ extern NSTimeInterval const kResizeComposerAnimationDuration;
  @param roomPreviewData the data for the room preview.
  */
 - (void)displayRoomPreview:(RoomPreviewData*)roomPreviewData;
-
-/**
- Display a new discussion with a target user without associated room.
- 
- @param directChatTargetUser Direct chat target user.
- @param session The Matrix session.
- */
-- (void)displayNewDirectChatWithTargetUser:(nonnull MXUser*)directChatTargetUser session:(nonnull MXSession*)session;
-
-/**
- Pop to home view controller
- */
-- (void)popToHomeViewController;
 
 /**
  If `YES`, the room settings screen will be initially displayed. Default `NO`

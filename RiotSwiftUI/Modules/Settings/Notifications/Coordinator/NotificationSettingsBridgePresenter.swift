@@ -25,6 +25,7 @@ import Foundation
 /// Each bridge should be removed once the underlying Coordinator has been integrated by another Coordinator.
 @objcMembers
 final class NotificationSettingsCoordinatorBridgePresenter: NSObject {
+    
     // MARK: - Properties
     
     // MARK: Private
@@ -47,6 +48,7 @@ final class NotificationSettingsCoordinatorBridgePresenter: NSObject {
     // MARK: - Public
     
     func push(from navigationController: UINavigationController, animated: Bool, screen: NotificationSettingsScreen, popCompletion: (() -> Void)?) {
+        
         let router = NavigationRouterStore.shared.navigationRouter(for: navigationController)
         
         let notificationSettingsCoordinator = NotificationSettingsCoordinator(session: session, screen: screen)
@@ -59,12 +61,12 @@ final class NotificationSettingsCoordinatorBridgePresenter: NSObject {
         
         notificationSettingsCoordinator.start()
         
-        coordinator = notificationSettingsCoordinator
+        self.coordinator = notificationSettingsCoordinator
         self.router = router
     }
     
     func dismiss(animated: Bool, completion: (() -> Void)?) {
-        guard let coordinator = coordinator else {
+        guard let coordinator = self.coordinator else {
             return
         }
         coordinator.toPresentable().dismiss(animated: animated) {
@@ -78,17 +80,18 @@ final class NotificationSettingsCoordinatorBridgePresenter: NSObject {
 }
 
 // MARK: - NotificationSettingsCoordinatorDelegate
-
 extension NotificationSettingsCoordinatorBridgePresenter: NotificationSettingsCoordinatorDelegate {
     func notificationSettingsCoordinatorDidComplete(_ coordinator: NotificationSettingsCoordinatorType) {
-        delegate?.notificationSettingsCoordinatorBridgePresenterDelegateDidComplete(self)
+        self.delegate?.notificationSettingsCoordinatorBridgePresenterDelegateDidComplete(self)
     }
 }
 
 // MARK: - UIAdaptivePresentationControllerDelegate
 
 extension NotificationSettingsCoordinatorBridgePresenter: UIAdaptivePresentationControllerDelegate {
+    
     func notificationSettingsCoordinatorDidComplete(_ presentationController: UIPresentationController) {
-        delegate?.notificationSettingsCoordinatorBridgePresenterDelegateDidComplete(self)
+        self.delegate?.notificationSettingsCoordinatorBridgePresenterDelegateDidComplete(self)
     }
+    
 }

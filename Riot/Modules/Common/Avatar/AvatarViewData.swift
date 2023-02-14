@@ -29,21 +29,6 @@ struct AvatarViewData: AvatarViewDataProtocol {
     /// Matrix media handler if exists
     var mediaManager: MXMediaManager?
     
-    /// Fallback images used when avatarUrl is nil
-    var fallbackImages: [AvatarFallbackImage]?
-}
-
-extension AvatarViewData {
-    init(matrixItemId: String,
-         displayName: String? = nil,
-         avatarUrl: String? = nil,
-         mediaManager: MXMediaManager? = nil,
-         fallbackImage: AvatarFallbackImage?) {
-        
-        self.matrixItemId = matrixItemId
-        self.displayName = displayName
-        self.avatarUrl = avatarUrl
-        self.mediaManager = mediaManager
-        self.fallbackImages = fallbackImage.map { [$0] }
-    }
+    /// Fallback image used when avatarUrl is nil
+    var fallbackImage: AvatarFallbackImage?
 }

@@ -28,7 +28,8 @@ protocol RoomNotificationSettingsViewModelCoordinatorDelegate: AnyObject {
 }
 
 /// Protocol describing the view model used by `RoomNotificationSettingsViewController`
-protocol RoomNotificationSettingsViewModelType {
+protocol RoomNotificationSettingsViewModelType {        
+        
     var viewDelegate: RoomNotificationSettingsViewModelViewDelegate? { get set }
     var coordinatorDelegate: RoomNotificationSettingsViewModelCoordinatorDelegate? { get set }
     

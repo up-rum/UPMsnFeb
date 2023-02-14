@@ -19,6 +19,7 @@
 
 #import "ThemeService.h"
 #import "GeneratedInterface-Swift.h"
+#import "GBDeviceInfo_iOS.h"
 
 static const CGFloat kContextBarHeight = 24;
 static const CGFloat kActionMenuAttachButtonSpringVelocity = 7;
@@ -58,7 +59,7 @@ static const NSTimeInterval kActionMenuComposerHeightAnimationDuration = .3;
 @implementation RoomInputToolbarView
 @dynamic delegate;
 
-+ (MXKRoomInputToolbarView *)instantiateRoomInputToolbarView
++ (instancetype)roomInputToolbarView
 {
     UINib *nib = [UINib nibWithNibName:NSStringFromClass([RoomInputToolbarView class]) bundle:nil];
     return [nib instantiateWithOwner:nil options:nil].firstObject;
@@ -79,9 +80,22 @@ static const NSTimeInterval kActionMenuComposerHeightAnimationDuration = .3;
     [self updateUIWithAttributedTextMessage:nil animated:NO];
     
     self.textView.toolbarDelegate = self;
+    
+    // Add an accessory view to the text view in order to retrieve keyboard view.
+    inputAccessoryView = [[UIView alloc] initWithFrame:CGRectZero];
+    self.textView.inputAccessoryView = inputAccessoryView;
+}
 
-    inputAccessoryViewForKeyboard = [[UIView alloc] initWithFrame:CGRectZero];
-    self.textView.inputAccessoryView = inputAccessoryViewForKeyboard;
+- (void)setVoiceMessageToolbarView:(UIView *)voiceMessageToolbarView
+{
+    _voiceMessageToolbarView = voiceMessageToolbarView;
+    self.voiceMessageToolbarView.translatesAutoresizingMaskIntoConstraints = NO;
+    [self addSubview:self.voiceMessageToolbarView];
+
+    [NSLayoutConstraint activateConstraints:@[[self.mainToolbarView.topAnchor constraintEqualToAnchor:self.voiceMessageToolbarView.topAnchor],
+                                              [self.mainToolbarView.leftAnchor constraintEqualToAnchor:self.voiceMessageToolbarView.leftAnchor],
+                                              [self.mainToolbarView.bottomAnchor constraintEqualToAnchor:self.voiceMessageToolbarView.bottomAnchor],
+                                              [self.mainToolbarView.rightAnchor constraintEqualToAnchor:self.voiceMessageToolbarView.rightAnchor]]];
 }
 
 #pragma mark - Override MXKView
@@ -161,15 +175,15 @@ static const NSTimeInterval kActionMenuComposerHeightAnimationDuration = .3;
 
     self.textView.attributedText = attributedTextMessage;
 
-    if (@available(iOS 15.0, *)) {
-        // Fixes an iOS 16 issue where attachment are not drawn properly by
-        // forcing the layoutManager to redraw the glyphs at all NSAttachment positions.
-        [self.textView vc_invalidateTextAttachmentsDisplay];
-    }
+        if (@available(iOS 15.0, *)) {
+            // Fixes an iOS 16 issue where attachment are not drawn properly by
+            // forcing the layoutManager to redraw the glyphs at all NSAttachment positions.
+            [self.textView vc_invalidateTextAttachmentsDisplay];
+        }
 
-    [self updateUIWithAttributedTextMessage:attributedTextMessage animated:YES];
-    [self textViewDidChange:self.textView];
-}
+        [self updateUIWithAttributedTextMessage:attributedTextMessage animated:YES];
+        [self textViewDidChange:self.textView];
+    }
 
 - (NSAttributedString *)attributedTextMessage
 {
@@ -236,10 +250,6 @@ static const NSTimeInterval kActionMenuComposerHeightAnimationDuration = .3;
             updatedHeight += kContextBarHeight;
             self.textView.maxHeight -= kContextBarHeight;
             break;
-        case RoomInputToolbarViewSendModeCreateDM:
-            buttonImage = AssetImages.sendIcon.image;
-            self.inputContextViewHeightConstraint.constant = 0;
-            break;
         default:
             buttonImage = AssetImages.sendIcon.image;
 
@@ -278,6 +288,61 @@ static const NSTimeInterval kActionMenuComposerHeightAnimationDuration = .3;
             }
         }];
     }
+}
+
+- (void)updatePlaceholder
+{
+    // Consider the default placeholder
+    
+    NSString *placeholder;
+    
+    // Check the device screen size before using large placeholder
+    BOOL shouldDisplayLargePlaceholder = [GBDeviceInfo deviceInfo].family == GBDeviceFamilyiPad || [GBDeviceInfo deviceInfo].displayInfo.display >= GBDeviceDisplay5p8Inch;
+    
+    if (!shouldDisplayLargePlaceholder)
+    {
+        switch (_sendMode)
+        {
+            case RoomInputToolbarViewSendModeReply:
+                placeholder = [VectorL10n roomMessageReplyToShortPlaceholder];
+                break;
+
+            default:
+                placeholder = [VectorL10n roomMessageShortPlaceholder];
+                break;
+        }
+    }
+    else
+    {
+        if (_isEncryptionEnabled)
+        {
+            switch (_sendMode)
+            {
+                case RoomInputToolbarViewSendModeReply:
+                    placeholder = [VectorL10n encryptedRoomMessageReplyToPlaceholder];
+                    break;
+
+                default:
+                    placeholder = [VectorL10n encryptedRoomMessagePlaceholder];
+                    break;
+            }
+        }
+        else
+        {
+            switch (_sendMode)
+            {
+                case RoomInputToolbarViewSendModeReply:
+                    placeholder = [VectorL10n roomMessageReplyToPlaceholder];
+                    break;
+
+                default:
+                    placeholder = [VectorL10n roomMessagePlaceholder];
+                    break;
+            }
+        }
+    }
+    
+    self.placeholder = placeholder;
 }
 
 - (void)setPlaceholder:(NSString *)inPlaceholder
@@ -460,28 +525,4 @@ static const NSTimeInterval kActionMenuComposerHeightAnimationDuration = .3;
     }];
 }
 
-#pragma mark - RoomInputToolbarViewProtocol
-
-- (CGFloat)toolbarHeight {
-    return self.mainToolbarHeightConstraint.constant;
-}
-
-- (void)setVoiceMessageToolbarView:(UIView *)voiceMessageToolbarView
-{
-    if (voiceMessageToolbarView) {
-        _voiceMessageToolbarView = voiceMessageToolbarView;
-        self.voiceMessageToolbarView.translatesAutoresizingMaskIntoConstraints = NO;
-        [self addSubview:self.voiceMessageToolbarView];
-
-        [NSLayoutConstraint activateConstraints:@[[self.mainToolbarView.topAnchor constraintEqualToAnchor:self.voiceMessageToolbarView.topAnchor],
-                                                  [self.mainToolbarView.leftAnchor constraintEqualToAnchor:self.voiceMessageToolbarView.leftAnchor],
-                                                  [self.mainToolbarView.bottomAnchor constraintEqualToAnchor:self.voiceMessageToolbarView.bottomAnchor],
-                                                  [self.mainToolbarView.rightAnchor constraintEqualToAnchor:self.voiceMessageToolbarView.rightAnchor]]];
-    }
-    else
-    {
-        [self.voiceMessageToolbarView removeFromSuperview];
-        _voiceMessageToolbarView = nil;
-    }
-}
 @end

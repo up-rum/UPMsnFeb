@@ -22,9 +22,9 @@ struct MultilineTextField: View {
     @Binding private var text: String
     @State private var dynamicHeight: CGFloat = 100
     @State private var isEditing = false
-    
+
     private var placeholder = ""
-    
+
     private var showingPlaceholder: Bool {
         text.isEmpty
     }
@@ -33,7 +33,7 @@ struct MultilineTextField: View {
         self.placeholder = placeholder
         _text = text
     }
-    
+
     private var textColor: Color {
         if theme.identifier == ThemeIdentifier.dark {
             return theme.colors.primaryContent
@@ -41,27 +41,27 @@ struct MultilineTextField: View {
             return theme.colors.primaryContent
         }
     }
-    
+
     private var backgroundColor: Color {
         theme.colors.background
     }
-    
+
     private var placeholderColor: Color {
         theme.colors.tertiaryContent
     }
-    
+
     private var borderColor: Color {
         if isEditing {
             return theme.colors.accent
         }
-        
+
         return theme.colors.quarterlyContent
     }
-    
+
     private var borderWidth: CGFloat {
         isEditing ? 2.0 : 1.5
     }
-    
+
     var body: some View {
         let rect = RoundedRectangle(cornerRadius: 8.0)
         return UITextViewWrapper(text: $text, calculatedHeight: $dynamicHeight, isEditing: $isEditing)
@@ -149,20 +149,20 @@ private struct UITextViewWrapper: UIViewRepresentable {
             text.wrappedValue = uiView.text
             UITextViewWrapper.recalculateHeight(view: uiView, result: calculatedHeight)
         }
-        
+
         func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
             if text == "\n" {
                 textView.resignFirstResponder()
                 return false
             }
-            
+
             return true
         }
-        
+
         func textViewDidBeginEditing(_ textView: UITextView) {
             isEditing.wrappedValue = true
         }
-        
+
         func textViewDidEndEditing(_ textView: UITextView) {
             isEditing.wrappedValue = false
         }
@@ -183,7 +183,7 @@ struct MultilineTextField_Previews: PreviewProvider {
         }
         .padding()
     }
-    
+
     struct PreviewWrapper: View {
         @State(initialValue: "123") var text: String
 
@@ -191,7 +191,7 @@ struct MultilineTextField_Previews: PreviewProvider {
             MultilineTextField("Placeholder", text: $text)
         }
     }
-    
+
     struct PlaceholderPreviewWrapper: View {
         @State(initialValue: "") var text: String
 

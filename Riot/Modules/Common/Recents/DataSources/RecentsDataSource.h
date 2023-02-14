@@ -35,7 +35,6 @@ typedef NS_ENUM(NSInteger, RecentsDataSourceMode)
     RecentsDataSourceModeFavourites,
     RecentsDataSourceModePeople,
     RecentsDataSourceModeRooms,
-    RecentsDataSourceModeRoomInvites,
     RecentsDataSourceModeAllChats
 };
 

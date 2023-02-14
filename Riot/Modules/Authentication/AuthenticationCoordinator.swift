@@ -257,10 +257,13 @@ final class AuthenticationCoordinator: NSObject, AuthenticationCoordinatorProtoc
         MXLog.debug("[AuthenticationCoordinator] showLoginScreen")
         
         let homeserver = authenticationService.state.homeserver
+        let paramServer = AuthenticationServerSelectionCoordinatorParameters(authenticationService: authenticationService,
+                                                                            flow: .login,
+                                                                            hasModalPresentation: true)
         let parameters = AuthenticationLoginCoordinatorParameters(navigationRouter: navigationRouter,
                                                                   authenticationService: authenticationService,
                                                                   loginMode: homeserver.preferredLoginMode)
-        let coordinator = AuthenticationLoginCoordinator(parameters: parameters)
+        let coordinator = AuthenticationLoginCoordinator(parameters: parameters, paramServer: paramServer)
         coordinator.callback = { [weak self, weak coordinator] result in
             guard let self = self, let coordinator = coordinator else { return }
             self.loginCoordinator(coordinator, didCallbackWith: result)
@@ -268,7 +271,8 @@ final class AuthenticationCoordinator: NSObject, AuthenticationCoordinatorProtoc
         
         coordinator.start()
         add(childCoordinator: coordinator)
-        
+
+       
         if navigationRouter.modules.isEmpty {
             navigationRouter.setRootModule(coordinator, popCompletion: nil)
         } else {
@@ -336,9 +340,6 @@ final class AuthenticationCoordinator: NSObject, AuthenticationCoordinatorProtoc
             password = loginPassword
             authenticationType = .password
             onSessionCreated(session: session, flow: .login)
-        case .loggedInWithQRCode(let session, let securityCompleted):
-            authenticationType = .other
-            onSessionCreated(session: session, flow: .login, securityCompleted: securityCompleted)
         case .fallback:
             showFallback(for: .login)
         }
@@ -350,11 +351,14 @@ final class AuthenticationCoordinator: NSObject, AuthenticationCoordinatorProtoc
     @MainActor private func showRegistrationScreen() {
         MXLog.debug("[AuthenticationCoordinator] showRegistrationScreen")
         let homeserver = authenticationService.state.homeserver
+        let paramServer = AuthenticationServerSelectionCoordinatorParameters(authenticationService: authenticationService,
+                                                                            flow: .login,
+                                                                            hasModalPresentation: true)
         let parameters = AuthenticationRegistrationCoordinatorParameters(navigationRouter: navigationRouter,
                                                                          authenticationService: authenticationService,
                                                                          registrationFlow: homeserver.registrationFlow,
                                                                          loginMode: homeserver.preferredLoginMode)
-        let coordinator = AuthenticationRegistrationCoordinator(parameters: parameters)
+        let coordinator = AuthenticationRegistrationCoordinator(parameters: parameters, paramServer: paramServer)
         coordinator.callback = { [weak self, weak coordinator] result in
             guard let self = self, let coordinator = coordinator else { return }
             self.registrationCoordinator(coordinator, didCallbackWith: result)
@@ -384,6 +388,13 @@ final class AuthenticationCoordinator: NSObject, AuthenticationCoordinatorProtoc
             handleRegistrationResult(result)
         case .fallback:
             showFallback(for: .register)
+        case .signupSuccess(username: let username, password: let password):
+            UserDefaults.standard.setValue(username, forKey: "upusername")
+            let alert = UIAlertController(title: "Registration Completed", message: "Your UP Messenger display name is : \(username). You can always change your display name in UP Messenger settings.", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: VectorL10n.ok, style: .default, handler: {_ in self.showLoginScreen()}))
+            toPresentable().present(alert, animated: true)
+
+//            navigationRouter.popModule(animated: true)
         }
     }
     
@@ -525,14 +536,8 @@ final class AuthenticationCoordinator: NSObject, AuthenticationCoordinatorProtoc
     }
     
     /// Handles the creation of a new session following on from a successful authentication.
-    @MainActor private func onSessionCreated(session: MXSession, flow: AuthenticationFlow, securityCompleted: Bool = false) {
+    @MainActor private func onSessionCreated(session: MXSession, flow: AuthenticationFlow) {
         self.session = session
-        
-        guard !securityCompleted else {
-            callback?(.didLogin(session: session, authenticationFlow: flow, authenticationType: authenticationType ?? .other))
-            callback?(.didComplete)
-            return
-        }
         
         if canPresentAdditionalScreens {
             showLoadingAnimation()
@@ -544,14 +549,15 @@ final class AuthenticationCoordinator: NSObject, AuthenticationCoordinatorProtoc
             guard let self = self else { return }
             switch result {
             case .needsVerification:
-                guard self.canPresentAdditionalScreens else {
-                    MXLog.debug("[AuthenticationCoordinator] Delaying presentCompleteSecurity during onboarding.")
-                    self.isWaitingToPresentCompleteSecurity = true
-                    return
-                }
+//                guard self.canPresentAdditionalScreens else {
+//                    MXLog.debug("[AuthenticationCoordinator] Delaying presentCompleteSecurity during onboarding.")
+//                    self.isWaitingToPresentCompleteSecurity = true
+//                    return
+//                }
                 
                 MXLog.debug("[AuthenticationCoordinator] Complete security")
-                self.presentCompleteSecurity()
+                self.authenticationDidComplete()
+//                self.presentCompleteSecurity()
             case .authenticationIsComplete:
                 self.authenticationDidComplete()
             }
@@ -613,8 +619,7 @@ final class AuthenticationCoordinator: NSObject, AuthenticationCoordinatorProtoc
     
     /// Replace the contents of the navigation router with a loading animation.
     private func showLoadingAnimation() {
-        let startupProgress: MXSessionStartupProgress? = MXSDKOptions.sharedInstance().enableStartupProgress ? session?.startupProgress : nil
-        let loadingViewController = LaunchLoadingViewController(startupProgress: startupProgress)
+        let loadingViewController = LaunchLoadingViewController()
         loadingViewController.modalPresentationStyle = .fullScreen
         
         // Replace the navigation stack with the loading animation
@@ -764,12 +769,12 @@ extension AuthenticationCoordinator: KeyVerificationCoordinatorDelegate {
             MXLog.debug("[AuthenticationCoordinator][MXKeyVerification] requestAllPrivateKeys: Request key backup private keys")
             crypto.setOutgoingKeyRequestsEnabled(true, onComplete: nil)
         }
-        
+
         navigationRouter.dismissModule(animated: true) { [weak self] in
             self?.authenticationDidComplete()
         }
     }
-    
+
     func keyVerificationCoordinatorDidCancel(_ coordinator: KeyVerificationCoordinatorType) {
         navigationRouter.dismissModule(animated: true) { [weak self] in
             self?.authenticationDidComplete()
@@ -811,4 +816,5 @@ extension AuthenticationCoordinator: AuthFallBackViewControllerDelegate {
     func authFallBackViewControllerDidClose(_ authFallBackViewController: AuthFallBackViewController) {
         dismissFallback()
     }
+
 }

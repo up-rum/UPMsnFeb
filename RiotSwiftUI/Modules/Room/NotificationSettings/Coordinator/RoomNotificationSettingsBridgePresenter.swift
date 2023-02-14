@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,7 @@ import Foundation
 /// Each bridge should be removed once the underlying Coordinator has been integrated by another Coordinator.
 @objcMembers
 final class RoomNotificationSettingsCoordinatorBridgePresenter: NSObject {
+    
     // MARK: - Properties
     
     // MARK: Private
@@ -60,11 +61,11 @@ final class RoomNotificationSettingsCoordinatorBridgePresenter: NSObject {
         viewController.present(navigationController, animated: animated, completion: nil)
         roomNotificationSettingsCoordinator.start()
         
-        coordinator = roomNotificationSettingsCoordinator
+        self.coordinator = roomNotificationSettingsCoordinator
     }
     
     func dismiss(animated: Bool, completion: (() -> Void)?) {
-        guard let coordinator = coordinator else {
+        guard let coordinator = self.coordinator else {
             return
         }
         coordinator.toPresentable().dismiss(animated: animated) {
@@ -78,21 +79,22 @@ final class RoomNotificationSettingsCoordinatorBridgePresenter: NSObject {
 }
 
 // MARK: - RoomNotificationSettingsCoordinatorDelegate
-
 extension RoomNotificationSettingsCoordinatorBridgePresenter: RoomNotificationSettingsCoordinatorDelegate {
     func roomNotificationSettingsCoordinatorDidCancel(_ coordinator: RoomNotificationSettingsCoordinatorType) {
-        delegate?.roomNotificationSettingsCoordinatorBridgePresenterDelegateDidComplete(self)
+        self.delegate?.roomNotificationSettingsCoordinatorBridgePresenterDelegateDidComplete(self)
     }
     
     func roomNotificationSettingsCoordinatorDidComplete(_ coordinator: RoomNotificationSettingsCoordinatorType) {
-        delegate?.roomNotificationSettingsCoordinatorBridgePresenterDelegateDidComplete(self)
+        self.delegate?.roomNotificationSettingsCoordinatorBridgePresenterDelegateDidComplete(self)
     }
 }
 
 // MARK: - UIAdaptivePresentationControllerDelegate
 
 extension RoomNotificationSettingsCoordinatorBridgePresenter: UIAdaptivePresentationControllerDelegate {
+    
     func roomNotificationSettingsCoordinatorDidComplete(_ presentationController: UIPresentationController) {
-        delegate?.roomNotificationSettingsCoordinatorBridgePresenterDelegateDidComplete(self)
+        self.delegate?.roomNotificationSettingsCoordinatorBridgePresenterDelegateDidComplete(self)
     }
+    
 }

@@ -346,11 +346,6 @@
 
 - (void)displayAttachments:(NSArray*)attachmentArray focusOn:(NSString*)eventId
 {
-    if ([attachmentArray isEqualToArray:attachments] && eventId.length == 0)
-    {
-        //  neither the attachments nor the focus changed, can be ignored
-        return;
-    }
     NSString *currentAttachmentEventId = eventId;
     NSString *currentAttachmentOriginalFileName = nil;
     
@@ -1388,19 +1383,13 @@
 
 - (BOOL)prepareSubviewsForTransition:(BOOL)isStartInteraction
 {
-    // Sanity check
-    if (currentVisibleItemIndex >= attachments.count)
-    {
-        return NO;
-    }
-    
+    MXKMediaCollectionViewCell *cell = (MXKMediaCollectionViewCell *)[self.attachmentsCollection.visibleCells firstObject];
     MXKAttachment *attachment = attachments[currentVisibleItemIndex];
     NSString *mimeType = attachment.contentInfo[@"mimetype"];
 
     // Check attachment type for GIFs - this is required because of the extra WKWebView
     if (attachment.type == MXKAttachmentTypeImage && attachment.contentURL && [mimeType isEqualToString:@"image/gif"])
     {
-        MXKMediaCollectionViewCell *cell = (MXKMediaCollectionViewCell *)[self.attachmentsCollection.visibleCells firstObject];
         UIView *customView = cell.customView;
         for (UIView *v in customView.subviews)
         {

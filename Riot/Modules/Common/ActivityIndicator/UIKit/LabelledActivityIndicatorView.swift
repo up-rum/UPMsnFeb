@@ -25,7 +25,7 @@ final class LabelledActivityIndicatorView: UIView, Themable {
         static let cornerRadius: CGFloat = 12.0
         static let stackBackgroundOpacity: CGFloat = 0.9
         static let stackSpacing: CGFloat = 15
-        static let backgroundOpacity: CGFloat = 0.5
+        static let backgroundOpacity: CGFloat = 0.0
     }
     
     private let stackBackgroundView: UIView = {

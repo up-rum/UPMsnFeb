@@ -373,6 +373,8 @@ NSString *const RecentsViewControllerDataReadyNotification = @"RecentsViewContro
 
 - (void)refreshRecentsTable
 {
+    MXLogDebug(@"[RecentsViewController]: Refreshing recents table view")
+
     if (!self.recentsUpdateEnabled)
     {
         isRefreshNeeded = YES;
@@ -382,11 +384,7 @@ NSString *const RecentsViewControllerDataReadyNotification = @"RecentsViewContro
     isRefreshNeeded = NO;
     
     // Refresh the tabBar icon badges
-    if (!BuildSettings.newAppLayoutEnabled)
-    {
-        // Refresh the tabBar icon badges
-        [[AppDelegate theDelegate].masterTabBarController refreshTabBarBadges];
-    }
+    [[AppDelegate theDelegate].masterTabBarController refreshTabBarBadges];
     
     // do not refresh if there is a pending recent drag and drop
     if (movingCellPath)
@@ -1105,12 +1103,9 @@ NSString *const RecentsViewControllerDataReadyNotification = @"RecentsViewContro
         [self refreshRecentsTable];
     }
     
-    if (!BuildSettings.newAppLayoutEnabled)
-    {
-        // Since we've enabled room list pagination, `refreshRecentsTable` not called in this case.
-        // Refresh tab bar badges separately.
-        [[AppDelegate theDelegate].masterTabBarController refreshTabBarBadges];
-    }
+    // Since we've enabled room list pagination, `refreshRecentsTable` not called in this case.
+    // Refresh tab bar badges separately.
+    [[AppDelegate theDelegate].masterTabBarController refreshTabBarBadges];
     
     [self showEmptyViewIfNeeded];
 
@@ -1510,20 +1505,10 @@ NSString *const RecentsViewControllerDataReadyNotification = @"RecentsViewContro
     }
 }
 
-- (NSString *)tableView:(UITableView *)tableView titleForDeleteConfirmationButtonForRowAtIndexPath:(NSIndexPath *)indexPath {
-    return [VectorL10n leave];
-}
-
 #pragma mark - UIScrollViewDelegate
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView
 {
-    if (!self.recentsSearchBar)
-    {
-        [super scrollViewDidScroll:scrollView];
-        return;
-    }
-    
     dispatch_async(dispatch_get_main_queue(), ^{
         
         [self refreshStickyHeadersContainersHeight];
@@ -2057,11 +2042,7 @@ NSString *const RecentsViewControllerDataReadyNotification = @"RecentsViewContro
         }
         else if (section >= self.recentsTableView.numberOfSections)
         {
-            NSDictionary *details = @{
-                @"section": @(section),
-                @"number_of_sections": @(self.recentsTableView.numberOfSections)
-            };
-            MXLogFailureDetails(@"[RecentsViewController] Section in a table view is invalid", details);
+            MXLogFailure(@"[RecentsViewController] Section %ld is invalid in a table view with only %ld sections", section, self.recentsTableView.numberOfSections);
         }
     }
 }
@@ -2226,8 +2207,7 @@ NSString *const RecentsViewControllerDataReadyNotification = @"RecentsViewContro
         [self.view addSubview:emptyView];
     }
     
-    NSLayoutYAxisAnchor *bottomAnchor = self.emptyViewBottomAnchor ?: emptyView.superview.bottomAnchor;
-    emptyViewBottomConstraint = [emptyView.bottomAnchor constraintEqualToAnchor:bottomAnchor constant:-1]; // 1pt spacing for UIToolbar's divider.
+    emptyViewBottomConstraint = [emptyView.bottomAnchor constraintEqualToAnchor:emptyView.superview.bottomAnchor];
     
     emptyView.translatesAutoresizingMaskIntoConstraints = NO;
     
@@ -2469,11 +2449,6 @@ NSString *const RecentsViewControllerDataReadyNotification = @"RecentsViewContro
     editedRoomId = roomId;
     [self changeEditedRoomNotificationSettings];
     editedRoomId = nil;
-}
-
--(void)roomContextActionServiceDidMarkRoom:(id<RoomContextActionServiceProtocol>)service
-{
-    [self refreshRecentsTable];
 }
 
 #pragma mark - RecentCellContextMenuProviderDelegate

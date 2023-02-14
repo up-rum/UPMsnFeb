@@ -36,10 +36,7 @@ typedef NS_ENUM(NSInteger, RoomBubbleCellDataTag)
     RoomBubbleCellDataTagRoomCreationIntro,
     RoomBubbleCellDataTagPoll,
     RoomBubbleCellDataTagLocation,
-    RoomBubbleCellDataTagLiveLocation,
-    RoomBubbleCellDataTagVoiceBroadcastRecord,
-    RoomBubbleCellDataTagVoiceBroadcastPlayback,
-    RoomBubbleCellDataTagVoiceBroadcastNoDisplay
+    RoomBubbleCellDataTagLiveLocation
 };
 
 /**
@@ -104,8 +101,6 @@ typedef NS_ENUM(NSInteger, RoomBubbleCellDataTag)
  Index of the component which needs a sent tick displayed. -1 if none.
  */
 @property(nonatomic) NSInteger componentIndexOfSentMessageTick;
-
-@property(nonatomic, strong) NSString *voiceBroadcastState;
 
 /**
  Indicate that both the text message layout and any additional content height are no longer

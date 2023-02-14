@@ -237,7 +237,6 @@ static BOOL _disableLongPressGestureOnEvent;
     [tapGesture setDelegate:self];
     [self.messageTextView addGestureRecognizer:tapGesture];
     self.messageTextView.userInteractionEnabled = YES;
-    self.messageTextView.clipsToBounds = NO;
     
     // Recognise and make tappable phone numbers, address, etc.
     self.messageTextView.dataDetectorTypes = UIDataDetectorTypeAll;
@@ -432,7 +431,25 @@ static BOOL _disableLongPressGestureOnEvent;
         }
     }
 }
+- (NSString *)timeFormatted:(int)totalSeconds
+{
 
+    int seconds = totalSeconds % 60;
+    int minutes = (totalSeconds / 60) % 60;
+    int hours = totalSeconds / 3600;
+    NSString *timeStr = @"";
+    if (hours > 0) {
+        timeStr = [NSString stringWithFormat:@"%dh ",hours];
+    }
+    if (minutes > 0) {
+        timeStr = [NSString stringWithFormat:@"%@%dm ",timeStr,minutes];
+    }
+    if (seconds > 0) {
+        timeStr = [NSString stringWithFormat:@"%@%ds ",timeStr,seconds];
+    }
+
+    return [NSString stringWithFormat:@"%@", timeStr];
+}
 - (CGFloat)topPositionOfEvent:(NSString*)eventId
 {
     CGFloat topPositionOfEvent = 0;
@@ -598,7 +615,62 @@ static BOOL _disableLongPressGestureOnEvent;
             {
                 newText = self.suitableAttributedTextMessage;
             }
-            
+            MXEvent *event = self.bubbleData.events.firstObject;
+            if (event.content[@"time_limit"] != nil) {
+
+                NSUInteger currentTS = [[NSDate date] timeIntervalSince1970] * 1000;
+                NSUInteger msgTS = event.originServerTs;
+                NSUInteger timeLimit = currentTS - msgTS;
+//                NSLog(@"time=limit-=> %lu",(unsigned long)timeLimit);
+//                NSLog(@"msgTS=limit-=> %lu",(unsigned long)msgTS);
+
+                NSUInteger eventTime = [event.content[@"time_limit"] intValue] -  timeLimit;
+                if(([event.content[@"time_limit"] intValue] > timeLimit) && eventTime > 2000){
+                    
+                    eventTime = eventTime/1000;
+
+
+    //                [self timeFormatted:eventTime];
+                    // NSTimeInterval is defined as double
+            //        NSNumber *timeStampObj = [NSNumber numberWithDouble: timeStamp];
+                     NSString *string = [NSString stringWithFormat:@"%@ ",[self timeFormatted:(long)eventTime]];
+                    NSMutableAttributedString* mutableString = [[NSMutableAttributedString alloc] initWithAttributedString:newText];
+
+
+                    [mutableString appendString:@"\n"];
+//                        CGSize imageSize = CGSizeMake(10, 10);
+//                        NSTextAttachment *attachment = [[NSTextAttachment alloc] init];
+//                        attachment.image = [UIImage imageNamed:@"timeLimited"];//[[AssetImages.roomContextMenuDelete.image vc_resizedWith:imageSize] vc_tintedImageUsingColor:color];
+//                        attachment.bounds = CGRectMake(0, 5, imageSize.width, imageSize.height);
+//                        NSAttributedString *imageString = [NSAttributedString attributedStringWithAttachment:attachment];
+//                        [mutableString appendAttributedString:imageString];
+                    NSAttributedString *time = [[NSAttributedString alloc] initWithString:string attributes:@{ NSForegroundColorAttributeName : [UIColor lightGrayColor], NSFontAttributeName: [UIFont systemFontOfSize:10]}];
+                    [mutableString appendAttributedString:time];;
+
+
+                                newText = mutableString;
+                    }
+                else {
+//                                    [[NSNotificationCenter defaultCenter] postNotificationName:@"deleteTimerMessage" object:nil];
+                                }
+
+//                NSAttributedString *attrString =
+//                [[NSAttributedString alloc] initWithString:string
+//                                                                                 attributes:@{
+//                                                                                     NSFontAttributeName: font,
+//                                                                                     NSForegroundColorAttributeName: color
+//                                                                                 }];
+        //        [attributedStringWithTimeLimited appendAttributedString: attrString];
+//                CGSize imageSize = CGSizeMake(10, 10);
+//                NSTextAttachment *attachment = [[NSTextAttachment alloc] init];
+//                attachment.image = [UIImage imageNamed:@"timeLimited"];//[[AssetImages.roomContextMenuDelete.image vc_resizedWith:imageSize] vc_tintedImageUsingColor:color];
+//                attachment.bounds = CGRectMake(0, font.descender, imageSize.width, imageSize.height);
+//                NSAttributedString *imageString = [NSAttributedString attributedStringWithAttachment:attachment];
+        //        NSMutableAttributedString *result = [[NSMutableAttributedString alloc] initWithAttributedString:imageString];
+//                [attributedStringWithTimeLimited appendAttributedString:attrString];
+//                [attributedStringWithTimeLimited appendAttributedString:imageString];
+//                attributedString = attributedStringWithTimeLimited;
+            }
             // update the text only if it is required
             // updating a text is quite long (even with the same text).
             if (![self.messageTextView.attributedText isEqualToAttributedString:newText])
@@ -806,7 +878,7 @@ static BOOL _disableLongPressGestureOnEvent;
             mimetype = bubbleData.attachment.contentInfo[@"mimetype"];
         }
         
-        if ([mimetype isKindOfClass:[NSString class]] && [mimetype isEqualToString:@"image/gif"])
+        if ([mimetype isEqualToString:@"image/gif"])
         {
             if (_isAutoAnimatedGif)
             {

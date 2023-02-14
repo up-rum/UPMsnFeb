@@ -53,13 +53,9 @@ extension MXRestClient {
         let jsonDictionary = try await getResponse { completion in
             login(parameters: parameters, completion: completion)
         }
+        
         guard let loginResponse = MXLoginResponse(fromJSON: jsonDictionary) else { throw ClientError.decodingError }
         return MXCredentials(loginResponse: loginResponse, andDefaultCredentials: credentials)
-    }
-    
-    /// An async version of generateLoginToken(completion:)
-    func generateLoginToken() async throws -> MXLoginToken {
-        try await getResponse(generateLoginToken)
     }
     
     // MARK: - Registration
@@ -71,7 +67,7 @@ extension MXRestClient {
     
     /// An async version of `isUsernameAvailable(_:completion:)`.
     func isUsernameAvailable(_ username: String) async throws -> Bool {
-        let availability = try await getResponse { completion in
+        let availability = try await getResponse { completion  in
             isUsernameAvailable(username, completion: completion)
         }
         return availability.available
@@ -160,19 +156,9 @@ extension MXRestClient {
             changePassword(from: oldPassword, to: newPassword, logoutDevices: logoutDevices, completion: completion)
         }
     }
-
-    // MARK: - Versions
-
-    /// An async version of `supportedMatrixVersions(completion:)`.
-    func supportedMatrixVersions() async throws -> MXMatrixVersions {
-        try await getResponse({ completion in
-            supportedMatrixVersions(completion: completion)
-        })
-    }
     
     // MARK: - Private
     
-    @MainActor
     private func getResponse<T>(_ callback: (@escaping (MXResponse<T>) -> Void) -> MXHTTPOperation) async throws -> T {
         try await withCheckedThrowingContinuation { continuation in
             _ = callback { response in
@@ -186,7 +172,7 @@ extension MXRestClient {
         }
     }
     
-    @MainActor
+
     private func getResponse<T>(_ callback: (@escaping (T?) -> Void, @escaping (Error?) -> Void) -> MXHTTPOperation) async throws -> T {
         try await withCheckedThrowingContinuation { continuation in
             _ = callback { response in
@@ -202,7 +188,6 @@ extension MXRestClient {
         }
     }
     
-    @MainActor
     private func getResponse<T, U, V>(_ callback: (@escaping (T?, U?, V?) -> Void, @escaping (Error?) -> Void) -> MXHTTPOperation) async throws -> (T?, U?, V?) {
         try await withCheckedThrowingContinuation { continuation in
             _ = callback { arg1, arg2, arg3  in

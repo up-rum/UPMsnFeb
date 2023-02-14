@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@ import XCTest
 @testable import RiotSwiftUI
 
 class AuthenticationChoosePasswordViewModelTests: XCTestCase {
+
     @MainActor func testInitialState() async {
         let viewModel = AuthenticationChoosePasswordViewModel()
         let context = viewModel.context
@@ -28,4 +29,5 @@ class AuthenticationChoosePasswordViewModelTests: XCTestCase {
         XCTAssert(context.viewState.hasInvalidPassword, "The view model should start with an invalid password.")
         XCTAssertFalse(context.signoutAllDevices, "The view model should start with sign out of all devices unchecked.")
     }
+
 }

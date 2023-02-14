@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "Microphone icon.png",
+      "filename" : "action_voice_message.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "Microphone icon@2x.png",
+      "filename" : "action_voice_message@2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "Microphone icon@3x.png",
+      "filename" : "action_voice_message@3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

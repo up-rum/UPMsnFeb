@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-import Combine
 import Foundation
+import Combine
 
 /// A service for changing notification settings and keywords
 protocol NotificationSettingsServiceType {
@@ -40,5 +40,5 @@ protocol NotificationSettingsServiceType {
     ///   - ruleId: The id of the rule.
     ///   - enabled: Whether the rule should be enabled or disabled.
     ///   - actions: The actions to update with.
-    func updatePushRuleActions(for ruleId: String, enabled: Bool, actions: NotificationActions?) async throws
+    func updatePushRuleActions(for ruleId: String, enabled: Bool, actions: NotificationActions?)
 }

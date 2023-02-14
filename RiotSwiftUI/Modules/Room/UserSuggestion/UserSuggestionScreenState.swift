@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,13 +20,13 @@ import SwiftUI
 enum MockUserSuggestionScreenState: MockScreenState, CaseIterable {
     case multipleResults
     
-    private static var members: [RoomMembersProviderMember]!
+    static private var members: [RoomMembersProviderMember]!
     
     var screenType: Any.Type {
         UserSuggestionList.self
     }
     
-    var screenView: ([Any], AnyView) {
+    var screenView: ([Any], AnyView)  {
         let service = UserSuggestionService(roomMemberProvider: self)
         let listViewModel = UserSuggestionViewModel(userSuggestionService: service)
         
@@ -37,7 +37,7 @@ enum MockUserSuggestionScreenState: MockScreenState, CaseIterable {
         return (
             [service, listViewModel],
             AnyView(UserSuggestionListWithInput(viewModel: viewModel)
-                .environmentObject(AvatarViewModel.withMockedServices()))
+                        .addDependency(MockAvatarService.example))
         )
     }
 }
@@ -52,7 +52,7 @@ extension MockUserSuggestionScreenState: RoomMembersProviderProtocol {
     }
     
     private func generateUsersWithCount(_ count: UInt) -> [RoomMembersProviderMember] {
-        (0..<count).map { _ in
+        return (0..<count).map { _ in
             let identifier = "@" + UUID().uuidString
             return RoomMembersProviderMember(userId: identifier, displayName: identifier, avatarUrl: "mxc://matrix.org/VyNYAgahaiAzUoOeZETtQ")
         }

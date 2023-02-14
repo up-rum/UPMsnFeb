@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-import RiotSwiftUI
 import XCTest
+import RiotSwiftUI
 
 class LocationSharingUITests: MockScreenTestCase {
     func testInitialUserLocation() {

@@ -50,7 +50,7 @@ final class ViewModelContext<ViewState: BindableState, ViewAction>: ObservableOb
         get { viewState.bindings[keyPath: keyPath] }
         set { viewState.bindings[keyPath: keyPath] = newValue }
     }
-    
+
     // MARK: Setup
 
     init(initialViewState: ViewState) {
@@ -79,7 +79,7 @@ class StateStoreViewModel<State: BindableState, ViewAction> {
     // MARK: - Properties
 
     // MARK: Public
-    
+
     /// For storing subscription references.
     ///
     /// Left as public for `ViewModel` implementations convenience.
@@ -87,12 +87,12 @@ class StateStoreViewModel<State: BindableState, ViewAction> {
 
     /// Constrained interface for passing to Views.
     var context: Context
-    
+
     var state: State {
         get { context.viewState }
         set { context.viewState = newValue }
     }
-    
+
     // MARK: Setup
 
     init(initialViewState: State) {

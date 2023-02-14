@@ -14,24 +14,33 @@
 // limitations under the License.
 //
 
-import CommonKit
 import SwiftUI
+import CommonKit
 
 struct TemplateSimpleScreenCoordinatorParameters {
     let promptType: TemplateSimpleScreenPromptType
 }
 
 final class TemplateSimpleScreenCoordinator: Coordinator, Presentable {
+    
+    // MARK: - Properties
+    
+    // MARK: Private
+    
     private let parameters: TemplateSimpleScreenCoordinatorParameters
     private let templateSimpleScreenHostingController: UIViewController
     private var templateSimpleScreenViewModel: TemplateSimpleScreenViewModelProtocol
     
     private var indicatorPresenter: UserIndicatorTypePresenterProtocol
     private var loadingIndicator: UserIndicator?
+    
+    // MARK: Public
 
     // Must be used only internally
     var childCoordinators: [Coordinator] = []
     var completion: ((TemplateSimpleScreenViewModelResult) -> Void)?
+    
+    // MARK: - Setup
     
     init(parameters: TemplateSimpleScreenCoordinatorParameters) {
         self.parameters = parameters
@@ -56,7 +65,7 @@ final class TemplateSimpleScreenCoordinator: Coordinator, Presentable {
     }
     
     func toPresentable() -> UIViewController {
-        templateSimpleScreenHostingController
+        return self.templateSimpleScreenHostingController
     }
     
     // MARK: - Private

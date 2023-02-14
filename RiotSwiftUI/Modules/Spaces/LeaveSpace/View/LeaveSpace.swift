@@ -18,20 +18,20 @@ import SwiftUI
 
 struct LeaveSpace: View {
     // MARK: Properties
-    
+
     @ObservedObject var viewModel: MatrixItemChooserViewModel.Context
     let navTitle: String?
-    
+
     // MARK: Private
-    
+
     @Environment(\.theme) private var theme: ThemeSwiftUI
-    
+
     @ViewBuilder
     var body: some View {
         mainView
             .background(theme.colors.background.ignoresSafeArea())
     }
-    
+
     // MARK: - Private
 
     @ViewBuilder
@@ -41,7 +41,7 @@ struct LeaveSpace: View {
             footerView
         }
     }
-    
+
     @ViewBuilder
     private var footerView: some View {
         Button {

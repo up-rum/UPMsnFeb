@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,7 @@ import SwiftUI
 
 extension ThemableTextEditor {
     func showClearButton(text: Binding<String>, alignment: VerticalAlignment = .top) -> some View {
-        modifier(ClearViewModifier(alignment: alignment, text: text))
+        return modifier(ClearViewModifier(alignment: alignment, text: text))
     }
 }
 

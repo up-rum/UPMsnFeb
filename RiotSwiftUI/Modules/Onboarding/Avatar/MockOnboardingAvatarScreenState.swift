@@ -25,23 +25,23 @@ enum MockOnboardingAvatarScreenState: MockScreenState, CaseIterable {
     // mock that screen.
     case placeholderAvatar(userId: String, displayName: String)
     case userSelectedAvatar(userId: String, displayName: String)
-    
+
     /// The associated screen
     var screenType: Any.Type {
         OnboardingAvatarScreen.self
     }
-    
+
     /// A list of screen state definitions
     static var allCases: [MockOnboardingAvatarScreenState] {
         let userId = "@example:matrix.org"
         let displayName = "Jane"
-        
+
         return [
             .placeholderAvatar(userId: userId, displayName: displayName),
             .userSelectedAvatar(userId: userId, displayName: displayName)
         ]
     }
-    
+
     /// Generate the view struct for the screen state.
     var screenView: ([Any], AnyView) {
         let avatarColorCount = DefaultThemeSwiftUI().colors.namesAndAvatars.count
@@ -53,7 +53,7 @@ enum MockOnboardingAvatarScreenState: MockScreenState, CaseIterable {
             viewModel = OnboardingAvatarViewModel(userId: userId, displayName: displayName, avatarColorCount: avatarColorCount)
             viewModel.updateAvatarImage(with: Asset.Images.appSymbol.image)
         }
-        
+
         return (
             [self, viewModel],
             AnyView(OnboardingAvatarScreen(viewModel: viewModel.context)

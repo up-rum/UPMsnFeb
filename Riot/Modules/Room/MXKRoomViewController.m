@@ -221,11 +221,6 @@
 {
     [super viewDidLoad];
     
-    if (BuildSettings.newAppLayoutEnabled)
-    {
-        [self vc_setLargeTitleDisplayMode: UINavigationItemLargeTitleDisplayModeNever];
-    }
-    
     // Check whether the view controller has been pushed via storyboard
     if (!_bubblesTableView)
     {
@@ -296,8 +291,6 @@
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-
-    [self.navigationController setToolbarHidden:YES animated:NO];
     
     // Observe server sync process at room data source level too
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onMatrixSessionChange) name:kMXKRoomDataSourceSyncStatusChanged object:nil];
@@ -315,9 +308,7 @@
     }
     
     // Finalize view controller appearance
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self updateViewControllerAppearanceOnRoomDataSourceState];
-    });
+    [self updateViewControllerAppearanceOnRoomDataSourceState];
     
     // no need to reload the tableview at this stage
     // IOS is going to load it after calling this method
@@ -345,6 +336,11 @@
     {
         _bubblesTableView.hidden = NO;
     }
+
+    if (BuildSettings.newAppLayoutEnabled)
+    {
+        [self vc_setLargeTitleDisplayMode: UINavigationItemLargeTitleDisplayModeNever];
+    }
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -358,7 +354,7 @@
     {
         // Retrieve the potential message partially typed during last room display.
         // Note: We have to wait for viewDidAppear before updating growingTextView (viewWillAppear is too early)
-        inputToolbarView.attributedTextMessage = roomDataSource.partialAttributedTextMessage;
+        inputToolbarView.textMessage = roomDataSource.partialTextMessage;
     }
     
     if (!hasAppearedOnce)
@@ -368,13 +364,6 @@
     
     //  Mark all messages as read when the room is displayed
     [self.roomDataSource.room.summary markAllAsReadLocally];
-    
-    [self updateCurrentEventIdAtTableBottom:YES];
-    
-    if (!self.isContextPreview)
-    {
-        [self.roomDataSource.room resetUnread];
-    }
 }
 
 - (void)viewWillDisappear:(BOOL)animated
@@ -504,7 +493,7 @@
     if (!keyboardView)
     {
         // Check whether the first responder is the input tool bar text composer
-        keyboardView = inputToolbarView.inputAccessoryViewForKeyboard.superview;
+        keyboardView = inputToolbarView.inputAccessoryView.superview;
     }
     
     // Report the keyboard view in order to track keyboard frame changes
@@ -1123,7 +1112,7 @@
         
         MXLogDebug(@"[MXKRoomVC] setRoomInputToolbarViewClass: Set inputToolbarView to class %@", roomInputToolbarViewClass);
         
-        id inputToolbarView = [roomInputToolbarViewClass instantiateRoomInputToolbarView];
+        id inputToolbarView = [roomInputToolbarViewClass roomInputToolbarView];
         self->inputToolbarView = inputToolbarView;
         self->inputToolbarView.delegate = self;
         
@@ -1444,12 +1433,6 @@
             // Display cmd usage in text input as placeholder
             cmdUsage = @"Usage: /topic <topic>";
         }
-    }
-    else if ([string hasPrefix:kMXKSlashCmdDiscardSession])
-    {
-        [roomDataSource.mxSession.crypto discardOutboundGroupSessionForRoomWithRoomId:roomDataSource.roomId onComplete:^{
-            MXLogDebug(@"[MXKRoomVC] Manually discarded outbound group session");
-        }];
     }
     else
     {
@@ -1864,7 +1847,7 @@
                                            
                                            CGFloat localPositionOfEvent = 0.0;
                                            
-                                           if ([cell isKindOfClass:MXKRoomBubbleTableViewCell.class] && ![cell isKindOfClass:MXKRoomEmptyBubbleTableViewCell.class])
+                                           if ([cell isKindOfClass:MXKRoomBubbleTableViewCell.class])
                                            {
                                                MXKRoomBubbleTableViewCell *roomBubbleTableViewCell = (MXKRoomBubbleTableViewCell *)cell;
                                                
@@ -2308,7 +2291,7 @@
                 CGFloat eventBottomPosition = eventTopPosition + cell.frame.size.height;
                 
                 // Compute accurate event positions in case of bubble with multiple components
-                if ([cell isKindOfClass:MXKRoomBubbleTableViewCell.class] && ![cell isKindOfClass:MXKRoomEmptyBubbleTableViewCell.class])
+                if ([cell isKindOfClass:MXKRoomBubbleTableViewCell.class])
                 {
                     MXKRoomBubbleTableViewCell *roomBubbleTableViewCell = (MXKRoomBubbleTableViewCell *)cell;
                     NSArray *bubbleComponents = roomBubbleTableViewCell.bubbleData.bubbleComponents;
@@ -2504,10 +2487,7 @@
                             updateReadMarker = (currentReadMarkerEvent && (currentReadMarkerEvent.originServerTs <= component.event.originServerTs));
                         }
                         
-                        if (self.navigationController.viewControllers.lastObject == self)
-                        {
-                            [roomDataSource.room acknowledgeEvent:component.event andUpdateReadMarker:updateReadMarker];
-                        }
+                        [roomDataSource.room acknowledgeEvent:component.event andUpdateReadMarker:updateReadMarker];
                     }
                     break;
                 }
@@ -2609,11 +2589,11 @@
         roomDataSource.showBubblesDateTime = !roomDataSource.showBubblesDateTime;
         MXLogDebug(@"    -> Turn %@ cells date", roomDataSource.showBubblesDateTime ? @"ON" : @"OFF");
     }
-    else if ([actionIdentifier isEqualToString:kMXKRoomBubbleCellTapOnAttachmentView] && [cell isKindOfClass:MXKRoomBubbleTableViewCell.class] && ![cell isKindOfClass:MXKRoomEmptyBubbleTableViewCell.class])
+    else if ([actionIdentifier isEqualToString:kMXKRoomBubbleCellTapOnAttachmentView] && [cell isKindOfClass:MXKRoomBubbleTableViewCell.class])
     {
         [self showAttachmentInCell:(MXKRoomBubbleTableViewCell *)cell];
     }
-    else if ([actionIdentifier isEqualToString:kMXKRoomBubbleCellLongPressOnProgressView] && [cell isKindOfClass:MXKRoomBubbleTableViewCell.class] && ![cell isKindOfClass:MXKRoomEmptyBubbleTableViewCell.class])
+    else if ([actionIdentifier isEqualToString:kMXKRoomBubbleCellLongPressOnProgressView] && [cell isKindOfClass:MXKRoomBubbleTableViewCell.class])
     {
         MXKRoomBubbleTableViewCell *roomBubbleTableViewCell = (MXKRoomBubbleTableViewCell *)cell;
         
@@ -2724,7 +2704,7 @@
             }
         }
     }
-    else if ([actionIdentifier isEqualToString:kMXKRoomBubbleCellLongPressOnEvent] && [cell isKindOfClass:MXKRoomBubbleTableViewCell.class] && ![cell isKindOfClass:MXKRoomEmptyBubbleTableViewCell.class])
+    else if ([actionIdentifier isEqualToString:kMXKRoomBubbleCellLongPressOnEvent] && [cell isKindOfClass:MXKRoomBubbleTableViewCell.class])
     {
         [self dismissKeyboard];
         
@@ -3094,7 +3074,7 @@
         return;
     }
     
-    if ([cell isKindOfClass:MXKRoomBubbleTableViewCell.class] && ![cell isKindOfClass:MXKRoomEmptyBubbleTableViewCell.class])
+    if ([cell isKindOfClass:MXKRoomBubbleTableViewCell.class])
     {
         MXKRoomBubbleTableViewCell *roomBubbleTableViewCell = (MXKRoomBubbleTableViewCell *)cell;
         selectedText = roomBubbleTableViewCell.bubbleData.textMessage;
@@ -3361,7 +3341,7 @@
     if (_saveProgressTextInput && roomDataSource)
     {
         // Store the potential message partially typed in text input
-        roomDataSource.partialAttributedTextMessage = inputToolbarView.attributedTextMessage;
+        roomDataSource.partialTextMessage = inputToolbarView.textMessage;
     }
     
     [self handleTypingState:typing];
@@ -3369,34 +3349,32 @@
 
 - (void)roomInputToolbarView:(MXKRoomInputToolbarView*)toolbarView heightDidChanged:(CGFloat)height completion:(void (^)(BOOL finished))completion
 {
-    // This dispatch fixes a simultaneous accesses crash if this gets called twice quickly in succession
-    dispatch_async(dispatch_get_main_queue(), ^{
-        // Update layout with animation
-        [UIView animateWithDuration:self.resizeComposerAnimationDuration delay:0 options:UIViewAnimationOptionBeginFromCurrentState | UIViewAnimationOptionCurveEaseIn
-                         animations:^{
-            // We will scroll to bottom if the bottom of the table is currently visible
-            BOOL shouldScrollToBottom = [self isBubblesTableScrollViewAtTheBottom];
-
-            self->_roomInputToolbarContainerHeightConstraint.constant = height;
-            CGFloat bubblesTableViewBottomConst = self->_roomInputToolbarContainerBottomConstraint.constant + self->_roomInputToolbarContainerHeightConstraint.constant + self->_roomActivitiesContainerHeightConstraint.constant;
-
-            self->_bubblesTableViewBottomConstraint.constant = bubblesTableViewBottomConst;
-
-            // Force to render the view
-            [self.view layoutIfNeeded];
-            
-            if (shouldScrollToBottom)
-            {
-                [self scrollBubblesTableViewToBottomAnimated:NO];
-            }
-        }
-                         completion:^(BOOL finished){
-            if (completion)
-            {
-                completion(finished);
-            }
-        }];
-    });
+    _roomInputToolbarContainerHeightConstraint.constant = height;
+    
+    // Update layout with animation
+    [UIView animateWithDuration:self.resizeComposerAnimationDuration delay:0 options:UIViewAnimationOptionBeginFromCurrentState | UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         // We will scroll to bottom if the bottom of the table is currently visible
+                         BOOL shouldScrollToBottom = [self isBubblesTableScrollViewAtTheBottom];
+                         
+                         CGFloat bubblesTableViewBottomConst = self->_roomInputToolbarContainerBottomConstraint.constant + self->_roomInputToolbarContainerHeightConstraint.constant + self->_roomActivitiesContainerHeightConstraint.constant;
+                         
+                        self->_bubblesTableViewBottomConstraint.constant = bubblesTableViewBottomConst;
+                        
+                        // Force to render the view
+                        [self.view layoutIfNeeded];
+                        
+                        if (shouldScrollToBottom)
+                        {
+                            [self scrollBubblesTableViewToBottomAnimated:NO];
+                        }
+                     }
+                     completion:^(BOOL finished){
+                         if (completion)
+                         {
+                             completion(finished);
+                         }
+                     }];
 }
 
 - (void)roomInputToolbarView:(MXKRoomInputToolbarView*)toolbarView sendTextMessage:(NSString*)textMessage
@@ -3633,7 +3611,7 @@
                     
                     // Keep here the image view used to display the attachment in the selected cell.
                     // Note: Only `MXKRoomBubbleTableViewCell` and `MXKSearchTableViewCell` are supported for the moment.
-                    if ([cell isKindOfClass:MXKRoomBubbleTableViewCell.class] && ![cell isKindOfClass:MXKRoomEmptyBubbleTableViewCell.class])
+                    if ([cell isKindOfClass:MXKRoomBubbleTableViewCell.class])
                     {
                         self.openedAttachmentImageView = ((MXKRoomBubbleTableViewCell *)cell).attachmentView.imageView;
                     }
@@ -3811,7 +3789,7 @@
                     
                 }];
                 
-                if ([cell isKindOfClass:MXKRoomBubbleTableViewCell.class] && ![cell isKindOfClass:MXKRoomEmptyBubbleTableViewCell.class])
+                if ([cell isKindOfClass:MXKRoomBubbleTableViewCell.class])
                 {
                     // Start animation in case of download
                     MXKRoomBubbleTableViewCell *roomBubbleTableViewCell = (MXKRoomBubbleTableViewCell *)cell;

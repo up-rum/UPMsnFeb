@@ -14,10 +14,10 @@
 // limitations under the License.
 //
 
-import Combine
 import SwiftUI
+import Combine
 
-typealias OnboardingSplashScreenViewModelType = StateStoreViewModel<OnboardingSplashScreenViewState, OnboardingSplashScreenViewAction>
+typealias OnboardingSplashScreenViewModelType = StateStoreViewModel<OnboardingSplashScreenViewState,OnboardingSplashScreenViewAction>
 
 protocol OnboardingSplashScreenViewModelProtocol {
     var completion: ((OnboardingSplashScreenViewModelResult) -> Void)? { get set }
@@ -25,6 +25,7 @@ protocol OnboardingSplashScreenViewModelProtocol {
 }
 
 class OnboardingSplashScreenViewModel: OnboardingSplashScreenViewModelType, OnboardingSplashScreenViewModelProtocol {
+
     // MARK: - Properties
 
     // MARK: Private
@@ -47,12 +48,12 @@ class OnboardingSplashScreenViewModel: OnboardingSplashScreenViewModelType, Onbo
             register()
         case .login:
             login()
-        case .nextPage:
+        case .uplogin:
             // Wrap back round to the first page index when reaching the end.
-            state.bindings.pageIndex = (state.bindings.pageIndex + 1) % state.content.count
+            uplogin()
         case .previousPage:
             // Prevent the hidden page at index -1 from being shown.
-            state.bindings.pageIndex = max(0, state.bindings.pageIndex - 1)
+            state.bindings.pageIndex = max(0, (state.bindings.pageIndex - 1))
         case .hiddenPage:
             // Hidden page for a nicer animation when looping back to the start.
             state.bindings.pageIndex = -1
@@ -65,5 +66,9 @@ class OnboardingSplashScreenViewModel: OnboardingSplashScreenViewModelType, Onbo
 
     private func login() {
         completion?(.login)
+    }
+
+    private func uplogin() {
+        completion?(.uplogin)
     }
 }

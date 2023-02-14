@@ -18,6 +18,7 @@ import Foundation
 
 /// TemplateRoomsCoordinator input parameters
 struct TemplateRoomsCoordinatorParameters {
+    
     /// The Matrix session
     let session: MXSession
                 

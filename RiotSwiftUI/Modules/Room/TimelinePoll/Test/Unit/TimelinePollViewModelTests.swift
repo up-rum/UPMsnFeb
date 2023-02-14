@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-import Combine
 import XCTest
+import Combine
 
 @testable import RiotSwiftUI
 
@@ -29,17 +29,13 @@ class TimelinePollViewModelTests: XCTestCase {
                              TimelinePollAnswerOption(id: "2", text: "2", count: 1, winner: false, selected: false),
                              TimelinePollAnswerOption(id: "3", text: "3", count: 1, winner: false, selected: false)]
         
-        let timelinePoll = TimelinePollDetails(id: "poll-id",
-                                               question: "Question",
+        let timelinePoll = TimelinePollDetails(question: "Question",
                                                answerOptions: answerOptions,
                                                closed: false,
-                                               startDate: .init(),
                                                totalAnswerCount: 3,
                                                type: .disclosed,
-                                               eventType: .started,
                                                maxAllowedSelections: 1,
-                                               hasBeenEdited: false,
-                                               hasDecryptionError: false)
+                                               hasBeenEdited: false)
         
         viewModel = TimelinePollViewModel(timelinePollDetails: timelinePoll)
         context = viewModel.context

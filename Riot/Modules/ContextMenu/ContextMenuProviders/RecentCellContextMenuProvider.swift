@@ -1,4 +1,4 @@
-// 
+//
 // Copyright 2022 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +28,7 @@ class RecentCellContextMenuProvider: NSObject {
     weak var serviceDelegate: RoomContextActionServiceDelegate?
     weak var menuProviderDelegate: RecentCellContextMenuProviderDelegate?
     private var currentService: RoomContextActionServiceProtocol?
-    
+
     @available(iOS 13.0, *)
     func contextMenuConfiguration(with cellData: MXKRecentCellDataStoring, from cell: UIView, session: MXSession) -> UIContextMenuConfiguration? {
         if cellData.isSuggestedRoom, let childInfo = cellData.roomSummary.spaceChildInfo {
@@ -49,14 +49,14 @@ class RecentCellContextMenuProvider: NSObject {
                 if let self = self {
                     self.menuProviderDelegate?.recentCellContextMenuProviderDidStartShowingPreview(self)
                 }
-                
+
                 if room.summary?.isJoined == true {
                     let storyboard = UIStoryboard(name: "Main", bundle: Bundle.main)
                     guard let roomViewController = storyboard.instantiateViewController(withIdentifier: "RoomViewControllerStoryboardId") as? RoomViewController else {
                         return nil
                     }
                     roomViewController.isContextPreview = true
-                    
+
                     RoomPreviewDataSource.load(withRoomId: room.roomId, threadId: nil, andMatrixSession: session) { [weak roomViewController] roomDataSource in
                         guard let dataSource = roomDataSource as? RoomPreviewDataSource else {
                             return
@@ -78,10 +78,10 @@ class RecentCellContextMenuProvider: NSObject {
                 return actionProvider.menu
             }
         }
-        
+
         return nil
     }
-    
+
     func roomId(from identifier: NSCopying) -> String? {
         let roomId = identifier as? String
         return roomId?.isEmpty == true ? nil : roomId

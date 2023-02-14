@@ -29,72 +29,72 @@ enum LocationManagerAccuracy {
 
 /// LocationManager handles device geolocalization
 class LocationManager: NSObject {
-    
+
     // MARK: - Constants
-    
+
     private enum Constants {
         static let distanceFiler: CLLocationDistance = 200.0
         static let waitForAuthorizationStatusDelay: TimeInterval = 0.5
     }
-    
+
     // MARK: - Properties
-    
+
     // MARK: Private
-    
+
     private let locationManager: CLLocationManager
     private var authorizationHandler: LocationAuthorizationHandler?
     private var authorizationReturnedSinceRequestingAlways = false
-    
+
     // MARK: Public
-    
+
     class var isLocationEnabled: Bool {
         return CLLocationManager.locationServicesEnabled()
     }
-    
+
     private(set) var accuracy: LocationManagerAccuracy
-    
+
     var isUpdatingLocation = false
-    
+
     var lastLocation: CLLocation?
-    
+
     weak var delegate: LocationManagerDelegate?
-    
+
     // MARK: - Setup
-        
+
     init(accuracy: LocationManagerAccuracy, allowsBackgroundLocationUpdates: Bool) {
 
         self.accuracy = accuracy
-        
+
         let locationManager = CLLocationManager()
         locationManager.distanceFilter = Constants.distanceFiler
-        
+
         let desiredLocationAccuracy: CLLocationAccuracy
-        
+
         switch accuracy {
         case .full:
             desiredLocationAccuracy = kCLLocationAccuracyNearestTenMeters
         case .reduced:
             desiredLocationAccuracy = kCLLocationAccuracyHundredMeters
         }
-        
+
         locationManager.desiredAccuracy = desiredLocationAccuracy
         locationManager.allowsBackgroundLocationUpdates = allowsBackgroundLocationUpdates
-        
+
         // Indicate to change status bar appearance when the app uses location services in the background
         locationManager.showsBackgroundLocationIndicator = true
-        
+
         self.locationManager = locationManager
-        
+
         super.init()
     }
-    
+
     // MARK: - Public
-    
+
     /// Start monitoring user location
     func start() {
-        
+
         self.locationManager.delegate = self
-        
+
         switch accuracy {
         case .full:
             self.locationManager.startUpdatingLocation()
@@ -107,10 +107,10 @@ class LocationManager: NSObject {
 
         self.isUpdatingLocation = true
     }
-    
+
     /// Stop monitoring user location
     func stop() {
-        
+
         switch accuracy {
         case .full:
             self.locationManager.stopUpdatingLocation()
@@ -121,12 +121,12 @@ class LocationManager: NSObject {
         self.locationManager.delegate = nil
         self.isUpdatingLocation = false
     }
-    
+
     /// Request location authorization
     func requestAuthorization(_ handler: @escaping LocationAuthorizationHandler) {
-        
+
         let status = self.locationManager.authorizationStatus
-                
+
         switch status {
         case .notDetermined, .authorizedWhenInUse:
             // Try to resquest always authorization
@@ -135,9 +135,9 @@ class LocationManager: NSObject {
             handler(self.locationAuthorizationStatus(from: status))
         }
     }
-    
+
     // MARK: - Private
-    
+
     // Try to request always authorization and if `locationManagerDidChangeAuthorization` is not called within `Constants.waitForAuthorizationStatusDelay` call the input handler.
     // NOTE: As pointed in the Apple doc:
     // - Core Location limits calls to requestAlwaysAuthorization(). After your app calls this method, further calls have no effect.
@@ -148,20 +148,20 @@ class LocationManager: NSObject {
         self.authorizationReturnedSinceRequestingAlways = false
         self.locationManager.delegate = self
         self.locationManager.requestAlwaysAuthorization()
-        
+
         Timer.scheduledTimer(withTimeInterval: Constants.waitForAuthorizationStatusDelay, repeats: false) { [weak self] _ in
             guard let self = self, !self.authorizationReturnedSinceRequestingAlways else {
                 return
             }
-            
+
             self.authorizationAlwaysRequestDidComplete(with: self.locationManager.authorizationStatus)
         }
     }
-    
+
     private func locationAuthorizationStatus(from clLocationAuthorizationStatus: CLAuthorizationStatus) -> LocationAuthorizationStatus {
-        
+
         let status: LocationAuthorizationStatus
-        
+
         switch clLocationAuthorizationStatus {
         case .notDetermined:
             status = .unknown
@@ -174,7 +174,7 @@ class LocationManager: NSObject {
         @unknown default:
             status = .unknown
         }
-        
+
         return status
     }
     private func authorizationAlwaysRequestDidComplete(with status: CLAuthorizationStatus) {
@@ -191,7 +191,7 @@ class LocationManager: NSObject {
 extension LocationManager: CLLocationManagerDelegate {
 
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        
+
         let status = self.locationManager.authorizationStatus
         authorizationReturnedSinceRequestingAlways = true
         if status == .authorizedAlways {
@@ -202,26 +202,26 @@ extension LocationManager: CLLocationManagerDelegate {
             self.authorizationAlwaysRequestDidComplete(with: status)
         }
     }
-    
+
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        
+
         guard let lastLocation = locations.last else {
             return
         }
-        
+
         self.lastLocation = lastLocation
-        
+
         self.delegate?.locationManager(self, didUpdateLocation: lastLocation)
     }
-    
+
     func locationManagerDidResumeLocationUpdates(_ manager: CLLocationManager) {
         MXLog.debug("[LocationManager] Did resume location updates")
     }
-    
+
     func locationManagerDidPauseLocationUpdates(_ manager: CLLocationManager) {
         MXLog.debug("[LocationManager] Did pause location updates")
     }
-    
+
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         MXLog.error("[LocationManager] Did failed", context: error)
     }

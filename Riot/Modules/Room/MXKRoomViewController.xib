@@ -58,7 +58,7 @@
                 <constraint firstAttribute="bottom" secondItem="nLd-BP-JAE" secondAttribute="bottom" id="kQ6-Cg-FMi"/>
             </constraints>
             <nil key="simulatedStatusBarMetrics"/>
-            <point key="canvasLocation" x="130" y="132"/>
+            <point key="canvasLocation" x="140" y="106"/>
         </view>
     </objects>
 </document>

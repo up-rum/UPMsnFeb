@@ -34,8 +34,8 @@ struct RoomCoordinatorParameters {
     /// The matrix session in which the room should be available.
     let session: MXSession
     
-    /// The room identifier. `nil` on new DM
-    let roomId: String?
+    /// The room identifier
+    let roomId: String
     
     /// The identifier of the parent space. `nil` for home space
     let parentSpaceId: String?
@@ -45,9 +45,6 @@ struct RoomCoordinatorParameters {
     
     /// If not nil, specified thread will be opened.
     let threadId: String?
-    
-    /// The user identifier to create a new DM
-    let userId: String?
     
     /// Display configuration for the room
     let displayConfiguration: RoomDisplayConfiguration
@@ -67,11 +64,10 @@ struct RoomCoordinatorParameters {
                  navigationRouterStore: NavigationRouterStoreProtocol?,
                  userIndicatorPresenter: UserIndicatorTypePresenterProtocol,
                  session: MXSession,
-                 roomId: String?,
+                 roomId: String,
                  parentSpaceId: String?,
                  eventId: String?,
                  threadId: String?,
-                 userId: String?,
                  displayConfiguration: RoomDisplayConfiguration,
                  previewData: RoomPreviewData?,
                  showSettingsInitially: Bool,
@@ -84,7 +80,6 @@ struct RoomCoordinatorParameters {
         self.parentSpaceId = parentSpaceId
         self.eventId = eventId
         self.threadId = threadId
-        self.userId = userId
         self.displayConfiguration = displayConfiguration
         self.previewData = previewData
         self.showSettingsInitially = showSettingsInitially
@@ -97,10 +92,9 @@ struct RoomCoordinatorParameters {
          userIndicatorPresenter: UserIndicatorTypePresenterProtocol,
          session: MXSession,
          parentSpaceId: String?,
-         roomId: String?,
+         roomId: String,
          eventId: String? = nil,
          threadId: String? = nil,
-         userId: String? = nil,
          showSettingsInitially: Bool,
          displayConfiguration: RoomDisplayConfiguration = .default,
          autoJoinInvitedRoom: Bool = false) {
@@ -113,7 +107,6 @@ struct RoomCoordinatorParameters {
                   parentSpaceId: parentSpaceId,
                   eventId: eventId,
                   threadId: threadId,
-                  userId: userId,
                   displayConfiguration: displayConfiguration,
                   previewData: nil,
                   showSettingsInitially: showSettingsInitially,
@@ -135,7 +128,6 @@ struct RoomCoordinatorParameters {
                   parentSpaceId: parentSpaceId,
                   eventId: nil,
                   threadId: nil,
-                  userId: nil,
                   displayConfiguration: .default,
                   previewData: previewData,
                   showSettingsInitially: false,

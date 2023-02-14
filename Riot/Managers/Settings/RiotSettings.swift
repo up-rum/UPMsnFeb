@@ -32,7 +32,6 @@ final class RiotSettings: NSObject {
         static let showAllRoomsInHomeSpace = "showAllRoomsInHomeSpace"
         static let enableUISIAutoReporting = "enableUISIAutoReporting"
         static let enableLiveLocationSharing = "enableLiveLocationSharing"
-        static let showIPAddressesInSessionsManager = "showIPAddressesInSessionsManager"
     }
     
     static let shared = RiotSettings()
@@ -110,7 +109,13 @@ final class RiotSettings: NSObject {
     
     /// Whether the user was previously shown the Matomo analytics prompt.
     var hasSeenAnalyticsPrompt: Bool {
-        RiotSettings.defaults.object(forKey: UserDefaultsKeys.enableAnalytics) != nil
+        RiotSettings.shared.enableAnalytics = false
+        return true
+        // The order is important here. PostHog ignores the reset if stopped.
+//        reset()
+//        client.stop()
+//        monitoringClient.stop()
+//        RiotSettings.defaults.object(forKey: UserDefaultsKeys.enableAnalytics) != nil
     }
     
     /// Whether the user has both seen the Matomo analytics prompt and declined it.
@@ -153,10 +158,6 @@ final class RiotSettings: NSObject {
     @UserDefault(key: "enableThreads", defaultValue: false, storage: defaults)
     var enableThreads
     
-    /// Indicates if threads should be forced enabled in the timeline.
-    @UserDefault(key: "forceThreadsEnabled", defaultValue: true, storage: defaults)
-    var forceThreadsEnabled
-
     /// Indicates if auto reporting of decryption errors is enabled
     @UserDefault(key: UserDefaultsKeys.enableUISIAutoReporting, defaultValue: BuildSettings.cryptoUISIAutoReportingEnabled, storage: defaults)
     var enableUISIAutoReporting
@@ -168,7 +169,6 @@ final class RiotSettings: NSObject {
             NotificationCenter.default.post(name: RiotSettings.didUpdateLiveLocationSharingActivation, object: self)
         }
     }
-
     /// Flag indicating if the new session manager is enabled
     @UserDefault(key: "enableNewSessionManager", defaultValue: false, storage: defaults)
     var enableNewSessionManager
@@ -183,19 +183,18 @@ final class RiotSettings: NSObject {
 
     @UserDefault(key: "enableWysiwygTextFormatting", defaultValue: true, storage: defaults)
     var enableWysiwygTextFormatting
-    
+
     /// Flag indicating if the IP addresses should be shown in the new device manager
-    @UserDefault(key: UserDefaultsKeys.showIPAddressesInSessionsManager, defaultValue: false, storage: defaults)
-    var showIPAddressesInSessionsManager
-    
+//    @UserDefault(key: UserDefaultsKeys.showIPAddressesInSessionsManager, defaultValue: false, storage: defaults)
+//    var showIPAddressesInSessionsManager
+
     /// Flag indicating if the voice broadcast feature is enabled
     @UserDefault(key: "enableVoiceBroadcast", defaultValue: false, storage: defaults)
     var enableVoiceBroadcast
-    
     /// Flag indicating if we are using rust-based `MatrixCryptoSDK` instead of `MatrixSDK`'s internal crypto module
     @UserDefault(key: "enableCryptoSDK", defaultValue: false, storage: defaults)
     var enableCryptoSDK
-
+    
     // MARK: Calls
     
     /// Indicate if `allowStunServerFallback` settings has been set once.
@@ -210,6 +209,9 @@ final class RiotSettings: NSObject {
     
     @UserDefault(key: "hideVerifyThisSessionAlert", defaultValue: false, storage: defaults)
     var hideVerifyThisSessionAlert
+    
+    @UserDefault(key: "hideReviewSessionsAlert", defaultValue: false, storage: defaults)
+    var hideReviewSessionsAlert
     
     @UserDefault(key: "matrixApps", defaultValue: false, storage: defaults)
     var matrixApps
@@ -249,7 +251,7 @@ final class RiotSettings: NSObject {
     var roomScreenEnableMessageBubbles
 
     var roomTimelineStyleIdentifier: RoomTimelineStyleIdentifier {
-        return self.roomScreenEnableMessageBubbles ? .bubble : .plain
+        return self.roomScreenEnableMessageBubbles ? .bubble : .bubble //.plain //Rum
     }
 
     /// A setting used to display the latest known display name and avatar in the timeline
@@ -315,6 +317,9 @@ final class RiotSettings: NSObject {
     
     @UserDefault(key: "homeScreenShowRoomsTab", defaultValue: BuildSettings.homeScreenShowRoomsTab, storage: defaults)
     var homeScreenShowRoomsTab
+
+    @UserDefault(key: "homeScreenShowCallHistoryTab", defaultValue: BuildSettings.homeScreenShowCallHistoryTab, storage: defaults)
+    var homeScreenShowCallHistoryTab
     
     // MARK: General Settings
     
@@ -405,7 +410,6 @@ final class RiotSettings: NSObject {
     /// Number of spaces previously tracked by the `AnalyticsSpaceTracker` instance.
     @UserDefault(key: "lastNumberOfTrackedSpaces", defaultValue: nil, storage: defaults)
     var lastNumberOfTrackedSpaces: Int?
-    
 }
 
 // MARK: - RiotSettings notification constants

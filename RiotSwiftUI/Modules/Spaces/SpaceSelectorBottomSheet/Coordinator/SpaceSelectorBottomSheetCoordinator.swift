@@ -28,7 +28,7 @@ struct SpaceSelectorBottomSheetCoordinatorParameters {
     let session: MXSession
     let selectedSpaceId: String?
     let showHomeSpace: Bool
-    
+
     init(session: MXSession,
          selectedSpaceId: String? = nil,
          showHomeSpace: Bool = false) {
@@ -40,12 +40,12 @@ struct SpaceSelectorBottomSheetCoordinatorParameters {
 
 final class SpaceSelectorBottomSheetCoordinator: NSObject, Coordinator, Presentable {
     // MARK: - Properties
-    
+
     private let parameters: SpaceSelectorBottomSheetCoordinatorParameters
-    
+
     private let navigationRouter: NavigationRouterType
     private var spaceIdStack: [String]
-    
+
     private weak var roomDetailCoordinator: SpaceChildRoomDetailCoordinator?
 
     // MARK: - Public
@@ -53,46 +53,46 @@ final class SpaceSelectorBottomSheetCoordinator: NSObject, Coordinator, Presenta
     // Must be used only internally
     var childCoordinators: [Coordinator] = []
     var completion: ((SpaceSelectorBottomSheetCoordinatorResult) -> Void)?
-    
+
     // MARK: - Setup
-    
+
     init(parameters: SpaceSelectorBottomSheetCoordinatorParameters,
          navigationRouter: NavigationRouterType = NavigationRouter(navigationController: RiotNavigationController())) {
         self.parameters = parameters
         self.navigationRouter = navigationRouter
         spaceIdStack = []
-        
+
         super.init()
-        
+
         setupNavigationRouter()
     }
-    
+
     // MARK: - Public
-    
+
     func start() {
         Analytics.shared.trackScreen(.spaceBottomSheet)
         push(createSpaceSelectorCoordinator(parentSpaceId: nil))
     }
-    
+
     func toPresentable() -> UIViewController {
         navigationRouter.toPresentable()
     }
-    
+
     // MARK: - Private
-    
+
     private func setupNavigationRouter() {
         guard #available(iOS 15.0, *) else { return }
-        
+
         guard let sheetController = navigationRouter.toPresentable().sheetPresentationController else {
             MXLog.debug("[SpaceSelectorBottomSheetCoordinator] setup: no sheetPresentationController found")
             return
         }
-        
+
         sheetController.detents = [.medium(), .large()]
         sheetController.prefersGrabberVisible = true
         sheetController.selectedDetentIdentifier = .medium
         sheetController.prefersScrollingExpandsWhenScrolledToEdge = true
-        
+
         navigationRouter.toPresentable().presentationController?.delegate = self
     }
 
@@ -102,7 +102,7 @@ final class SpaceSelectorBottomSheetCoordinator: NSObject, Coordinator, Presenta
         } else {
             navigationRouter.push(coordinator.toPresentable(), animated: true) { [weak self] in
                 guard let self = self else { return }
-                
+
                 self.remove(childCoordinator: coordinator)
                 if coordinator is SpaceSelectorCoordinator {
                     self.spaceIdStack.removeLast()
@@ -110,7 +110,7 @@ final class SpaceSelectorBottomSheetCoordinator: NSObject, Coordinator, Presenta
             }
         }
     }
-    
+
     private func createSpaceSelectorCoordinator(parentSpaceId: String?) -> SpaceSelectorCoordinator {
         let parameters = SpaceSelectorCoordinatorParameters(session: parameters.session,
                                                             parentSpaceId: parentSpaceId,
@@ -120,7 +120,7 @@ final class SpaceSelectorBottomSheetCoordinator: NSObject, Coordinator, Presenta
         let coordinator = SpaceSelectorCoordinator(parameters: parameters)
         coordinator.completion = { [weak self] result in
             guard let self = self else { return }
-            
+
             switch result {
             case .cancel:
                 self.completion?(.cancel)
@@ -141,24 +141,24 @@ final class SpaceSelectorBottomSheetCoordinator: NSObject, Coordinator, Presenta
                 self.completion?(.createSpace(parentSpaceId))
             }
         }
-        
+
         coordinator.start()
-        
+
         add(childCoordinator: coordinator)
 
         if let spaceId = parentSpaceId {
             spaceIdStack.append(spaceId)
         }
-        
+
         return coordinator
     }
-    
+
     private func createSpaceDetailCoordinator(forSpaceWithId spaceId: String) -> SpaceDetailCoordinator {
         let parameters = SpaceDetailCoordinatorParameters(spaceId: spaceId, session: parameters.session, showCancel: false)
         let coordinator = SpaceDetailCoordinator(parameters: parameters)
         coordinator.completion = { [weak self] result in
             guard let self = self else { return }
-            
+
             self.remove(childCoordinator: coordinator)
             switch result {
             case .join:
@@ -167,20 +167,20 @@ final class SpaceSelectorBottomSheetCoordinator: NSObject, Coordinator, Presenta
                 self.navigationRouter.popModule(animated: true)
             }
         }
-        
+
         coordinator.start()
-        
+
         add(childCoordinator: coordinator)
 
         return coordinator
     }
-    
+
     private func trackSpaceSelection(with spaceId: String?) {
         guard parameters.selectedSpaceId != spaceId else {
             Analytics.shared.trackInteraction(.spacePanelSelectedSpace)
             return
         }
-        
+
         if spaceIdStack.isEmpty {
             Analytics.shared.trackInteraction(.spacePanelSwitchSpace)
         } else {

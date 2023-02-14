@@ -48,8 +48,6 @@
 {
     [super viewDidLoad];
 
-    [self vc_setLargeTitleDisplayMode:UINavigationItemLargeTitleDisplayModeNever];
-    
     // Hide line separators of empty cells
     self.tableView.tableFooterView = [[UIView alloc] init];
     

@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2022 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,8 +18,9 @@ import Foundation
 
 /// View data for LiveLocationListItem
 struct LiveLocationListItemViewData: Identifiable {
+    
     var id: String {
-        userId
+        return userId
     }
         
     let userId: String

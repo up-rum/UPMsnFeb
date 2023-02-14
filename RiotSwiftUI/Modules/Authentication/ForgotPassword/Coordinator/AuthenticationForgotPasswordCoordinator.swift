@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-import CommonKit
 import SwiftUI
+import CommonKit
 
 struct AuthenticationForgotPasswordCoordinatorParameters {
     let navigationRouter: NavigationRouterType
@@ -32,6 +32,7 @@ enum AuthenticationForgotPasswordCoordinatorResult {
 }
 
 final class AuthenticationForgotPasswordCoordinator: Coordinator, Presentable {
+    
     // MARK: - Properties
     
     // MARK: Private
@@ -82,12 +83,34 @@ final class AuthenticationForgotPasswordCoordinator: Coordinator, Presentable {
     }
     
     func toPresentable() -> UIViewController {
-        authenticationForgotPasswordHostingController
+        return self.authenticationForgotPasswordHostingController
     }
     
     // MARK: - Private
     
     /// Set up the view model. This method is extracted from `start()` so it can run on the `MainActor`.
+
+    @MainActor func forgotPasswordApi(username:String) {
+
+        startLoading()
+        APIServices.shared.upForgotPasswordApi(username: username) { response in
+            self.stopLoading()
+            if response != nil {
+//                print(response)
+//                self.state.bindings.showingAlert = true
+            }
+            self.authenticationForgotPasswordViewModel.displayAlert()
+
+        }
+            failure: { error in
+//               print(error)
+                self.authenticationForgotPasswordViewModel.displayAlert()
+
+                self.stopLoading()
+//                self.state.bindings.showingAlert = true
+//                self.displayError(.mxError("Request successfully sent, please check your mail."))
+            }
+    }
     @MainActor private func setupViewModel() {
         authenticationForgotPasswordViewModel.callback = { [weak self] result in
             guard let self = self else { return }
@@ -95,7 +118,8 @@ final class AuthenticationForgotPasswordCoordinator: Coordinator, Presentable {
             
             switch result {
             case .send(let emailAddress):
-                self.sendEmail(emailAddress)
+                self.forgotPasswordApi(username: emailAddress)
+//                self.sendEmail(emailAddress)
             case .cancel:
                 self.callback?(.cancel)
             case .done:
@@ -164,8 +188,7 @@ final class AuthenticationForgotPasswordCoordinator: Coordinator, Presentable {
     /// Processes an error to either update the flow or display it to the user.
     @MainActor private func handleError(_ error: Error) {
         if let mxError = MXError(nsError: error as NSError) {
-            let message = mxError.authenticationErrorMessage()
-            authenticationForgotPasswordViewModel.displayError(.mxError(message))
+            authenticationForgotPasswordViewModel.displayError(.mxError(mxError.error))
             return
         }
         

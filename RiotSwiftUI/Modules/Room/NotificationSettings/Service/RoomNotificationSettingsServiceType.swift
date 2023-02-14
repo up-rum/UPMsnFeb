@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,7 @@ typealias UpdateRoomNotificationStateCompletion = () -> Void
 typealias RoomNotificationStateCallback = (RoomNotificationState) -> Void
 
 protocol RoomNotificationSettingsServiceType {
+
     func observeNotificationState(listener: @escaping RoomNotificationStateCallback)
     func update(state: RoomNotificationState, completion: @escaping UpdateRoomNotificationStateCompletion)
     var notificationState: RoomNotificationState { get }

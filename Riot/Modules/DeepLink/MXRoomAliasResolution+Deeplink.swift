@@ -29,7 +29,9 @@ import MatrixSDK
             return nil
         }
         
-        return fragment(for: roomId)
+        return MXTools.encodeURIComponent(
+            fragment(for: roomId)
+        )
     }
     
     private func fragment(for roomId: String) -> String {

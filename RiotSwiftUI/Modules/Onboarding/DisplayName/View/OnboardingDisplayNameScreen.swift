@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +17,7 @@
 import SwiftUI
 
 struct OnboardingDisplayNameScreen: View {
+
     // MARK: - Properties
     
     // MARK: Private
@@ -63,6 +64,7 @@ struct OnboardingDisplayNameScreen: View {
     /// The icon, title and message views.
     var header: some View {
         VStack(spacing: 8) {
+            
             OnboardingIconImage(image: Asset.Images.onboardingCongratulationsIcon)
                 .padding(.bottom, 8)
             

@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,12 +14,13 @@
 // limitations under the License.
 //
 
-import Combine
 import SwiftUI
+import Combine
 
-typealias UserSuggestionViewModelType = StateStoreViewModel<UserSuggestionViewState, UserSuggestionViewAction>
+typealias UserSuggestionViewModelType = StateStoreViewModel <UserSuggestionViewState,UserSuggestionViewAction>
 
 class UserSuggestionViewModel: UserSuggestionViewModelType, UserSuggestionViewModelProtocol {
+    
     // MARK: - Properties
     
     // MARK: Private
@@ -36,15 +37,15 @@ class UserSuggestionViewModel: UserSuggestionViewModelType, UserSuggestionViewMo
         self.userSuggestionService = userSuggestionService
         
         let items = userSuggestionService.items.value.map { suggestionItem in
-            UserSuggestionViewStateItem(id: suggestionItem.userId, avatar: suggestionItem, displayName: suggestionItem.displayName)
+            return UserSuggestionViewStateItem(id: suggestionItem.userId, avatar: suggestionItem, displayName: suggestionItem.displayName)
         }
         
         super.init(initialViewState: UserSuggestionViewState(items: items))
         
         userSuggestionService.items.sink { [weak self] items in
-            self?.state.items = items.map { item in
+            self?.state.items = items.map({ item in
                 UserSuggestionViewStateItem(id: item.userId, avatar: item, displayName: item.displayName)
-            }
+            })
         }.store(in: &cancellables)
     }
     

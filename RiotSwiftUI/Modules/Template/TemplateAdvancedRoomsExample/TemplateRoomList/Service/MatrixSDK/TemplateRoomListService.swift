@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,26 +14,36 @@
 // limitations under the License.
 //
 
-import Combine
 import Foundation
+import Combine
 
 class TemplateRoomListService: TemplateRoomListServiceProtocol {
+    
+    // MARK: - Properties
+    
+    // MARK: Private
+    
     private let session: MXSession
     private var listenerReference: Any?
-
+    
+    // MARK: Public
     private(set) var roomsSubject: CurrentValueSubject<[TemplateRoomListRoom], Never>
+    
+    // MARK: - Setup
     
     init(session: MXSession) {
         self.session = session
         
         let unencryptedRooms = session.rooms
-            .filter { !$0.summary.isEncrypted }
+            .filter({ !$0.summary.isEncrypted })
             .map(TemplateRoomListRoom.init(mxRoom:))
-        roomsSubject = CurrentValueSubject(unencryptedRooms)
+        self.roomsSubject = CurrentValueSubject(unencryptedRooms)
     }
+
 }
 
-private extension TemplateRoomListRoom {
+fileprivate extension TemplateRoomListRoom {
+    
     init(mxRoom: MXRoom) {
         self.init(id: mxRoom.roomId, avatar: mxRoom.avatarData, displayName: mxRoom.summary.displayname)
     }

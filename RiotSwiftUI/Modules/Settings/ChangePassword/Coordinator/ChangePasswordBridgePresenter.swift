@@ -30,6 +30,7 @@ import MatrixSDK
 /// once the underlying Coordinator has been integrated by another Coordinator.
 @objcMembers
 final class ChangePasswordCoordinatorBridgePresenter: NSObject {
+
     // MARK: - Constants
 
     // MARK: - Properties
@@ -56,7 +57,8 @@ final class ChangePasswordCoordinatorBridgePresenter: NSObject {
     // MARK: - Public
 
     func present(from viewController: UIViewController, animated: Bool) {
-        let params = ChangePasswordCoordinatorParameters(restClient: session.matrixRestClient)
+
+        let params = ChangePasswordCoordinatorParameters(restClient: self.session.matrixRestClient)
 
         let changePasswordCoordinator = ChangePasswordCoordinator(parameters: params)
         changePasswordCoordinator.callback = { [weak self] in
@@ -72,11 +74,11 @@ final class ChangePasswordCoordinatorBridgePresenter: NSObject {
         viewController.present(navController, animated: animated, completion: nil)
         changePasswordCoordinator.start()
 
-        coordinator = changePasswordCoordinator
+        self.coordinator = changePasswordCoordinator
     }
 
     func dismiss(animated: Bool, completion: (() -> Void)?) {
-        guard let coordinator = coordinator else {
+        guard let coordinator = self.coordinator else {
             return
         }
 

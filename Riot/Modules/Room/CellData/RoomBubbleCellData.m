@@ -63,6 +63,8 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
 - (instancetype)initWithEvent:(MXEvent *)event andRoomState:(MXRoomState *)roomState andRoomDataSource:(MXKRoomDataSource *)roomDataSource
 {
     self = [super initWithEvent:event andRoomState:roomState andRoomDataSource:roomDataSource];
+    NSLog(@":::::::::EVENTS::::::::::");
+    NSLog(@"%@", self.events);
     
     if (self)
     {
@@ -148,11 +150,10 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
                 self.collapsed = YES;
                 
                 // Show timestamps always on right
-                self.displayTimestampForSelectedComponentOnLeftWhenPossible = NO;
+                self.displayTimestampForSelectedComponentOnLeftWhenPossible = YES;
                 break;
             }
             case MXEventTypePollStart:
-            case MXEventTypePollEnd:
             {
                 self.tag = RoomBubbleCellDataTagPoll;
                 self.collapsable = NO;
@@ -181,85 +182,16 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
                         self.tag = RoomBubbleCellDataTagGroupCall;
                         
                         // Show timestamps always on right
-                        self.displayTimestampForSelectedComponentOnLeftWhenPossible = NO;
+                        self.displayTimestampForSelectedComponentOnLeftWhenPossible = YES;
                     }
-                }
-                else if ([event.type isEqualToString:VoiceBroadcastSettings.voiceBroadcastInfoContentKeyType])
-                {
-                    VoiceBroadcastInfo *voiceBroadcastInfo = [VoiceBroadcastInfo modelFromJSON: event.content];
-                    
-                    // Check if the state event corresponds to the beginning of a voice broadcast
-                    if ([VoiceBroadcastInfo isStartedFor:voiceBroadcastInfo.state])
-                    {
-                        // Retrieve the most recent voice broadcast info.
-                        MXEvent *lastVoiceBroadcastInfoEvent = [roomDataSource.roomState stateEventsWithType:VoiceBroadcastSettings.voiceBroadcastInfoContentKeyType].lastObject;
-                        if (event.originServerTs > lastVoiceBroadcastInfoEvent.originServerTs)
-                        {
-                            lastVoiceBroadcastInfoEvent = event;
-                        }
-                        
-                        VoiceBroadcastInfo *lastVoiceBroadcastInfo = [VoiceBroadcastInfo modelFromJSON: lastVoiceBroadcastInfoEvent.content];
-                        
-                        // Handle the specific case where the state event is a started voice broadcast (the voiceBroadcastId is the event id itself).
-                        if (!lastVoiceBroadcastInfo.voiceBroadcastId)
-                        {
-                            lastVoiceBroadcastInfo.voiceBroadcastId = lastVoiceBroadcastInfoEvent.eventId;
-                        }
-                        
-                        // Check if the voice broadcast is still alive.
-                        if ([lastVoiceBroadcastInfo.voiceBroadcastId isEqualToString:event.eventId] && ![VoiceBroadcastInfo isStoppedFor:lastVoiceBroadcastInfo.state])
-                        {
-                            // Check whether this broadcast is sent from the currrent session to display it with the recorder view or not.
-                            if ([event.stateKey isEqualToString:self.mxSession.myUserId] &&
-                                [voiceBroadcastInfo.deviceId isEqualToString:self.mxSession.myDeviceId])
-                            {
-                                self.tag = RoomBubbleCellDataTagVoiceBroadcastRecord;
-                            }
-                            else
-                            {
-                                self.tag = RoomBubbleCellDataTagVoiceBroadcastPlayback;
-                            }
-                            
-                            self.voiceBroadcastState = lastVoiceBroadcastInfo.state;
-                        }
-                        else
-                        {
-                            self.tag = RoomBubbleCellDataTagVoiceBroadcastPlayback;
-                            self.voiceBroadcastState = VoiceBroadcastInfo.stoppedValue;
-                        }
-                    }
-                    else
-                    {
-                        self.tag = RoomBubbleCellDataTagVoiceBroadcastNoDisplay;
-                        
-                        if ([VoiceBroadcastInfo isStoppedFor:voiceBroadcastInfo.state])
-                        {
-                            // This state event corresponds to the end of a voice broadcast
-                            // Force the tag of the potential cellData which corresponds to the started event to switch the display from recorder to listener
-                            RoomBubbleCellData *bubbleData = [roomDataSource cellDataOfEventWithEventId:voiceBroadcastInfo.voiceBroadcastId];
-                            bubbleData.tag = RoomBubbleCellDataTagVoiceBroadcastPlayback;
-                            bubbleData.voiceBroadcastState = VoiceBroadcastInfo.stoppedValue;
-                        }
-                    }
-                    self.collapsable = NO;
-                    self.collapsed = NO;
-                    
-                    break;
                 }
                 
                 break;
             }
             case MXEventTypeRoomMessage:
             {
-                if (event.location)
-                {
+                if (event.location) {
                     self.tag = RoomBubbleCellDataTagLocation;
-                    self.collapsable = NO;
-                    self.collapsed = NO;
-                }
-                else if (event.content[VoiceBroadcastSettings.voiceBroadcastContentKeyChunkType])
-                {
-                    self.tag = RoomBubbleCellDataTagVoiceBroadcastNoDisplay;
                     self.collapsable = NO;
                     self.collapsed = NO;
                 }
@@ -295,14 +227,6 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
     if (self.tag == RoomBubbleCellDataTagLiveLocation)
     {
         [self updateBeaconInfoSummaryWithId:eventId andEvent:event];
-    }
-    
-    // Handle here the case where an audio chunk of a voice broadcast have been decrypted with delay
-    // We take the opportunity of this update to disable the display of this chunk in the room timeline
-    if (event.eventType == MXEventTypeRoomMessage && event.content[VoiceBroadcastSettings.voiceBroadcastContentKeyChunkType]) {
-        self.tag = RoomBubbleCellDataTagVoiceBroadcastNoDisplay;
-        self.collapsable = NO;
-        self.collapsed = NO;
     }
 
     return retVal;
@@ -349,46 +273,42 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
 
 - (BOOL)hasNoDisplay
 {
-    BOOL hasNoDisplay = YES;
-    
-    switch (self.tag)
+    if (self.tag == RoomBubbleCellDataTagKeyVerificationNoDisplay)
     {
-        case RoomBubbleCellDataTagKeyVerificationNoDisplay:
-            hasNoDisplay = YES;
-            break;
-        case RoomBubbleCellDataTagRoomCreationIntro:
-            hasNoDisplay = NO;
-            break;
-        case RoomBubbleCellDataTagPoll:
-            if (!self.events.lastObject.isEditEvent)
-            {
-                hasNoDisplay = NO;
-            }
-            
-            break;
-        case RoomBubbleCellDataTagLocation:
-            hasNoDisplay = NO;
-            break;
-        case RoomBubbleCellDataTagLiveLocation:
-            // Show the cell only if the summary exists
-            if (self.beaconInfoSummary)
-            {
-                hasNoDisplay = NO;
-            }
-            
-            break;
-        case RoomBubbleCellDataTagVoiceBroadcastRecord:
-        case RoomBubbleCellDataTagVoiceBroadcastPlayback:
-            hasNoDisplay = NO;
-            break;
-        case RoomBubbleCellDataTagVoiceBroadcastNoDisplay:
-            break;
-        default:
-            hasNoDisplay = [super hasNoDisplay];
-            break;
+        return YES;
     }
     
-    return hasNoDisplay;
+    if (self.tag == RoomBubbleCellDataTagRoomCreationIntro)
+    {
+        return NO;
+    }
+    
+    if (self.tag == RoomBubbleCellDataTagPoll)
+    {
+        if (self.events.lastObject.isEditEvent) {
+            return YES;
+        }
+        
+        return NO;
+    }
+    
+    if (self.tag == RoomBubbleCellDataTagLocation)
+    {
+        return NO;
+    }
+    
+    if (self.tag == RoomBubbleCellDataTagLiveLocation)
+    {
+        // If the summary does not exist don't show the cell
+        if (!self.beaconInfoSummary)
+        {
+            return YES;
+        }
+        
+        return NO;
+    }
+    
+    return [super hasNoDisplay];
 }
 
 - (BOOL)hasThreadRoot
@@ -422,6 +342,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
 
 - (BOOL)collapseWith:(id<MXKRoomBubbleCellDataStoring>)cellData
 {
+    
     if (self.tag == RoomBubbleCellDataTagMembership
         && cellData.tag == RoomBubbleCellDataTagMembership)
     {
@@ -445,6 +366,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
     }
     else if (self.tag == RoomBubbleCellDataTagCall && cellData.tag == RoomBubbleCellDataTagCall)
     {
+
         //  Check if the same call
         MXEvent * event1 = self.events.firstObject;
         MXCallEventContent *eventContent1 = [MXCallEventContent modelFromJSON:event1.content];
@@ -635,11 +557,9 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
 {
     __block NSInteger firstVisibleComponentIndex = NSNotFound;
     
-    MXEvent *firstEvent = self.events.firstObject;
-    BOOL isPoll = firstEvent.isTimelinePollEvent;
-    BOOL isVoiceBroadcast = (firstEvent.eventType == MXEventTypeCustom && [firstEvent.type isEqualToString: VoiceBroadcastSettings.voiceBroadcastInfoContentKeyType]);
+    BOOL isPoll = (self.events.firstObject.eventType == MXEventTypePollStart);
     
-    if ((isPoll || self.attachment || isVoiceBroadcast) && self.bubbleComponents.count)
+    if ((isPoll || self.attachment) && self.bubbleComponents.count)
     {
         firstVisibleComponentIndex = 0;
     }
@@ -1134,11 +1054,6 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
         case RoomBubbleCellDataTagLiveLocation:
             shouldAddEvent = NO;
             break;
-        case RoomBubbleCellDataTagVoiceBroadcastRecord:
-        case RoomBubbleCellDataTagVoiceBroadcastPlayback:
-        case RoomBubbleCellDataTagVoiceBroadcastNoDisplay:
-            shouldAddEvent = NO;
-            break;
         default:
             break;
     }
@@ -1194,10 +1109,6 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
                 shouldAddEvent = NO;
                 break;
             case MXEventTypePollStart:
-            case MXEventTypePollEnd:
-                shouldAddEvent = NO;
-                break;
-            case MXEventTypeBeaconInfo:
                 shouldAddEvent = NO;
                 break;
             case MXEventTypeCustom:
@@ -1211,8 +1122,6 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
                     {
                         shouldAddEvent = NO;
                     }
-                } else if ([event.type isEqualToString:VoiceBroadcastSettings.voiceBroadcastInfoContentKeyType]) {
-                    shouldAddEvent = NO;
                 }
                 break;
             }
@@ -1460,9 +1369,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
 {
     if (event.eventType != MXEventTypeBeaconInfo)
     {
-        MXLogErrorDetails(@"[RoomBubbleCellData] Try to update beacon info summary with wrong event type", @{
-            @"event_id": eventId ?: @"unknown"
-        });
+        MXLogError(@"[RoomBubbleCellData] Try to update beacon info summary with wrong event type with event id %@", eventId);
         return;
     }
     
@@ -1475,9 +1382,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
         // A start beacon info event (isLive == true) should have an associated BeaconInfoSummary
         if (beaconInfo && beaconInfo.isLive)
         {
-            MXLogErrorDetails(@"[RoomBubbleCellData] No beacon info summary found for beacon info start event", @{
-                @"event_id": eventId ?: @"unknown"
-            });
+            MXLogError(@"[RoomBubbleCellData] No beacon info summary found for beacon info start event with id %@", eventId);
         }
     }
     

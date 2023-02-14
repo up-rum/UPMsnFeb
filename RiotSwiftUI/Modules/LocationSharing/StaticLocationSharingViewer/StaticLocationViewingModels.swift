@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,9 +14,9 @@
 // limitations under the License.
 //
 
+import Foundation
 import Combine
 import CoreLocation
-import Foundation
 
 // MARK: View model
 
@@ -33,6 +33,7 @@ enum StaticLocationViewingViewModelResult {
 // MARK: View
 
 struct StaticLocationViewingViewState: BindableState {
+    
     /// Map style URL
     let mapStyleURL: URL
     
@@ -42,7 +43,7 @@ struct StaticLocationViewingViewState: BindableState {
     /// Shared annotation to display existing location
     let sharedAnnotation: LocationAnnotation
     
-    var showLoadingIndicator = false
+    var showLoadingIndicator: Bool = false
     
     var shareButtonEnabled: Bool {
         !showLoadingIndicator

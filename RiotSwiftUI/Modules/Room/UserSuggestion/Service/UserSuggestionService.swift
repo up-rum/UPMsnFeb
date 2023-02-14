@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-import Combine
 import Foundation
+import Combine
 
 struct RoomMembersProviderMember {
     var userId: String
@@ -34,6 +34,7 @@ struct UserSuggestionServiceItem: UserSuggestionItemProtocol {
 }
 
 class UserSuggestionService: UserSuggestionServiceProtocol {
+    
     // MARK: - Properties
     
     // MARK: Private
@@ -57,7 +58,7 @@ class UserSuggestionService: UserSuggestionServiceProtocol {
     init(roomMemberProvider: RoomMembersProviderProtocol, shouldDebounce: Bool = true) {
         self.roomMemberProvider = roomMemberProvider
         
-        if shouldDebounce {
+        if (shouldDebounce) {
             currentTextTriggerSubject
                 .debounce(for: 0.5, scheduler: RunLoop.main)
                 .removeDuplicates()
@@ -78,12 +79,12 @@ class UserSuggestionService: UserSuggestionServiceProtocol {
               let lastComponent = textMessage.components(separatedBy: .whitespaces).last,
               lastComponent.prefix(while: { $0 == "@" }).count == 1 // Partial username should start with one and only one "@" character
         else {
-            items.send([])
-            currentTextTriggerSubject.send(nil)
+            self.items.send([])
+            self.currentTextTriggerSubject.send(nil)
             return
         }
         
-        currentTextTriggerSubject.send(lastComponent)
+        self.currentTextTriggerSubject.send(lastComponent)
     }
     
     // MARK: - Private
@@ -104,12 +105,12 @@ class UserSuggestionService: UserSuggestionServiceProtocol {
                 UserSuggestionServiceItem(userId: member.userId, displayName: member.displayName, avatarUrl: member.avatarUrl)
             }
             
-            self.items.send(self.suggestionItems.filter { userSuggestion in
+            self.items.send(self.suggestionItems.filter({ userSuggestion in
                 let containedInUsername = userSuggestion.userId.lowercased().contains(partialName.lowercased())
                 let containedInDisplayName = (userSuggestion.displayName ?? "").lowercased().contains(partialName.lowercased())
                 
                 return (containedInUsername || containedInDisplayName)
-            })
+            }))
         }
     }
 }

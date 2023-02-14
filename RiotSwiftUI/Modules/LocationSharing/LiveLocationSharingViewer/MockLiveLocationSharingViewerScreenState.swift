@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,11 +33,12 @@ enum MockLiveLocationSharingViewerScreenState: MockScreenState, CaseIterable {
     
     /// A list of screen state definitions
     static var allCases: [MockLiveLocationSharingViewerScreenState] {
-        [.currentUser, .multipleUsers]
+        return [.currentUser, .multipleUsers]
     }
     
     /// Generate the view struct for the screen state.
-    var screenView: ([Any], AnyView) {
+    var screenView: ([Any], AnyView)  {
+        
         let service: LiveLocationSharingViewerServiceProtocol
         
         switch self {

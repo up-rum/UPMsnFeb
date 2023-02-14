@@ -14,13 +14,13 @@
 // limitations under the License.
 //
 
+import SwiftUI
 import Combine
 import CoreLocation
-import SwiftUI
 
-typealias LocationSharingViewModelType = StateStoreViewModel<LocationSharingViewState, LocationSharingViewAction>
-
+typealias LocationSharingViewModelType = StateStoreViewModel<LocationSharingViewState,LocationSharingViewAction>
 class LocationSharingViewModel: LocationSharingViewModelType, LocationSharingViewModelProtocol {
+    
     // MARK: - Properties
     
     // MARK: Private
@@ -34,7 +34,8 @@ class LocationSharingViewModel: LocationSharingViewModelType, LocationSharingVie
     // MARK: - Setup
     
     init(mapStyleURL: URL, avatarData: AvatarInputProtocol, isLiveLocationSharingEnabled: Bool = false, service: LocationSharingServiceProtocol) {
-        locationSharingService = service
+        
+        self.locationSharingService = service
         
         let viewState = LocationSharingViewState(mapStyleURL: mapStyleURL,
                                                  userAvatarData: avatarData,
@@ -76,7 +77,7 @@ class LocationSharingViewModel: LocationSharingViewModelType, LocationSharingVie
             state.showsUserLocation = true
             state.isPinDropSharing = false
         case .startLiveSharing:
-            startLiveLocationSharing()
+            self.startLiveLocationSharing()
         case .shareLiveLocation(let timeout):
             state.bindings.showingTimerSelector = false
             completion?(.shareLiveLocation(timeout: timeout.rawValue))
@@ -98,7 +99,8 @@ class LocationSharingViewModel: LocationSharingViewModelType, LocationSharingVie
         state.showLoadingIndicator = false
         
         if let error = error {
-            let alertInfo: AlertInfo<LocationSharingAlertType>
+            
+            let alertInfo:  AlertInfo<LocationSharingAlertType>
             
             switch error {
             case .locationSharingPowerLevelError:
@@ -124,7 +126,7 @@ class LocationSharingViewModel: LocationSharingViewModelType, LocationSharingVie
             return
         }
         
-        let primaryButtonCompletion: (() -> Void)? = { [weak self] () in
+        let primaryButtonCompletion = { [weak self] () -> Void in
             self?.completion?(.cancel)
         }
         
@@ -145,15 +147,16 @@ class LocationSharingViewModel: LocationSharingViewModelType, LocationSharingVie
                                                  title: VectorL10n.locationSharingInvalidAuthorizationErrorTitle(AppInfo.current.displayName),
                                                  primaryButton: (VectorL10n.locationSharingInvalidAuthorizationNotNow, primaryButtonCompletion),
                                                  secondaryButton: (VectorL10n.locationSharingInvalidAuthorizationSettings, {
-                                                     UIApplication.shared.vc_openSettings()
-                                                 }))
+                UIApplication.shared.vc_openSettings()
+            }))
         default:
             break
         }
     }
     
     private func checkLocationAuthorizationAndPresentTimerSelector() {
-        locationSharingService.requestAuthorization { [weak self] authorizationStatus in
+        
+        self.locationSharingService.requestAuthorization { [weak self] authorizationStatus in
             
             guard let self = self else {
                 return
@@ -163,15 +166,15 @@ class LocationSharingViewModel: LocationSharingViewModelType, LocationSharingVie
             case .unknown, .denied:
                 // Show error alert
                 self.state.bindings.alertInfo = AlertInfo(id: .userLocatingError,
-                                                          title: VectorL10n.locationSharingLocatingUserErrorTitle(AppInfo.current.displayName),
+                                                     title: VectorL10n.locationSharingLocatingUserErrorTitle(AppInfo.current.displayName),
                                                           primaryButton: (VectorL10n.ok, { UIApplication.shared.vc_openSettings()
-                                                          }))
+                    }))
             case .authorizedInForeground:
                 // When user only authorized location in foreground, advize to use background location
                 self.state.bindings.alertInfo = AlertInfo(id: .userLocatingError,
                                                           title: VectorL10n.locationSharingAllowBackgroundLocationTitle,
-                                                          message: VectorL10n.locationSharingAllowBackgroundLocationMessage,
-                                                          primaryButton: (VectorL10n.locationSharingAllowBackgroundLocationCancelAction, { }),
+                                                          message:  VectorL10n.locationSharingAllowBackgroundLocationMessage,
+                                                          primaryButton: (VectorL10n.locationSharingAllowBackgroundLocationCancelAction, {}),
                                                           secondaryButton: (VectorL10n.locationSharingAllowBackgroundLocationValidateAction, { UIApplication.shared.vc_openSettings() }))
             case .authorizedAlways:
                 self.state.bindings.showingTimerSelector = true
@@ -180,11 +183,12 @@ class LocationSharingViewModel: LocationSharingViewModelType, LocationSharingVie
     }
     
     private func startLiveLocationSharing() {
+        
         guard let completion = completion else {
             return
         }
         
-        completion(.checkLiveLocationCanBeStarted { result in
+        completion(.checkLiveLocationCanBeStarted({ result in
             
             switch result {
             case .success:
@@ -194,6 +198,6 @@ class LocationSharingViewModel: LocationSharingViewModelType, LocationSharingVie
                     self.stopLoading(error: .locationSharingPowerLevelError)
                 }
             }
-        })
+        }))
     }
 }

@@ -40,11 +40,8 @@ class RoomNavigationParameters: NSObject {
     
     // MARK: - Properties
 
-    /// The room identifier. `nil` on new DM
-    let roomId: String?
-    
-    /// The user identifier to create a new DM
-    let userId: String?
+    /// The room identifier
+    let roomId: String
     
     /// If not nil, the room will be opened on this event.
     let eventId: String?
@@ -77,7 +74,6 @@ class RoomNavigationParameters: NSObject {
          autoJoinInvitedRoom: Bool
     ) {
         self.roomId = roomId
-        self.userId = nil
         self.eventId = eventId
         self.mxSession = mxSession
         self.threadParameters = threadParameters
@@ -96,7 +92,6 @@ class RoomNavigationParameters: NSObject {
          presentationParameters: ScreenPresentationParameters
     ) {
         self.roomId = roomId
-        self.userId = nil
         self.eventId = eventId
         self.mxSession = mxSession
         self.threadParameters = threadParameters
@@ -115,7 +110,6 @@ class RoomNavigationParameters: NSObject {
          threadParameters: ThreadParameters?,
          presentationParameters: ScreenPresentationParameters) {
         self.roomId = roomId
-        self.userId = nil
         self.eventId = eventId
         self.mxSession = mxSession
         self.threadParameters = threadParameters
@@ -133,7 +127,6 @@ class RoomNavigationParameters: NSObject {
          presentationParameters: ScreenPresentationParameters,
          showSettingsInitially: Bool) {
         self.roomId = roomId
-        self.userId = nil
         self.eventId = eventId
         self.mxSession = mxSession
         self.presentationParameters = presentationParameters
@@ -142,22 +135,6 @@ class RoomNavigationParameters: NSObject {
         self.senderId = nil
         self.autoJoinInvitedRoom = false
 
-        super.init()
-    }
-    
-    init(userId: String,
-         mxSession: MXSession,
-         presentationParameters: ScreenPresentationParameters) {
-        self.roomId = nil
-        self.userId = userId
-        self.eventId = nil
-        self.mxSession = mxSession
-        self.threadParameters = nil
-        self.presentationParameters = presentationParameters
-        self.showSettingsInitially = false
-        self.senderId = nil
-        self.autoJoinInvitedRoom = false
-        
         super.init()
     }
 }

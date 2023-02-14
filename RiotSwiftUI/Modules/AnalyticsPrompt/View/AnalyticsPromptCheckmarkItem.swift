@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +17,7 @@
 import SwiftUI
 
 struct AnalyticsPromptCheckmarkItem: View {
+    
     // MARK: - Properties
     
     // MARK: Private
@@ -39,7 +40,7 @@ struct AnalyticsPromptCheckmarkItem: View {
         let range = NSRange(location: 0, length: attributedString.length)
         let string = attributedString.string as NSString
         
-        attributedString.enumerateAttributes(in: range, options: []) { attributes, range, _ in
+        attributedString.enumerateAttributes(in: range, options: []) { attributes, range, stop in
             var isBold = false
             
             if let font = attributes[.font] as? UIFont {
@@ -53,7 +54,7 @@ struct AnalyticsPromptCheckmarkItem: View {
     }
     
     init(string: String) {
-        components = [StringComponent(string: string, isBold: false)]
+        self.components = [StringComponent(string: string, isBold: false)]
     }
     
     // MARK: - Views
@@ -74,10 +75,11 @@ struct AnalyticsPromptCheckmarkItem: View {
 // MARK: - Previews
 
 struct AnalyticsPromptCheckmarkItem_Previews: PreviewProvider {
+    
     static let strings = MockAnalyticsPromptStrings()
     
     static var previews: some View {
-        VStack(alignment: .leading) {
+        VStack(alignment:.leading) {
             AnalyticsPromptCheckmarkItem(attributedString: strings.point1)
             AnalyticsPromptCheckmarkItem(attributedString: strings.point2)
             AnalyticsPromptCheckmarkItem(attributedString: strings.longString)

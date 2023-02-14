@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +17,7 @@
 import Foundation
 
 final class MXRoomNotificationSettingsService: RoomNotificationSettingsServiceType {
+    
     typealias Completion = () -> Void
     
     // MARK: - Properties
@@ -49,11 +50,11 @@ final class MXRoomNotificationSettingsService: RoomNotificationSettingsServiceTy
     // MARK: - Public
     
     func observeNotificationState(listener: @escaping RoomNotificationStateCallback) {
+        
         let observer = NotificationCenter.default.addObserver(
             forName: NSNotification.Name(rawValue: kMXNotificationCenterDidUpdateRules),
             object: nil,
-            queue: OperationQueue.main
-        ) { [weak self] _ in
+            queue: OperationQueue.main) { [weak self] _ in
             guard let self = self else { return }
             listener(self.room.notificationState)
         }
@@ -87,7 +88,7 @@ final class MXRoomNotificationSettingsService: RoomNotificationSettingsServiceTy
         }
         
         guard let rule = room.overridePushRule else {
-            addPushRuleToMute(completion: completion)
+            self.addPushRuleToMute(completion: completion)
             return
         }
         
@@ -95,7 +96,7 @@ final class MXRoomNotificationSettingsService: RoomNotificationSettingsServiceTy
             MXLog.debug("[RoomNotificationSettingsService] Request in progress: ignore push rule update")
             completion()
             return
-        }
+          }
         
         // if the user defined one, use it
         if rule.actionsContains(actionType: MXPushRuleActionTypeDontNotify) {
@@ -129,7 +130,7 @@ final class MXRoomNotificationSettingsService: RoomNotificationSettingsServiceTy
             MXLog.debug("[MXRoom+Riot] Request in progress: ignore push rule update")
             completion()
             return
-        }
+          }
         
         // if the user defined one, use it
         if rule.actionsContains(actionType: MXPushRuleActionTypeDontNotify) {
@@ -139,10 +140,11 @@ final class MXRoomNotificationSettingsService: RoomNotificationSettingsServiceTy
                 self.addPushRuleToMentionOnly(completion: completion)
             }
         }
+        
     }
     
     private func allMessages(completion: @escaping Completion) {
-        if !room.isMentionsOnly, !room.isMuted {
+        if !room.isMentionsOnly && !room.isMuted {
             completion()
             return
         }
@@ -170,8 +172,7 @@ final class MXRoomNotificationSettingsService: RoomNotificationSettingsServiceTy
             room.roomId,
             notify: false,
             sound: false,
-            highlight: false
-        )
+            highlight: false)
     }
     
     private func addPushRuleToMute(completion: @escaping Completion) {
@@ -206,19 +207,18 @@ final class MXRoomNotificationSettingsService: RoomNotificationSettingsServiceTy
     private func enablePushRule(rule: MXPushRule, completion: @escaping Completion) {
         handleUpdateCallback(completion) {
             // No way to check whether this notification concerns the push rule. Consider the change is applied.
-            true
+            return true
         }
         handleFailureCallback(completion)
         
         room.mxSession.notificationCenter.enableRule(rule, isEnabled: true)
     }
     
-    private func handleUpdateCallback(_ completion: @escaping Completion, releaseCheck: @escaping () -> Bool) {
+    private func handleUpdateCallback(_ completion:  @escaping Completion, releaseCheck: @escaping () -> Bool) {
         notificationCenterDidUpdateObserver = NotificationCenter.default.addObserver(
             forName: NSNotification.Name(rawValue: kMXNotificationCenterDidUpdateRules),
             object: nil,
-            queue: OperationQueue.main
-        ) { [weak self] _ in
+            queue: OperationQueue.main) { [weak self] _ in
             guard let self = self else { return }
             if releaseCheck() {
                 self.removeObservers()
@@ -231,8 +231,7 @@ final class MXRoomNotificationSettingsService: RoomNotificationSettingsServiceTy
         notificationCenterDidFailObserver = NotificationCenter.default.addObserver(
             forName: NSNotification.Name(rawValue: kMXNotificationCenterDidFailRulesUpdate),
             object: nil,
-            queue: OperationQueue.main
-        ) { [weak self] _ in
+            queue: OperationQueue.main) { [weak self] _ in
             guard let self = self else { return }
             self.removeObservers()
             completion()
@@ -240,23 +239,23 @@ final class MXRoomNotificationSettingsService: RoomNotificationSettingsServiceTy
     }
     
     func removeObservers() {
-        if let observer = notificationCenterDidUpdateObserver {
+        if let observer = self.notificationCenterDidUpdateObserver {
             NotificationCenter.default.removeObserver(observer)
-            notificationCenterDidUpdateObserver = nil
+            self.notificationCenterDidUpdateObserver = nil
         }
         
-        if let observer = notificationCenterDidFailObserver {
+        if let observer = self.notificationCenterDidFailObserver {
             NotificationCenter.default.removeObserver(observer)
-            notificationCenterDidFailObserver = nil
+            self.notificationCenterDidFailObserver = nil
         }
     }
 }
 
-public extension MXRoom {
-    var isMuted: Bool {
+extension MXRoom {
+    public var isMuted: Bool {
         // Check whether an override rule has been defined with the roomm id as rule id.
         // This kind of rule is created to mute the room
-        guard let rule = overridePushRule,
+        guard let rule = self.overridePushRule,
               rule.actionsContains(actionType: MXPushRuleActionTypeDontNotify),
               rule.conditionIsEnabled(kind: .eventMatch, for: roomId) else {
             return false
@@ -264,7 +263,7 @@ public extension MXRoom {
         return rule.enabled
     }
     
-    var isMentionsOnly: Bool {
+    public var isMentionsOnly: Bool {
         // Check push rules at room level
         guard let rule = roomPushRule else { return false }
         return rule.enabled && rule.actionsContains(actionType: MXPushRuleActionTypeDontNotify)
@@ -272,7 +271,8 @@ public extension MXRoom {
 }
 
 // We could move these to their own file and make available in global namespace or move to sdk but they are only used here at the moment
-private extension MXRoom {
+fileprivate extension MXRoom {
+    
     typealias Completion = () -> Void
     func getRoomRule(from rules: [Any]) -> MXPushRule? {
         guard let pushRules = rules as? [MXPushRule] else {
@@ -285,18 +285,19 @@ private extension MXRoom {
     var overridePushRule: MXPushRule? {
         guard let overrideRules = mxSession.notificationCenter.rules.global.override else {
             return nil
-        }
+          }
         return getRoomRule(from: overrideRules)
     }
     
     var roomPushRule: MXPushRule? {
         guard let roomRules = mxSession.notificationCenter.rules.global.room else {
             return nil
-        }
+          }
         return getRoomRule(from: roomRules)
     }
     
     var notificationState: RoomNotificationState {
+        
         if isMuted {
             return .mute
         }
@@ -305,9 +306,10 @@ private extension MXRoom {
         }
         return .all
     }
+
 }
 
-private extension MXPushRule {
+fileprivate extension MXPushRule {
     func actionsContains(actionType: MXPushRuleActionType) -> Bool {
         guard let actions = actions as? [MXPushRuleAction] else {
             return false
@@ -321,8 +323,8 @@ private extension MXPushRule {
         }
         let ruleContainsCondition = conditions.contains { condition in
             guard case kind = MXPushRuleConditionType(identifier: condition.kind),
-                  let key = condition.parameters["key"] as? String,
-                  let pattern = condition.parameters["pattern"] as? String
+                let key = condition.parameters["key"] as? String,
+                let pattern = condition.parameters["pattern"] as? String
             else { return false }
             return key == "room_id" && pattern == roomId
         }

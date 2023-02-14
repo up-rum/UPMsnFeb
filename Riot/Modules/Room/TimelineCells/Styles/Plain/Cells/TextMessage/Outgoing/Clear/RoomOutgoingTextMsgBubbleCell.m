@@ -28,6 +28,8 @@
     [super customizeTableViewCellRendering];
     
     [self updateUserNameColor];
+    
+    self.messageTextView.tintColor = ThemeService.shared.theme.tintColor;
 }
 
 

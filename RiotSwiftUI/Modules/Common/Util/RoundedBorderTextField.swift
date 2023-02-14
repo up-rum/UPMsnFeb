@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,21 +17,22 @@
 import SwiftUI
 
 struct RoundedBorderTextField: View {
+    
     // MARK: - Properties
     
-    var title: String?
+    var title: String? = nil
     let placeHolder: String
     @Binding var text: String
-    var footerText: String?
-    var isError = false
+    var footerText: String? = nil
+    var isError: Bool = false
     var isFirstResponder = false
 
-    var configuration = UIKitTextInputConfiguration()
+    var configuration: UIKitTextInputConfiguration = UIKitTextInputConfiguration()
     @State var isSecureTextVisible = false
     
-    var onTextChanged: ((String) -> Void)?
-    var onEditingChanged: ((Bool) -> Void)?
-    var onCommit: (() -> Void)?
+    var onTextChanged: ((String) -> Void)? = nil
+    var onEditingChanged: ((Bool) -> Void)? = nil
+    var onCommit: (() -> Void)? = nil
 
     // MARK: Private
     
@@ -99,8 +100,8 @@ struct RoundedBorderTextField: View {
     /// The text field's border color.
     private var borderColor: Color {
         if isEditing {
-            return theme.colors.accent
-        } else if footerText != nil, isError {
+            return Color("SColor")//theme.colors.accent
+        } else if footerText != nil && isError {
             return theme.colors.alert
         } else {
             return theme.colors.quinaryContent
@@ -117,6 +118,7 @@ struct RoundedBorderTextField: View {
 
 struct TextFieldWithError_Previews: PreviewProvider {
     static var previews: some View {
+
         Group {
             sampleView.theme(.light).preferredColorScheme(.light)
             sampleView.theme(.dark).preferredColorScheme(.dark)
@@ -138,5 +140,111 @@ struct TextFieldWithError_Previews: PreviewProvider {
             RoundedBorderTextField(title: "Password", placeHolder: "Enter your password", text: .constant(""), configuration: UIKitTextInputConfiguration(isSecureTextEntry: true))
             RoundedBorderTextField(title: "Password", placeHolder: "Enter your password", text: .constant("password"), configuration: UIKitTextInputConfiguration(isSecureTextEntry: true))
         }
+    }
+}
+
+
+
+struct UPRoundedBorderTextField: View {
+
+    // MARK: - Properties
+
+    var title: String? = nil
+    let placeHolder: String
+    @Binding var text: String
+    var footerText: String? = nil
+    var isError: Bool = false
+
+    var isFirstResponder = false
+
+    var configuration: UIKitTextInputConfiguration = UIKitTextInputConfiguration()
+    @State var isSecureTextVisible = false
+    @State var usernameValidation = false
+    @State var tfCharValidation = ""
+    var onTextChanged: ((String) -> Void)? = nil
+    var onEditingChanged: ((Bool) -> Void)? = nil
+    var onCommit: (() -> Void)? = nil
+
+    // MARK: Private
+
+    @State private var isEditing = false
+    @State private var regex = "[^a-z0-9._/-]*"
+
+    @Environment(\.theme) private var theme: ThemeSwiftUI
+    @Environment(\.isEnabled) private var isEnabled
+
+    // MARK: Public
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: -1) {
+            if let title = self.title {
+                Text(title)
+                    .foregroundColor(Color.white)
+                    .font(theme.fonts.footnoteSB)
+                    .multilineTextAlignment(.leading)
+                    .padding(.bottom, 8)
+            }
+
+            ZStack(alignment: .leading) {
+                if text.isEmpty {
+                    Text(placeHolder)
+                        .font(theme.fonts.callout)
+                        .foregroundColor(Color.white)
+                        .lineLimit(1)
+                        .accessibilityHidden(true)
+                }
+
+                ThemableTextField(placeholder: "",
+                                  text: $text,
+                                  configuration: configuration,
+                                  isSecureTextVisible: $isSecureTextVisible,
+                                  usernameValidation: $usernameValidation,
+                                  tfCharValidation: $tfCharValidation) { isEditing in
+                    self.isEditing = isEditing
+                    onEditingChanged?(isEditing)
+                } onCommit: {
+                    onCommit?()
+                }
+                .makeFirstResponder(isFirstResponder)
+                .addButton(isEnabled)
+                .onChange(of: text) { newText in
+                    onTextChanged?(newText)
+                }
+                
+                .frame(height: 30)
+                .allowsHitTesting(isEnabled)
+                .opacity(isEnabled ? 1 : 0.5)
+                .accessibilityLabel(text.isEmpty ? placeHolder : "")
+            }
+            .padding(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: text.isEmpty ? 8 : 0))
+            .background(RoundedRectangle(cornerRadius: 8).fill(Color.black))
+            .overlay(RoundedRectangle(cornerRadius: 5).stroke(borderColor, lineWidth: borderWidth))
+
+            if let footerText = self.footerText {
+                Text(footerText)
+                    .foregroundColor(isError ? theme.colors.alert : theme.colors.tertiaryContent)
+                    .font(theme.fonts.footnote)
+                    .multilineTextAlignment(.leading)
+                    .padding(.top, 8)
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeOut(duration: 0.2))
+    }
+
+    /// The text field's border color.
+    private var borderColor: Color {
+        if isEditing {
+            return Color("SColor")//theme.colors.accent
+        } else if footerText != nil && isError {
+            return theme.colors.alert
+        } else {
+            return theme.colors.quinaryContent
+        }
+    }
+
+    /// The text field's border width.
+    private var borderWidth: CGFloat {
+        isEditing || (footerText != nil && isError) ? 2 : 1
     }
 }

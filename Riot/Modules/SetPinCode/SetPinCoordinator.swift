@@ -17,6 +17,7 @@
  */
 
 import UIKit
+import MatrixSDK
 
 @objcMembers
 final class SetPinCoordinator: SetPinCoordinatorType {
@@ -24,9 +25,11 @@ final class SetPinCoordinator: SetPinCoordinatorType {
     // MARK: - Properties
     
     // MARK: Private
-    
+    var callback: ((AuthenticationCoordinatorResult) -> Void)?
     private let navigationRouter: NavigationRouterType
+    private let authenticationService: AuthenticationService = .shared
     private let session: MXSession?
+    private var authenticationFinished = false
     var viewMode: SetPinCoordinatorViewMode {
         didSet {
             updateRootCoordinator()
@@ -66,6 +69,8 @@ final class SetPinCoordinator: SetPinCoordinatorType {
             return createEnterPinCodeCoordinator()
         case .changePin:
             return createEnterPinCodeCoordinator()
+        case .clearData:
+            return createEnterPinCodeCoordinator()
         }
     }
     
@@ -74,7 +79,85 @@ final class SetPinCoordinator: SetPinCoordinatorType {
     func start() {
         updateRootCoordinator()
     }
-    
+    private func showClearAllDataConfirmation() {
+        //Rum
+//        let alertController = UIAlertController(title: VectorL10n.authSoftlogoutClearDataSignOutTitle,
+//                                                message: VectorL10n.authSoftlogoutClearDataSignOutMsg,
+//                                                preferredStyle: .alert)
+//        alertController.addAction(UIAlertAction(title: VectorL10n.cancel, style: .cancel, handler: nil))
+//        alertController.addAction(UIAlertAction(title: VectorL10n.authSoftlogoutClearDataSignOut, style: .destructive) { [weak self] action in
+//            guard let self = self else { return }
+            MXLog.debug("[OnboardingCoordinator] showClearAllDataConfirmation: clear all data after soft logout")
+//            self.authenticationService.reset()
+//            self.authenticationFinished = false
+            self.cancelAuthentication(flow: .login)
+            AppDelegate.theDelegate().logoutSendingRequestServer(true, completion: nil)
+//        }
+//    )
+
+//        navigationRouter.present(alertController, animated: true)
+    }
+    /// Cancels the registration flow, returning to the Use Case screen.
+    private func cancelAuthentication(flow: AuthenticationFlow) {
+        switch flow {
+        case .register:
+            navigationRouter.popAllModules(animated: false)
+
+            showSplashScreen()
+//            showUseCaseSelectionScreen(animated: false)
+        case .login:
+            navigationRouter.popAllModules(animated: false)
+
+            showSplashScreen()
+        case .uplogin:
+            navigationRouter.popAllModules(animated: false)
+
+            showSplashScreen()
+//            showUseCaseSelectionScreen(animated: false)
+        }
+    }
+    private var splashScreenResult: OnboardingSplashScreenViewModelResult?
+    private func splashScreenCoordinator(_ coordinator: OnboardingSplashScreenCoordinator, didCompleteWith result: OnboardingSplashScreenViewModelResult) {
+        splashScreenResult = result
+        // Set the auth type early on the legacy auth to allow network requests to finish during display of the use case screen.
+//        legacyAuthenticationCoordinator.update(authenticationFlow: result.flow)
+//
+//        switch result {
+//        case .register:
+//            if BuildSettings.onboardingEnableNewAuthenticationFlow {
+//                beginAuthentication(with: .registration, onStart: coordinator.stop)
+//            } else {
+//                coordinator.stop()
+//                showLegacyAuthenticationScreen()
+//            }
+//        case .login:
+//            if BuildSettings.onboardingEnableNewAuthenticationFlow {
+//                beginAuthentication(with: .login, onStart: coordinator.stop)
+//            } else {
+//                coordinator.stop()
+//                showLegacyAuthenticationScreen()
+//            }
+//        case .uplogin:
+//            showUseCaseSelectionScreen()
+//        }
+    }
+    private func showSplashScreen() {
+        MXLog.debug("[OnboardingCoordinator] showSplashScreen")
+
+        let coordinator = OnboardingSplashScreenCoordinator()
+        coordinator.completion = { [weak self, weak coordinator] result in
+            guard let self = self, let coordinator = coordinator else { return }
+            self.splashScreenResult = .login
+//            self.splashScreenCoordinator(coordinator, didCompleteWith: .uplogin)
+        }
+
+        coordinator.start()
+        add(childCoordinator: coordinator)
+
+        navigationRouter.setRootModule(coordinator) { [weak self] in
+            self?.remove(childCoordinator: coordinator)
+        }
+    }
     func toPresentable() -> UIViewController {
         let controller = self.navigationRouter.toPresentable()
         if #available(iOS 13.0, *) {
@@ -110,9 +193,18 @@ final class SetPinCoordinator: SetPinCoordinatorType {
         coordinator.delegate = self
         return coordinator
     }
+    private func createClearData() -> EnterPinCodeCoordinator {
+        let coordinator = EnterPinCodeCoordinator(session: self.session, viewMode: self.viewMode)
+        coordinator.delegate = self
+        return coordinator
+//        self.showClearAllDataConfirmation()
+    }
     
     private func storePin(_ pin: String) {
         pinCodePreferences.pin = pin
+    }
+    private func storeClearDataPin(_ pin: String) {
+        pinCodePreferences.clearPin = pin
     }
     
     private func removePin() {
@@ -126,10 +218,26 @@ final class SetPinCoordinator: SetPinCoordinatorType {
     private func removeBiometrics() {
         pinCodePreferences.biometricsEnabled = nil
     }
+    
 }
 
 // MARK: - EnterPinCodeCoordinatorDelegate
 extension SetPinCoordinator: EnterPinCodeCoordinatorDelegate {
+    func enterPinCodeCoordinatorClearData(_ coordinator: EnterPinCodeCoordinatorType) {
+        navigationRouter.popAllModules(animated: false)
+        self.authenticationFinished = false
+//        showSplashScreen()
+
+        self.delegate?.setPinCoordinatorDidCompleteWithReset(self, dueToTooManyErrors: false)
+        self.authenticationService.reset()
+
+        AppDelegate.theDelegate().logoutSendingRequestServer(true, completion: nil)
+
+
+//        self.cancelAuthentication(flow: .login)
+
+    }
+
     
     func enterPinCodeCoordinatorDidComplete(_ coordinator: EnterPinCodeCoordinatorType) {
         if viewMode == .confirmPinToDeactivate {
@@ -144,7 +252,14 @@ extension SetPinCoordinator: EnterPinCodeCoordinatorDelegate {
     }
     
     func enterPinCodeCoordinator(_ coordinator: EnterPinCodeCoordinatorType, didCompleteWithPin pin: String) {
+        if viewMode == .clearData {
+            pinCodePreferences.biometricsEnabled = nil
+            storeClearDataPin(pin)
+
+        }
+        else{
         storePin(pin)
+        }
         if pinCodePreferences.forcePinProtection && pinCodePreferences.isBiometricsAvailable && !pinCodePreferences.isBiometricsSet {
             viewMode = .setupBiometricsAfterLogin
             setRootCoordinator(createSetupBiometricsCoordinator())

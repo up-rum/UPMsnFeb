@@ -16,18 +16,20 @@
 
 import SwiftUI
 
+
 struct ThemableTextEditor: UIViewRepresentable {
+    
     // MARK: Properties
     
     @Binding var text: String
-    @State var configuration = UIKitTextInputConfiguration()
+    @State var configuration: UIKitTextInputConfiguration = UIKitTextInputConfiguration()
     var onEditingChanged: ((_ edit: Bool) -> Void)?
 
     // MARK: Private
     
     @Environment(\.theme) private var theme: ThemeSwiftUI
 
-    private let textView = UITextView()
+    private let textView: UITextView = UITextView()
     private let internalParams = InternalParams()
     
     // MARK: Setup
@@ -35,8 +37,8 @@ struct ThemableTextEditor: UIViewRepresentable {
     init(text: Binding<String>,
          configuration: UIKitTextInputConfiguration = UIKitTextInputConfiguration(),
          onEditingChanged: ((_ edit: Bool) -> Void)? = nil) {
-        _text = text
-        _configuration = State(initialValue: configuration)
+        self._text = text
+        self._configuration = State(initialValue: configuration)
         self.onEditingChanged = onEditingChanged
         
         ResponderManager.register(view: textView)
@@ -61,8 +63,8 @@ struct ThemableTextEditor: UIViewRepresentable {
         uiView.textColor = UIColor(theme.colors.primaryContent)
         uiView.tintColor = UIColor(theme.colors.accent)
         
-        if uiView.text != text {
-            uiView.text = text
+        if uiView.text != self.text {
+            uiView.text = self.text
         }
 
         uiView.keyboardType = configuration.keyboardType
@@ -79,7 +81,7 @@ struct ThemableTextEditor: UIViewRepresentable {
     // MARK: - Private
     
     private func replaceText(with newText: String) {
-        text = newText
+        self.text = newText
     }
 
     private class InternalParams {
@@ -89,7 +91,7 @@ struct ThemableTextEditor: UIViewRepresentable {
     // MARK: - Coordinator
     
     func makeCoordinator() -> Coordinator {
-        Coordinator(self)
+        return Coordinator(self)
     }
     
     class Coordinator: NSObject, UITextViewDelegate {

@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,9 +14,9 @@
 // limitations under the License.
 //
 
-import CoreLocation
 import Foundation
 import SwiftUI
+import CoreLocation
 
 enum MockLocationSharingScreenState: MockScreenState, CaseIterable {
     case shareUserLocation
@@ -25,7 +25,8 @@ enum MockLocationSharingScreenState: MockScreenState, CaseIterable {
         LocationSharingView.self
     }
     
-    var screenView: ([Any], AnyView) {
+    var screenView: ([Any], AnyView)  {
+        
         let locationSharingService = MockLocationSharingService()
         
         let mapStyleURL = URL(string: "https://api.maptiler.com/maps/streets/style.json?key=fU3vlMsMn4Jb6dnEIFsx")!
@@ -34,6 +35,6 @@ enum MockLocationSharingScreenState: MockScreenState, CaseIterable {
                                                  isLiveLocationSharingEnabled: true, service: locationSharingService)
         return ([viewModel],
                 AnyView(LocationSharingView(context: viewModel.context)
-                    .environmentObject(AvatarViewModel.withMockedServices())))
+                            .addDependency(MockAvatarService.example)))
     }
 }

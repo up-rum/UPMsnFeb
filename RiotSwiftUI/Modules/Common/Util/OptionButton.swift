@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,9 +17,11 @@
 import SwiftUI
 
 struct OptionButton: View {
+    
     // MARK: - Style
     
     private struct Style: ButtonStyle {
+        
         func makeBody(configuration: Configuration) -> some View {
             configuration.label
                 .scaleEffect(configuration.isPressed ? 0.97 : 1)
@@ -59,7 +61,8 @@ struct OptionButton: View {
             .background(theme.colors.quinaryContent)
             .foregroundColor(theme.colors.secondaryContent)
             .clipShape(RoundedRectangle(cornerRadius: 8))
-        })
+        }
+        )
         .buttonStyle(Style())
     }
 }
@@ -70,14 +73,14 @@ struct OptionButton_Previews: PreviewProvider {
     static var previews: some View {
         Group {
             VStack {
-                OptionButton(icon: Asset.Images.spaceTypeIcon.image, title: "A title", detailMessage: "Some details for this option", action: { }).theme(.light)
-                OptionButton(icon: nil, title: "A title", detailMessage: "Some details for this option", action: { }).theme(.light)
-                OptionButton(icon: nil, title: "A title", detailMessage: nil, action: { }).theme(.light)
+                OptionButton(icon: Asset.Images.spaceTypeIcon.image, title: "A title", detailMessage: "Some details for this option", action: {}).theme(.light)
+                OptionButton(icon: nil, title: "A title", detailMessage: "Some details for this option", action: {}).theme(.light)
+                OptionButton(icon: nil, title: "A title", detailMessage: nil, action: {}).theme(.light)
             }
             VStack {
-                OptionButton(icon: Asset.Images.spaceTypeIcon.image, title: "A title", detailMessage: "Some details for this option", action: { }).theme(.dark)
-                OptionButton(icon: nil, title: "A title", detailMessage: "Some details for this option", action: { }).theme(.dark)
-                OptionButton(icon: nil, title: "A title", detailMessage: nil, action: { }).theme(.dark)
+                OptionButton(icon: Asset.Images.spaceTypeIcon.image, title: "A title", detailMessage: "Some details for this option", action: {}).theme(.dark)
+                OptionButton(icon: nil, title: "A title", detailMessage: "Some details for this option", action: {}).theme(.dark)
+                OptionButton(icon: nil, title: "A title", detailMessage: nil, action: {}).theme(.dark)
             }.preferredColorScheme(.dark)
         }
         .padding()

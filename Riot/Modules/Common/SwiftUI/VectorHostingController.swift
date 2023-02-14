@@ -16,7 +16,6 @@
 
 import Foundation
 import SwiftUI
-import Combine
 
 /**
  UIHostingController that applies some app-level specific configuration
@@ -25,9 +24,8 @@ import Combine
 class VectorHostingController: UIHostingController<AnyView> {
     
     // MARK: Private
-
+    
     private var theme: Theme
-    private var heightSubject = CurrentValueSubject<CGFloat, Never>(0)
     
     // MARK: Public
 
@@ -42,20 +40,19 @@ class VectorHostingController: UIHostingController<AnyView> {
     var enableNavigationBarScrollEdgeAppearance = false
     /// When non-nil, the style will be applied to the status bar.
     var statusBarStyle: UIStatusBarStyle?
-    /// Whether or not to publish when the height of the view changes.
-    var publishHeightChanges: Bool = false
-    /// The publisher to subscribe to if `publishHeightChanges` is enabled.
-    var heightPublisher: AnyPublisher<CGFloat, Never> {
-        return heightSubject.eraseToAnyPublisher()
-    }
+
+    private let forceZeroSafeAreaInsets: Bool
     
     override var preferredStatusBarStyle: UIStatusBarStyle {
         statusBarStyle ?? super.preferredStatusBarStyle
     }
     /// Initializer
     /// - Parameter rootView: Root view for the controller.
-    init<Content>(rootView: Content) where Content: View {
+    /// - Parameter forceZeroSafeAreaInsets: Whether to force-set the hosting view's safe area insets to zero. Useful when the view is used as part of a table view.
+    init<Content>(rootView: Content,
+                  forceZeroSafeAreaInsets: Bool = false) where Content: View {
         self.theme = ThemeService.shared().theme
+        self.forceZeroSafeAreaInsets = forceZeroSafeAreaInsets
         super.init(rootView: AnyView(rootView.vectorContent()))
     }
     
@@ -68,12 +65,20 @@ class VectorHostingController: UIHostingController<AnyView> {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        self.view.backgroundColor = .clear
+        self.view.backgroundColor = .black
         
         self.registerThemeServiceDidChangeThemeNotification()
         self.update(theme: self.theme)
         
         bottomSheetPreferences?.setup(viewController: self)
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        if isNavigationBarHidden {
+            self.navigationController?.isNavigationBarHidden = true
+        }
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -88,18 +93,6 @@ class VectorHostingController: UIHostingController<AnyView> {
         }
     }
     
-    override func viewWillLayoutSubviews() {
-        super.viewWillLayoutSubviews()
-        
-        guard
-            let navigationController = navigationController,
-            navigationController.topViewController == self,
-            navigationController.isNavigationBarHidden != isNavigationBarHidden
-        else { return }
-        
-        navigationController.isNavigationBarHidden = isNavigationBarHidden
-    }
-    
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
     
@@ -107,9 +100,21 @@ class VectorHostingController: UIHostingController<AnyView> {
         if #available(iOS 15.0, *) {
             self.view.invalidateIntrinsicContentSize()
         }
-        if publishHeightChanges {
-            let height = sizeThatFits(in: CGSize(width: self.view.frame.width, height: UIView.layoutFittingExpandedSize.height)).height
-            heightSubject.send(height)
+    }
+
+    override func viewSafeAreaInsetsDidChange() {
+        super.viewSafeAreaInsetsDidChange()
+
+        guard forceZeroSafeAreaInsets else {
+            return
+        }
+
+        let counterSafeAreaInsets = UIEdgeInsets(top: -view.safeAreaInsets.top,
+                                                 left: -view.safeAreaInsets.left,
+                                                 bottom: -view.safeAreaInsets.bottom,
+                                                 right: -view.safeAreaInsets.right)
+        if additionalSafeAreaInsets != counterSafeAreaInsets, counterSafeAreaInsets != .zero {
+            additionalSafeAreaInsets = counterSafeAreaInsets
         }
     }
     

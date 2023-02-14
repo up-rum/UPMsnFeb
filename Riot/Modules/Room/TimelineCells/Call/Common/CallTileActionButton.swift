@@ -80,7 +80,8 @@ class CallTileActionButton: UIButton {
         switch style {
         case .positive:
             vc_setBackgroundColor(theme.tintColor, for: .normal)
-            tintColor = theme.baseTextPrimaryColor
+            tintColor = theme.backgroundColor // baseTextPrimaryColor
+            setTitleColor(theme.backgroundColor, for: .normal)
         case .negative:
             vc_setBackgroundColor(theme.noticeColor, for: .normal)
             tintColor = theme.baseTextPrimaryColor

@@ -21,19 +21,28 @@ struct TemplateRoomListCoordinatorParameters {
 }
 
 final class TemplateRoomListCoordinator: Coordinator, Presentable {
+    
+    // MARK: - Properties
+    
+    // MARK: Private
+    
     private let parameters: TemplateRoomListCoordinatorParameters
     private let templateRoomListHostingController: UIViewController
     private var templateRoomListViewModel: TemplateRoomListViewModelProtocol
+    
+    // MARK: Public
 
     // Must be used only internally
     var childCoordinators: [Coordinator] = []
     var callback: ((TemplateRoomListCoordinatorAction) -> Void)?
     
+    // MARK: - Setup
+    
     init(parameters: TemplateRoomListCoordinatorParameters) {
         self.parameters = parameters
         let viewModel = TemplateRoomListViewModel(templateRoomListService: TemplateRoomListService(session: parameters.session))
         let view = TemplateRoomList(viewModel: viewModel.context)
-            .environmentObject(AvatarViewModel(avatarService: AvatarService(mediaManager: parameters.session.mediaManager)))
+            .addDependency(AvatarService.instantiate(mediaManager: parameters.session.mediaManager))
         templateRoomListViewModel = viewModel
         templateRoomListHostingController = VectorHostingController(rootView: view)
     }
@@ -50,11 +59,12 @@ final class TemplateRoomListCoordinator: Coordinator, Presentable {
                 self.callback?(.didSelectRoom(roomId))
             case .done:
                 self.callback?(.done)
+            break
             }
         }
     }
     
     func toPresentable() -> UIViewController {
-        templateRoomListHostingController
+        return self.templateRoomListHostingController
     }
 }

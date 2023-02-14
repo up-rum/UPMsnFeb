@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,14 +17,13 @@
 import SwiftUI
 
 struct UserSuggestionListItem: View {
+    
     // MARK: - Properties
     
     // MARK: Private
-
     @Environment(\.theme) private var theme: ThemeSwiftUI
     
     // MARK: Public
-
     let avatar: AvatarInputProtocol?
     let displayName: String?
     let userId: String
@@ -55,6 +54,6 @@ struct UserSuggestionListItem: View {
 struct UserSuggestionHeader_Previews: PreviewProvider {
     static var previews: some View {
         UserSuggestionListItem(avatar: MockAvatarInput.example, displayName: "Alice", userId: "@alice:matrix.org")
-            .environmentObject(AvatarViewModel.withMockedServices())
+            .addDependency(MockAvatarService.example)
     }
 }

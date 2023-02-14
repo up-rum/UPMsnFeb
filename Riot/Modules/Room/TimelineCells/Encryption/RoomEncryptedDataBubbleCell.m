@@ -24,18 +24,12 @@ NSString *const kRoomEncryptedDataBubbleCellTapOnEncryptionIcon = @"kRoomEncrypt
 
 + (UIImage*)encryptionIconForBubbleComponent:(MXKRoomBubbleComponent *)bubbleComponent
 {
-    switch (bubbleComponent.encryptionDecoration) {
-        case EventEncryptionDecorationNone:
-            return nil;
-        case EventEncryptionDecorationUnsafeKey:
-            return AssetImages.encryptionUntrusted.image;
-        case EventEncryptionDecorationDecryptionError:
-        case EventEncryptionDecorationNotEncrypted:
-        case EventEncryptionDecorationUntrustedDevice:
-            return AssetImages.encryptionWarning.image;
-        default:
-            return nil;
+    if (!bubbleComponent.showEncryptionBadge)
+    {
+        return nil;
     }
+    
+    return AssetImages.encryptionWarning.image;
 }
 
 + (void)addEncryptionStatusFromBubbleData:(MXKRoomBubbleCellData *)bubbleData inContainerView:(UIView *)containerView

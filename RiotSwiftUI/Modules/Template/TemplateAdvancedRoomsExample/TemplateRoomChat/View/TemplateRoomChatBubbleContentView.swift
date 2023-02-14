@@ -17,7 +17,14 @@
 import SwiftUI
 
 struct TemplateRoomChatBubbleContentView: View {
+    
+    // MARK: - Properties
+    
+    // MARK: Private
+    
     @Environment(\.theme) private var theme: ThemeSwiftUI
+    
+    // MARK: Public
     
     let bubbleItem: TemplateRoomChatBubbleItem
     

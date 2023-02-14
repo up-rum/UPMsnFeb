@@ -16,10 +16,11 @@
  limitations under the License.
  */
 
-import Combine
 import Foundation
+import Combine
 
 class RoomNotificationSettingsViewModel: RoomNotificationSettingsViewModelType {
+    
     // MARK: - Properties
     
     // MARK: Private
@@ -39,10 +40,12 @@ class RoomNotificationSettingsViewModel: RoomNotificationSettingsViewModelType {
     
     // MARK: - Setup
     
-    init(roomNotificationService: RoomNotificationSettingsServiceType,
-         initialState: RoomNotificationSettingsViewState) {
+    init(
+        roomNotificationService: RoomNotificationSettingsServiceType,
+        initialState: RoomNotificationSettingsViewState
+    ) {
         self.roomNotificationService = roomNotificationService
-        state = initialState
+        self.state = initialState
         
         self.roomNotificationService.observeNotificationState { [weak self] state in
             guard let self = self else { return }
@@ -50,10 +53,12 @@ class RoomNotificationSettingsViewModel: RoomNotificationSettingsViewModelType {
         }
     }
     
-    convenience init(roomNotificationService: RoomNotificationSettingsServiceType,
-                     avatarData: AvatarProtocol?,
-                     displayName: String?,
-                     roomEncrypted: Bool) {
+    convenience init(
+        roomNotificationService: RoomNotificationSettingsServiceType,
+        avatarData: AvatarProtocol?,
+        displayName: String?,
+        roomEncrypted: Bool
+    ) {
         let notificationState = Self.mapNotificationStateOnRead(encrypted: roomEncrypted, state: roomNotificationService.notificationState)
         
         let initialState = RoomNotificationSettingsViewState(
@@ -66,16 +71,16 @@ class RoomNotificationSettingsViewModel: RoomNotificationSettingsViewModelType {
         self.init(roomNotificationService: roomNotificationService, initialState: initialState)
     }
     
-    // MARK: - Public
+    // MARK: - Public 
     
     func process(viewAction: RoomNotificationSettingsViewAction) {
         switch viewAction {
         case .load:
-            update(viewState: state)
+            update(viewState: self.state)
         case .selectNotificationState(let state):
             self.state.notificationState = state
         case .save:
-            state.saving = true
+            self.state.saving = true
             roomNotificationService.update(state: state.notificationState) { [weak self] in
                 guard let self = self else { return }
                 self.state.saving = false
@@ -98,6 +103,6 @@ class RoomNotificationSettingsViewModel: RoomNotificationSettingsViewModelType {
     }
     
     func update(viewState: RoomNotificationSettingsViewState) {
-        viewDelegate?.roomNotificationSettingsViewModel(self, didUpdateViewState: viewState)
+        self.viewDelegate?.roomNotificationSettingsViewModel(self, didUpdateViewState: viewState)
     }
 }

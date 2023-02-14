@@ -40,14 +40,25 @@ class VersionCheckBannerView: UIView, NibLoadable, Themable {
     override func awakeFromNib() {
         super.awakeFromNib()
         
-        let tapGestureRecognizer = UITapGestureRecognizer()
-        tapGestureRecognizer.addTarget(self, action: #selector(handleTapGesture))
-        self.addGestureRecognizer(tapGestureRecognizer)
+//        let tapGestureRecognizer = UITapGestureRecognizer()
+//        tapGestureRecognizer.addTarget(self, action: #selector(handleTapGesture))
+//        self.addGestureRecognizer(tapGestureRecognizer)
     }
     
     func configureWithDetails(_ details: VersionCheckBannerViewDetails) {
-        titleLabel.text = details.title
-        subtitleLabel.text = details.subtitle
+        let grace_period = UserDefaults.standard.integer(forKey: "grace_period") ?? 0
+        var suffixStr = "days"
+        if grace_period == 1 {
+            suffixStr = "day"
+        }
+        titleLabel.text = "Update Available"//details.title
+        subtitleLabel.text = "Mandatory version update required within \(grace_period) \(suffixStr)."
+    }
+
+    @IBAction func updateApp() {
+        if let url = URL(string: "itms-apps://itunes.apple.com/app/id1644037554") {
+            UIApplication.shared.open(url)
+        }
     }
     
     // MARK: - Themable

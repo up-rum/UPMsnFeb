@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,13 +14,14 @@
 // limitations under the License.
 //
 
+import XCTest
 import Combine
 import CoreLocation
-import XCTest
 
 @testable import RiotSwiftUI
 
 class StaticLocationViewingViewModelTests: XCTestCase {
+
     var cancellables = Set<AnyCancellable>()
     
     func testInitialState() {
@@ -38,7 +39,7 @@ class StaticLocationViewingViewModelTests: XCTestCase {
     func testCancellation() {
         let viewModel = buildViewModel()
         
-        let expectation = expectation(description: "Cancellation completion should be invoked")
+        let expectation = self.expectation(description: "Cancellation completion should be invoked")
         
         viewModel.completion = { result in
             switch result {
@@ -57,7 +58,7 @@ class StaticLocationViewingViewModelTests: XCTestCase {
     func testShareExistingLocation() {
         let viewModel = buildViewModel()
         
-        let expectation = expectation(description: "Share completion should be invoked")
+        let expectation = self.expectation(description: "Share completion should be invoked")
         
         viewModel.completion = { result in
             switch result {

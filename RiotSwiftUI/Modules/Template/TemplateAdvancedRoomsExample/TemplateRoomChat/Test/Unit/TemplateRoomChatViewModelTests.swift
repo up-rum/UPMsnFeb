@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,12 +14,13 @@
 // limitations under the License.
 //
 
-import Combine
 import XCTest
+import Combine
 
 @testable import RiotSwiftUI
 
 class TemplateRoomChatViewModelTests: XCTestCase {
+
     var service: MockTemplateRoomChatService!
     var viewModel: TemplateRoomChatViewModel!
     var context: TemplateRoomChatViewModel.Context!
@@ -38,17 +39,18 @@ class TemplateRoomChatViewModelTests: XCTestCase {
         XCTAssertEqual(context.viewState.roomInitializationStatus, .initialized)
     }
 
+
     func testSendMessageUpdatesReceived() throws {
         let bubblesPublisher: AnyPublisher<[[TemplateRoomChatBubble]], Never> = context.$viewState.map(\.bubbles).removeDuplicates().collect(2).first().eraseToAnyPublisher()
         let awaitDeferred = xcAwaitDeferred(bubblesPublisher)
-        let newMessage = "Let's Go"
+        let newMessage: String = "Let's Go"
         service.send(textMessage: newMessage)
         
         let result: [[TemplateRoomChatBubble]]? = try awaitDeferred()
         
         // Test that the update to the messages in turn updates the view's
         // the last bubble by appending another text item, asserting the body.
-        guard let item: TemplateRoomChatBubbleItem = result?.last?.last?.items.last,
+        guard let item:TemplateRoomChatBubbleItem = result?.last?.last?.items.last,
               case TemplateRoomChatBubbleItemContent.message(let message) = item.content,
               case let TemplateRoomChatMessageContent.text(text) = message else {
             XCTFail()

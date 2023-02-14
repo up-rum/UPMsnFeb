@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@ import Mapbox
 
 /// Base class to handle a map annotation
 class LocationAnnotation: NSObject, MGLAnnotation {
+    
     // MARK: - Properties
     
     // Title property is needed to enable annotation selection and callout view showing
@@ -35,14 +36,15 @@ class LocationAnnotation: NSObject, MGLAnnotation {
 }
 
 /// POI map annotation
-class PinLocationAnnotation: LocationAnnotation { }
+class PinLocationAnnotation: LocationAnnotation {}
 
 /// User map annotation
 class UserLocationAnnotation: LocationAnnotation {
+    
     // MARK: - Properties
     
     var userId: String {
-        avatarData.matrixItemId
+        return avatarData.matrixItemId
     }
     
     let avatarData: AvatarInputProtocol
@@ -51,12 +53,13 @@ class UserLocationAnnotation: LocationAnnotation {
     
     init(avatarData: AvatarInputProtocol,
          coordinate: CLLocationCoordinate2D) {
+
         self.avatarData = avatarData
                         
         super.init(coordinate: coordinate)
-        super.title = self.avatarData.displayName ?? userId
+        super.title = self.avatarData.displayName ?? self.userId
     }
 }
 
 /// Invisible annotation
-class InvisibleLocationAnnotation: LocationAnnotation { }
+class InvisibleLocationAnnotation: LocationAnnotation {}

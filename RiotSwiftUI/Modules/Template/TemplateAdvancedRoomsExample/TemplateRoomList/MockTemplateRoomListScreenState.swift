@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +16,7 @@
 
 import Foundation
 import SwiftUI
+
 
 /// Using an enum for the screen allows you define the different state cases with
 /// the relevant associated data for each case.
@@ -47,7 +48,7 @@ enum MockTemplateRoomListScreenState: MockScreenState, CaseIterable {
         return (
             [service, viewModel],
             AnyView(TemplateRoomList(viewModel: viewModel.context)
-                .environmentObject(AvatarViewModel.withMockedServices()))
+                .addDependency(MockAvatarService.example))
         )
     }
 }

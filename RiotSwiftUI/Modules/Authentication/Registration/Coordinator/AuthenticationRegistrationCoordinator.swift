@@ -14,9 +14,9 @@
 // limitations under the License.
 //
 
+import SwiftUI
 import CommonKit
 import MatrixSDK
-import SwiftUI
 
 struct AuthenticationRegistrationCoordinatorParameters {
     let navigationRouter: NavigationRouterType
@@ -32,6 +32,8 @@ enum AuthenticationRegistrationCoordinatorResult: CustomStringConvertible {
     case continueWithSSO(SSOIdentityProvider)
     /// The screen completed with the associated registration result.
     case completed(result: RegistrationResult, password: String)
+
+    case signupSuccess(username:String, password:String)
     /// Continue using the fallback
     case fallback
     
@@ -44,15 +46,19 @@ enum AuthenticationRegistrationCoordinatorResult: CustomStringConvertible {
             return "completed"
         case .fallback:
             return "fallback"
+        case .signupSuccess(username: let username, password: let password):
+            return "signupSuccess"
         }
     }
 }
 
 final class AuthenticationRegistrationCoordinator: Coordinator, Presentable {
+    
     // MARK: - Properties
     
     // MARK: Private
-    
+    private let parameServer: AuthenticationServerSelectionCoordinatorParameters
+
     private let parameters: AuthenticationRegistrationCoordinatorParameters
     private let authenticationRegistrationHostingController: VectorHostingController
     private var authenticationRegistrationViewModel: AuthenticationRegistrationViewModelProtocol
@@ -77,12 +83,14 @@ final class AuthenticationRegistrationCoordinator: Coordinator, Presentable {
     // Must be used only internally
     var childCoordinators: [Coordinator] = []
     var callback: (@MainActor (AuthenticationRegistrationCoordinatorResult) -> Void)?
+    var callback2: (@MainActor (AuthenticationLoginCoordinatorResult) -> Void)?
+
     
     // MARK: - Setup
     
-    @MainActor init(parameters: AuthenticationRegistrationCoordinatorParameters) {
+    @MainActor init(parameters: AuthenticationRegistrationCoordinatorParameters, paramServer: AuthenticationServerSelectionCoordinatorParameters) {
         self.parameters = parameters
-        
+        self.parameServer = paramServer
         let homeserver = parameters.authenticationService.state.homeserver
         let viewModel = AuthenticationRegistrationViewModel(homeserver: homeserver.viewData)
         authenticationRegistrationViewModel = viewModel
@@ -93,17 +101,18 @@ final class AuthenticationRegistrationCoordinator: Coordinator, Presentable {
         authenticationRegistrationHostingController.enableNavigationBarScrollEdgeAppearance = true
         
         indicatorPresenter = UserIndicatorTypePresenter(presentingViewController: authenticationRegistrationHostingController)
+
+//        self.useHomeserver("matrix.unpluggedsystems.app")
     }
     
     // MARK: - Public
-
     func start() {
         MXLog.debug("[AuthenticationRegistrationCoordinator] did start.")
         Task { await setupViewModel() }
     }
     
     func toPresentable() -> UIViewController {
-        authenticationRegistrationHostingController
+        return self.authenticationRegistrationHostingController
     }
     
     // MARK: - Private
@@ -117,10 +126,10 @@ final class AuthenticationRegistrationCoordinator: Coordinator, Presentable {
             switch result {
             case .selectServer:
                 self.presentServerSelectionScreen()
-            case .validateUsername(let username):
+            case.validateUsername(let username):
                 self.validateUsername(username)
-            case .createAccount(let username, let password):
-                self.createAccount(username: username, password: password)
+            case .createAccount(let username, let password, let email, let phone, let firstName, let lastName, let subscribeEmailUpdates):
+                self.createAccount(username: username, password: password, email: email, phone: phone, firstName: firstName, lastName: lastName, subscribeEmailUpdates: subscribeEmailUpdates)
             case .continueWithSSO(let provider):
                 self.callback?(.continueWithSSO(provider))
             case .fallback:
@@ -128,13 +137,37 @@ final class AuthenticationRegistrationCoordinator: Coordinator, Presentable {
             }
         }
     }
-    
+    @MainActor private func useHomeserver(_ homeserverAddress: String) {
+        startLoading(isInteractionBlocking: true)
+
+        let homeserverAddress = HomeserverAddress.sanitized(homeserverAddress)
+
+        Task {
+            do {
+                try await authenticationService.startFlow(parameServer.flow, for: homeserverAddress)
+                self.stopLoading()
+
+//                callback?(.updated)
+            } catch {
+                self.stopLoading()
+//
+//                if let error = error as? RegistrationError {
+//                    authenticationServerSelectionViewModel.displayError(.footerMessage(error.localizedDescription))
+//                } else {
+//                    // Show the MXError message if possible otherwise use a generic server error
+//                    let message = MXError(nsError: error)?.error ?? VectorL10n.authenticationServerSelectionGenericError
+//                    authenticationServerSelectionViewModel.displayError(.footerMessage(message))
+//                }
+            }
+        }
+    }
     /// Show an activity indicator whilst loading.
     /// - Parameter isInteractionBlocking: Whether or not the indicator blocks user interaction.
     @MainActor private func startLoading(isInteractionBlocking: Bool = true) {
         waitingIndicator = indicatorPresenter.present(.loading(label: VectorL10n.loading, isInteractionBlocking: isInteractionBlocking))
-        
-        if !isInteractionBlocking {
+
+        if !isInteractionBlocking
+        {
             authenticationRegistrationViewModel.update(isLoading: true)
         }
     }
@@ -185,53 +218,97 @@ final class AuthenticationRegistrationCoordinator: Coordinator, Presentable {
             MXLog.failure("[AuthenticationRegistrationCoordinator] The registration wizard was requested before getting the login flow.")
             return
         }
-        
+
+
         currentTask = Task {
             do {
-                _ = try await registrationWizard.registrationAvailable(username: username)
-                authenticationRegistrationViewModel.confirmUsernameAvailability(username)
-            } catch {
-                guard !Task.isCancelled, let mxError = MXError(nsError: error as NSError) else { return }
-                if mxError.errcode == kMXErrCodeStringUserInUse
-                    || mxError.errcode == kMXErrCodeStringInvalidUsername
-                    || mxError.errcode == kMXErrCodeStringExclusiveResource {
-                    authenticationRegistrationViewModel.displayError(.usernameUnavailable(mxError.error))
+                let session = try await APIServices.shared.checkUPUsername(username: username) { (responseDict, error) in
+                guard let response = responseDict else{
+                    self.authenticationRegistrationViewModel.confirmUsernameAvailability(username)
+
+                    return
                 }
+
+                    let parsedDictionary = response as? [String: Any]
+                    let stat = parsedDictionary?["message"] as? [String:Any]
+                    let dict = parsedDictionary?["message"] as? String
+                    print(parsedDictionary)
+                    print(stat)
+                    print(dict)
+                    self.authenticationRegistrationViewModel.displayError(.usernameUnavailable("\("\(username) is already in use")"))
             }
+
+//            do {
+//                _ = try await registrationWizard.registrationAvailable(username: username)
+//
+//                authenticationRegistrationViewModel.confirmUsernameAvailability(username)
+            }
+//            catch {
+//                guard !Task.isCancelled, let mxError = MXError(nsError: error as NSError) else { return }
+//                if mxError.errcode == kMXErrCodeStringUserInUse
+//                    || mxError.errcode == kMXErrCodeStringInvalidUsername
+//                    || mxError.errcode == kMXErrCodeStringExclusiveResource {
+//                    authenticationRegistrationViewModel.displayError(.usernameUnavailable(mxError.error))
+//                }
+//            }
         }
     }
-    
+
     /// Creates an account on the homeserver with the supplied username and password.
-    @MainActor private func createAccount(username: String, password: String) {
+    @MainActor private func createAccount(username: String, password: String, email:String, phone: String, firstName:String, lastName:String, subscribeEmailUpdates: Bool)  {
         guard let registrationWizard = registrationWizard else {
             MXLog.failure("[AuthenticationRegistrationCoordinator] createAccount: The registration wizard is nil.")
             return
         }
         
-        startLoading()
-        
-        currentTask = Task { [weak self] in
+
+//        currentTask = Task { [weak self] in
             do {
-                let result = try await registrationWizard.createAccount(username: username,
-                                                                        password: password,
-                                                                        initialDeviceDisplayName: UIDevice.current.initialDisplayName)
-                
+//                let result = try await registrationWizard.createAccount(username: username,
+//                                                                        password: password,
+//                                                                        initialDeviceDisplayName: UIDevice.current.initialDisplayName)
+                DispatchQueue.main.async {
+                    self.startLoading(isInteractionBlocking: true)
+                }
+                let result = try  APIServices.shared.callRegistrationApi(parameters:["username":username, "email":email, "password": password, "phoneNumber": phone, "firstName": firstName, "lastName": lastName, "subscribeEmailUpdates": subscribeEmailUpdates, "ip":""] )  { response in
+                    if let response = response {
+                        self.stopLoading()
+                        print(response)
+                        if response.id == nil {
+                            self.handleError("An error occured")
+                        }
+                        else{
+//                            self?.callback2?(.login(username: username, password: password))
+//                            self?.login(username: username, password: password)
+
+                            self.callback?(.signupSuccess(username: username, password: password))
+                        }
+
+                    }
+                }
+                    failure: { error in
+                        self.stopLoading()
+                       print(error)
+                    }
                 guard !Task.isCancelled else { return }
-                callback?(.completed(result: result, password: password))
-                
-                self?.stopLoading()
-            } catch {
-                self?.stopLoading()
-                self?.handleError(error)
+//                callback?(.completed(result: result, password: password))
+//                DispatchQueue.main.async {
+//                self.stopLoading()
+//                }
+            }
+            catch {
+//                DispatchQueue.main.async {
+//                self.stopLoading()
+//                }
+                self.handleError(error)
             }
         }
-    }
+//    }
     
     /// Processes an error to either update the flow or display it to the user.
     @MainActor private func handleError(_ error: Error) {
         if let mxError = MXError(nsError: error as NSError) {
-            let message = mxError.authenticationErrorMessage()
-            authenticationRegistrationViewModel.displayError(.mxError(message))
+            authenticationRegistrationViewModel.displayError(.mxError(mxError.error))
             return
         }
         

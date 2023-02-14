@@ -89,12 +89,8 @@
         self.navigationItem.leftBarButtonItem = nil;
         
         // Add the search bar
-        UIView *searchBarContainer = [[UIView alloc] initWithFrame:CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width, 44)];
-        searchBarContainer.backgroundColor = [UIColor clearColor];
-        searchBarContainer.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-        
-        self.navigationItem.titleView = searchBarContainer;
-        [searchBarContainer addSubview:self.searchBar];
+        self.navigationItem.titleView = self.searchBar;
+
         self.extendedLayoutIncludesOpaqueBars = YES;
         
         // On iPad, there is no cancel button inside the UISearchBar
@@ -181,9 +177,8 @@
         // Initialise internal data at the first call
         searchInternals = [[UIViewControllerRiotSearchInternals alloc] init];
 
-        UISearchBar *searchBar = [[UISearchBar alloc] initWithFrame:CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width, 44)];
+        UISearchBar *searchBar = [[UISearchBar alloc] init];
         searchBar.showsCancelButton = YES;
-        searchBar.autoresizingMask = UIViewAutoresizingFlexibleWidth;
         searchBar.delegate = (id<UISearchBarDelegate>)self;
         searchInternals.searchBar = searchBar;
 

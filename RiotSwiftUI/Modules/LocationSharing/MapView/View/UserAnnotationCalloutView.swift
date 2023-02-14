@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2022 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +17,7 @@
 import Mapbox
 
 class UserAnnotationCalloutView: UIView, MGLCalloutView, Themable {
+    
     // MARK: - Constants
     
     private enum Constants {
@@ -30,16 +31,16 @@ class UserAnnotationCalloutView: UIView, MGLCalloutView, Themable {
     
     var representedObject: MGLAnnotation
     
-    lazy var leftAccessoryView = UIView()
+    lazy var leftAccessoryView: UIView = UIView()
     
-    lazy var rightAccessoryView = UIView()
+    lazy var rightAccessoryView: UIView = UIView()
     
     var delegate: MGLCalloutViewDelegate?
     
     // Allow the callout to remain open during panning.
-    let dismissesAutomatically = false
+    let dismissesAutomatically: Bool = false
     
-    let isAnchoredToAnnotation = true
+    let isAnchoredToAnnotation: Bool = true
     
     // https://github.com/mapbox/mapbox-gl-native/issues/9228
     override var center: CGPoint {
@@ -49,31 +50,33 @@ class UserAnnotationCalloutView: UIView, MGLCalloutView, Themable {
             super.center = newCenter
         }
         get {
-            super.center
+            return super.center
         }
     }
     
     // MARK: Private
     
-    lazy var contentView = UserAnnotationCalloutContentView.instantiate()
+    lazy var contentView: UserAnnotationCalloutContentView = {
+        return UserAnnotationCalloutContentView.instantiate()
+    }()
     
     // MARK: - Setup
     
     required init(userLocationAnnotation: UserLocationAnnotation) {
-        representedObject = userLocationAnnotation
+        
+        self.representedObject = userLocationAnnotation
         
         super.init(frame: .zero)
                         
-        vc_addSubViewMatchingParent(contentView)
+        self.vc_addSubViewMatchingParent(self.contentView)
         
-        update(theme: ThemeService.shared().theme)
+        self.update(theme: ThemeService.shared().theme)
         
         let size = UserAnnotationCalloutContentView.contentViewSize()
 
-        frame = CGRect(origin: .zero, size: size)
+        self.frame = CGRect(origin: .zero, size: size)
     }
     
-    @available(*, unavailable)
     required init?(coder decoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -81,15 +84,16 @@ class UserAnnotationCalloutView: UIView, MGLCalloutView, Themable {
     // MARK: - Public
     
     func update(theme: Theme) {
-        contentView.update(theme: theme)
+        self.contentView.update(theme: theme)
     }
     
     // MARK: - Overrides
 
     func presentCallout(from rect: CGRect, in view: UIView, constrainedTo constrainedRect: CGRect, animated: Bool) {
+        
         // Set callout above the marker view
         
-        center = view.center.applying(CGAffineTransform(translationX: 0, y: view.bounds.height / 2 + bounds.height))
+        self.center = view.center.applying(CGAffineTransform(translationX: 0, y: view.bounds.height/2 + self.bounds.height))
         
         delegate?.calloutViewWillAppear?(self)
         
@@ -97,10 +101,10 @@ class UserAnnotationCalloutView: UIView, MGLCalloutView, Themable {
         
         if isCalloutTappable() {
             // Handle taps and eventually try to send them to the delegate (usually the map view).
-            contentView.shareButton.addTarget(self, action: #selector(UserAnnotationCalloutView.calloutTapped), for: .touchUpInside)
+            self.contentView.shareButton.addTarget(self, action: #selector(UserAnnotationCalloutView.calloutTapped), for: .touchUpInside)
         } else {
             // Disable tapping and highlighting.
-            contentView.shareButton.isUserInteractionEnabled = false
+            self.contentView.shareButton.isUserInteractionEnabled = false
         }
         
         if animated {
@@ -120,7 +124,7 @@ class UserAnnotationCalloutView: UIView, MGLCalloutView, Themable {
     }
     
     func dismissCallout(animated: Bool) {
-        if superview != nil {
+        if (superview != nil) {
             if animated {
                 UIView.animate(withDuration: Constants.animationDuration, animations: { [weak self] in
                     self?.alpha = 0
@@ -145,7 +149,7 @@ class UserAnnotationCalloutView: UIView, MGLCalloutView, Themable {
     }
 
     @objc func calloutTapped() {
-        if isCalloutTappable(), delegate!.responds(to: #selector(MGLCalloutViewDelegate.calloutViewTapped)) {
+        if isCalloutTappable() && delegate!.responds(to: #selector(MGLCalloutViewDelegate.calloutViewTapped)) {
             delegate!.calloutViewTapped!(self)
         }
     }

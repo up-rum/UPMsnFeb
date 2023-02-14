@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,49 +16,39 @@
 
 import Foundation
 
-@objcMembers
-class TimelinePollProvider: NSObject {
+class TimelinePollProvider {
     static let shared = TimelinePollProvider()
     
-    var session: MXSession? {
-        willSet {
-            guard let currentSession = self.session else { return }
-            
-            if currentSession != newValue {
-                // Clear all stored coordinators on new session
-                coordinatorsForEventIdentifiers.removeAll()
-            }
-        }
-    }
+    var session: MXSession?
     var coordinatorsForEventIdentifiers = [String: TimelinePollCoordinator]()
+    
+    private init() {
+        
+    }
     
     /// Create or retrieve the poll timeline coordinator for this event and return
     /// a view to be displayed in the timeline
-    func buildTimelinePollVCForEvent(_ event: MXEvent) -> UIViewController? {
+    func buildTimelinePollViewForEvent(_ event: MXEvent) -> UIView? {
         guard let session = session, let room = session.room(withRoomId: event.roomId) else {
             return nil
         }
         
         if let coordinator = coordinatorsForEventIdentifiers[event.eventId] {
-            return coordinator.toPresentable()
+            return coordinator.toPresentable().view
         }
         
-        let parameters = TimelinePollCoordinatorParameters(session: session, room: room, pollEvent: event)
+        let parameters = TimelinePollCoordinatorParameters(session: session, room: room, pollStartEvent: event)
         guard let coordinator = try? TimelinePollCoordinator(parameters: parameters) else {
             return nil
         }
         
         coordinatorsForEventIdentifiers[event.eventId] = coordinator
         
-        return coordinator.toPresentable()
+        return coordinator.toPresentable().view
     }
     
     /// Retrieve the poll timeline coordinator for the given event or nil if it hasn't been created yet
     func timelinePollCoordinatorForEventIdentifier(_ eventIdentifier: String) -> TimelinePollCoordinator? {
-        coordinatorsForEventIdentifiers[eventIdentifier]
-    }
-    
-    func reset() {
-        coordinatorsForEventIdentifiers.removeAll()
+        return coordinatorsForEventIdentifiers[eventIdentifier]
     }
 }

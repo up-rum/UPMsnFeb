@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-import RiotSwiftUI
 import XCTest
+import RiotSwiftUI
 
 class OnboardingUseCaseUITests: MockScreenTestCase {
     // The view has no parameters or changing state to test.
