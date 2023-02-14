@@ -15,20 +15,10 @@
 //
 
 import UIKit
+import SwiftUI
 
-class UPContactsTableViewCell: UITableViewCell {
-    @IBOutlet weak var avatarIcon: MXKImageView!
-    @IBOutlet weak var contactName: UILabel!
-    override func awakeFromNib() {
-        super.awakeFromNib()
-        // Initialization code
+extension View {
+    func hideKeyboard() {
+        UIApplication.shared.vc_closeKeyboard()
     }
-
-    override func setSelected(_ selected: Bool, animated: Bool) {
-        super.setSelected(selected, animated: animated)
-        accessoryType = selected ? UITableViewCell.AccessoryType.checkmark : UITableViewCell.AccessoryType.none
-
-        // Configure the view for the selected state
-    }
-    
 }

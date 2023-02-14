@@ -1,4 +1,4 @@
-// 
+//
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,19 +14,20 @@
 // limitations under the License.
 //
 
-import Foundation
+// MARK: View model
 
-/// A protocol for classes that can be injected with a dependency container
-protocol Injectable: AnyObject {
-    var dependencies: DependencyContainer! { get set }
+enum InfoSheetViewModelResult {
+    case actionTriggered
 }
 
+// MARK: View
 
-extension Injectable {
-    
-    /// Used to inject the dependency container into an Injectable.
-    /// - Parameter dependencies: The `DependencyContainer` to inject.
-    func inject(dependencies: DependencyContainer) {
-        self.dependencies = dependencies
-    }
+struct InfoSheetViewState: BindableState {
+    let title: String
+    let description: String
+    let action: InfoSheet.Action
+}
+
+enum InfoSheetViewAction {
+    case actionTriggered
 }

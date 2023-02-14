@@ -1,4 +1,4 @@
-// 
+//
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
 
 import Foundation
 
-/// Class that can be extended that supports injection and the `@Inject` property wrapper.
-open class InjectableObject: Injectable {
-    var dependencies: DependencyContainer!
+protocol InfoSheetViewModelProtocol {
+    var completion: ((InfoSheetViewModelResult) -> Void)? { get set }
+    var context: InfoSheetViewModelType.Context { get }
 }

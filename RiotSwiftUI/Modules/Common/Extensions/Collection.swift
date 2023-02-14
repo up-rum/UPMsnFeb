@@ -1,4 +1,4 @@
-// 
+//
 // Copyright 2022 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,20 +14,11 @@
 // limitations under the License.
 //
 
-import UIKit
+import Foundation
 
-class CallHistoryTableViewCell: UITableViewCell {
-    @IBOutlet weak var avatarIcon: MXKImageView!
-    @IBOutlet weak var callername, callStatus, callDate: UILabel!
-    override func awakeFromNib() {
-        super.awakeFromNib()
-        // Initialization code
+extension Collection {
+    /// Returns the element at the specified index if it is within bounds, otherwise nil.
+    subscript(safe index: Index) -> Element? {
+        indices.contains(index) ? self[index] : nil
     }
-
-    override func setSelected(_ selected: Bool, animated: Bool) {
-        super.setSelected(selected, animated: animated)
-
-        // Configure the view for the selected state
-    }
-    
 }

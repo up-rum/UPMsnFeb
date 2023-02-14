@@ -16,29 +16,21 @@
 
 import SwiftUI
 
-typealias OnboardingUseCaseViewModelType = StateStoreViewModel<OnboardingUseCaseViewState, OnboardingUseCaseViewAction>
+typealias InfoSheetViewModelType = StateStoreViewModel<InfoSheetViewState, InfoSheetViewAction>
 
-class OnboardingUseCaseViewModel: OnboardingUseCaseViewModelType, OnboardingUseCaseViewModelProtocol {
-    // MARK: - Properties
+class InfoSheetViewModel: InfoSheetViewModelType, InfoSheetViewModelProtocol {
+    var completion: ((InfoSheetViewModelResult) -> Void)?
 
-    // MARK: Private
-
-    // MARK: Public
-
-    var completion: ((OnboardingUseCaseViewModelResult) -> Void)?
-
-    // MARK: - Setup
-
-    init() {
-        super.init(initialViewState: OnboardingUseCaseViewState())
+    init(title: String, description: String, action: InfoSheet.Action) {
+        super.init(initialViewState: InfoSheetViewState(title: title, description: description, action: action))
     }
 
     // MARK: - Public
 
-    override func process(viewAction: OnboardingUseCaseViewAction) {
+    override func process(viewAction: InfoSheetViewAction) {
         switch viewAction {
-        case .answer(let result):
-            completion?(result)
+        case .actionTriggered:
+            completion?(.actionTriggered)
         }
     }
 }
