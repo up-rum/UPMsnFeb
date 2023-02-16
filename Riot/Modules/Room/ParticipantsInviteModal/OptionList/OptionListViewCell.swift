@@ -61,7 +61,7 @@ class OptionListViewCell: UITableViewCell, NibReusable {
     
     func update(with viewData: OptionListItemViewData) {
         self.iconView.image = viewData.image?.withRenderingMode(.alwaysTemplate)
-        self.titleLabel.text = "jjjjjj"//viewData.title
+        self.titleLabel.text = viewData.title
         self.detailLabel.text = viewData.detail
         self.chevronView.image = viewData.accessoryImage?.withRenderingMode(.alwaysTemplate)
         self.isEnabled = viewData.enabled

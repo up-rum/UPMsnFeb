@@ -1,4 +1,4 @@
-// 
+//
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -58,9 +58,10 @@ import AnalyticsEvents
     case spaceMembers
     case spaceExploreRooms
     case dialpad
+    case spaceBottomSheet
     case invites
     case createSpace
-    
+
     /// The screen name reported to the AnalyticsEvent.
     var screenName: AnalyticsEvent.MobileScreen.ScreenName {
         switch self {
@@ -144,6 +145,8 @@ import AnalyticsEvents
             return .SpaceExploreRooms
         case .dialpad:
             return .Dialpad
+        case .spaceBottomSheet:
+            return .SpaceBottomSheet
         case .invites:
             return .Invites
         case .createSpace:

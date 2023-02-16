@@ -27,7 +27,7 @@
     void (^onCompleteBlock)(BOOL doneButtonPressed);
 
     KeyVerificationCoordinatorBridgePresenter *keyVerificationCoordinatorBridgePresenter;
-    
+
     // Observe kThemeServiceDidChangeThemeNotification to handle user interface theme change.
     id kThemeServiceDidChangeThemeNotificationObserver;
 }
@@ -46,7 +46,7 @@
 - (void)finalizeInit
 {
     [super finalizeInit];
-    
+
     // Setup `MXKViewControllerHandling` properties
     self.enableBarTintColorStatusChange = NO;
     self.rageShakeManager = [RageShakeManager sharedManager];
@@ -71,12 +71,12 @@
 
     // Hide line separators of empty cells
     self.tableView.tableFooterView = [[UIView alloc] init];
-    
+
     // Observe user interface theme change.
     kThemeServiceDidChangeThemeNotificationObserver = [[NSNotificationCenter defaultCenter] addObserverForName:kThemeServiceDidChangeThemeNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *notif) {
-        
+
         [self userInterfaceThemeDidChange];
-        
+
     }];
     [self userInterfaceThemeDidChange];
 }
@@ -86,12 +86,12 @@
     [ThemeService.shared.theme applyStyleOnNavigationBar:self.navigationController.navigationBar];
 
     self.activityIndicator.backgroundColor = ThemeService.shared.theme.overlayBackgroundColor;
-    
+
     // Check the table view style to select its bg color.
     self.tableView.backgroundColor = ((self.tableView.style == UITableViewStylePlain) ? ThemeService.shared.theme.backgroundColor : ThemeService.shared.theme.headerBackgroundColor);
     self.view.backgroundColor = self.tableView.backgroundColor;
     self.tableView.separatorColor = ThemeService.shared.theme.lineBreakColor;
-    
+
     if (self.tableView.dataSource)
     {
         [self.tableView reloadData];
@@ -108,7 +108,7 @@
 - (void)destroy
 {
     [super destroy];
-    
+
     if (kThemeServiceDidChangeThemeNotificationObserver)
     {
         [[NSNotificationCenter defaultCenter] removeObserver:kThemeServiceDidChangeThemeNotificationObserver];
@@ -180,7 +180,7 @@
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath;
 {
     cell.backgroundColor = ThemeService.shared.theme.backgroundColor;
-    
+
     // Update the selected background view
     if (ThemeService.shared.theme.selectedBackgroundColor)
     {
@@ -246,13 +246,13 @@
 {
     // Update our map
     [mxSession.crypto downloadKeys:@[otherUserId] forceDownload:NO success:^(MXUsersDevicesMap<MXDeviceInfo *> *usersDevicesInfoMap, NSDictionary<NSString *,MXCrossSigningInfo *> *crossSigningKeysMap) {
-        
+
         [self reloadDataforUser:otherUserId andDevice:otherDeviceId];
-        
+
     } failure:^(NSError *error) {
         // Should not happen (the device is in the crypto db)
     }];
-    
+
     [self dismissKeyVerificationCoordinatorBridgePresenter];
 }
 
@@ -274,7 +274,12 @@
 {
     // Acknowledge the existence of all devices before leaving this screen
     [self startActivityIndicator];
-    [mxSession.crypto setDevicesKnown:usersDevices complete:^{
+    if (![self.mainSession.crypto isKindOfClass:[MXLegacyCrypto class]])
+    {
+        MXLogFailure(@"[UsersDevicesViewController] onDone: Only legacy crypto supports manual setting of known devices");
+        return;
+    }
+    [(MXLegacyCrypto *)mxSession.crypto setDevicesKnown:usersDevices complete:^{
 
         [self stopActivityIndicator];
         [self dismissViewControllerAnimated:YES completion:nil];

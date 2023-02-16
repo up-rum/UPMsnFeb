@@ -44,6 +44,7 @@
 {
     [super customizeTableViewCellRendering];
     
+    self.contentView.backgroundColor = ThemeService.shared.theme.backgroundColor;
     self.roomTitle.textColor = ThemeService.shared.theme.textPrimaryColor;
     self.lastEventDescription.textColor = ThemeService.shared.theme.textSecondaryColor;
     self.lastEventDate.textColor = ThemeService.shared.theme.textSecondaryColor;
@@ -68,6 +69,7 @@
     self.missedNotifAndUnreadIndicator.hidden = YES;
     self.missedNotifAndUnreadBadgeBgView.hidden = YES;
     self.missedNotifAndUnreadBadgeBgViewWidthConstraint.constant = 0;
+    self.missedNotifAndUnreadBadgeLabel.text = @"";
     
     roomCellData = (id<MXKRecentCellDataStoring>)cellData;
     if (roomCellData)
@@ -79,34 +81,36 @@
         // Manage lastEventAttributedTextMessage optional property
         if (!roomCellData.roomSummary.spaceChildInfo && [roomCellData respondsToSelector:@selector(lastEventAttributedTextMessage)])
         {
-            // Force the default text color for the last message (cancel highlighted message color)
-            NSMutableAttributedString *lastEventDescription = [[NSMutableAttributedString alloc] initWithAttributedString:roomCellData.lastEventAttributedTextMessage];
-            [lastEventDescription addAttribute:NSForegroundColorAttributeName value:ThemeService.shared.theme.textSecondaryColor range:NSMakeRange(0, lastEventDescription.length)];
-            self.lastEventDescription.attributedText = lastEventDescription;
+            self.lastEventDescription.attributedText = roomCellData.lastEventAttributedTextMessage;
         }
         else
         {
             self.lastEventDescription.text = roomCellData.lastEventTextMessage;
         }
-        
+
         self.unsentImageView.hidden = roomCellData.roomSummary.sentStatus == MXRoomSummarySentStatusOk;
         self.lastEventDecriptionLabelTrailingConstraint.constant = self.unsentImageView.hidden ? 10 : 30;
 
         // Notify unreads and bing
-        if (roomCellData.hasUnread)
+        if (roomCellData.isRoomMarkedAsUnread)
         {
-            self.missedNotifAndUnreadIndicator.hidden = BuildSettings.newAppLayoutEnabled;
-            
+            self.missedNotifAndUnreadBadgeBgView.hidden = NO;
+            self.missedNotifAndUnreadBadgeBgView.backgroundColor = ThemeService.shared.theme.tintColor;
+            self.missedNotifAndUnreadBadgeBgViewWidthConstraint.constant = 20;
+        }
+        else if (roomCellData.hasUnread)
+        {
+            self.missedNotifAndUnreadIndicator.hidden = NO;
             if (0 < roomCellData.notificationCount)
             {
                 self.missedNotifAndUnreadIndicator.backgroundColor = roomCellData.highlightCount ? ThemeService.shared.theme.noticeColor : ThemeService.shared.theme.noticeSecondaryColor;
-                
+
                 self.missedNotifAndUnreadBadgeBgView.hidden = NO;
                 self.missedNotifAndUnreadBadgeBgView.backgroundColor = self.missedNotifAndUnreadIndicator.backgroundColor;
-                
+
                 self.missedNotifAndUnreadBadgeLabel.text = roomCellData.notificationCountStringValue;
                 [self.missedNotifAndUnreadBadgeLabel sizeToFit];
-                
+
                 self.missedNotifAndUnreadBadgeBgViewWidthConstraint.constant = self.missedNotifAndUnreadBadgeLabel.frame.size.width + 18;
             }
             else
@@ -120,8 +124,8 @@
         else
         {
             self.lastEventDate.textColor = ThemeService.shared.theme.textSecondaryColor;
-            
-            // The room title is not bold anymore            
+
+            // The room title is not bold anymore
             self.roomTitle.font = [UIFont systemFontOfSize:17 weight:UIFontWeightMedium];
         }
 

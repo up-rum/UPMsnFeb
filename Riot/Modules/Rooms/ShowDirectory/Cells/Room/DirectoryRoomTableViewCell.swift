@@ -105,7 +105,7 @@ extension DirectoryRoomTableViewCell: Themable {
             joinButton.layer.borderColor = theme.textSecondaryColor.cgColor
         } else {
             joinButton.backgroundColor = theme.tintColor
-            joinButton.tintColor = .black
+            joinButton.tintColor = .white
             joinButton.layer.borderWidth = 0.0
             joinButton.layer.borderColor = nil
         }

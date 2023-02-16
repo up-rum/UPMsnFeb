@@ -1,4 +1,4 @@
-// 
+//
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,9 +17,9 @@
 import SwiftUI
 
 struct RoundedBorderTextField: View {
-    
+
     // MARK: - Properties
-    
+
     var title: String? = nil
     let placeHolder: String
     @Binding var text: String
@@ -29,20 +29,20 @@ struct RoundedBorderTextField: View {
 
     var configuration: UIKitTextInputConfiguration = UIKitTextInputConfiguration()
     @State var isSecureTextVisible = false
-    
+
     var onTextChanged: ((String) -> Void)? = nil
     var onEditingChanged: ((Bool) -> Void)? = nil
     var onCommit: (() -> Void)? = nil
 
     // MARK: Private
-    
+
     @State private var isEditing = false
-    
+
     @Environment(\.theme) private var theme: ThemeSwiftUI
     @Environment(\.isEnabled) private var isEnabled
-    
+
     // MARK: Public
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: -1) {
             if let title = self.title {
@@ -52,7 +52,7 @@ struct RoundedBorderTextField: View {
                     .multilineTextAlignment(.leading)
                     .padding(.bottom, 8)
             }
-            
+
             ZStack(alignment: .leading) {
                 if text.isEmpty {
                     Text(placeHolder)
@@ -61,7 +61,7 @@ struct RoundedBorderTextField: View {
                         .lineLimit(1)
                         .accessibilityHidden(true)
                 }
-                
+
                 ThemableTextField(placeholder: "",
                                   text: $text,
                                   configuration: configuration,
@@ -96,7 +96,7 @@ struct RoundedBorderTextField: View {
         }
         .animation(.easeOut(duration: 0.2))
     }
-    
+
     /// The text field's border color.
     private var borderColor: Color {
         if isEditing {
@@ -107,7 +107,7 @@ struct RoundedBorderTextField: View {
             return theme.colors.quinaryContent
         }
     }
-    
+
     /// The text field's border width.
     private var borderWidth: CGFloat {
         isEditing || (footerText != nil && isError) ? 2 : 1
@@ -125,7 +125,7 @@ struct TextFieldWithError_Previews: PreviewProvider {
         }
         .padding()
     }
-    
+
     static var sampleView: some View {
         VStack(alignment: .center, spacing: 20) {
             RoundedBorderTextField(title: "A title", placeHolder: "A placeholder", text: .constant(""), footerText: nil, isError: false)
@@ -134,9 +134,9 @@ struct TextFieldWithError_Previews: PreviewProvider {
             RoundedBorderTextField(title: "A title", placeHolder: "A placeholder", text: .constant("Some very long text used to check overlapping with the delete button"), footerText: "Some normal text", isError: false)
             RoundedBorderTextField(title: "A title", placeHolder: "A placeholder", text: .constant("Some very long text used to check overlapping with the delete button"), footerText: "Some normal text", isError: false)
                 .disabled(true)
-            
+
             Spacer().frame(height: 0)
-            
+
             RoundedBorderTextField(title: "Password", placeHolder: "Enter your password", text: .constant(""), configuration: UIKitTextInputConfiguration(isSecureTextEntry: true))
             RoundedBorderTextField(title: "Password", placeHolder: "Enter your password", text: .constant("password"), configuration: UIKitTextInputConfiguration(isSecureTextEntry: true))
         }
@@ -210,7 +210,7 @@ struct UPRoundedBorderTextField: View {
                 .onChange(of: text) { newText in
                     onTextChanged?(newText)
                 }
-                
+
                 .frame(height: 30)
                 .allowsHitTesting(isEnabled)
                 .opacity(isEnabled ? 1 : 0.5)

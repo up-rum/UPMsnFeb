@@ -1,4 +1,4 @@
-// 
+//
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,23 +22,28 @@ enum MockTimelinePollScreenState: MockScreenState, CaseIterable {
     case closedDisclosed
     case openUndisclosed
     case closedUndisclosed
+    case closedPollEnded
     
     var screenType: Any.Type {
         TimelinePollDetails.self
     }
     
-    var screenView: ([Any], AnyView)  {
+    var screenView: ([Any], AnyView) {
         let answerOptions = [TimelinePollAnswerOption(id: "1", text: "First", count: 10, winner: false, selected: false),
                              TimelinePollAnswerOption(id: "2", text: "Second", count: 5, winner: false, selected: true),
                              TimelinePollAnswerOption(id: "3", text: "Third", count: 15, winner: true, selected: false)]
         
-        let poll = TimelinePollDetails(question: "Question",
+        let poll = TimelinePollDetails(id: "id",
+                                       question: "Question",
                                        answerOptions: answerOptions,
-                                       closed: (self == .closedDisclosed || self == .closedUndisclosed ? true : false),
+                                       closed: self == .closedDisclosed || self == .closedUndisclosed ? true : false,
+                                       startDate: .init(),
                                        totalAnswerCount: 20,
-                                       type: (self == .closedDisclosed || self == .openDisclosed ? .disclosed : .undisclosed),
+                                       type: self == .closedDisclosed || self == .openDisclosed ? .disclosed : .undisclosed,
+                                       eventType: self == .closedPollEnded ? .ended : .started,
                                        maxAllowedSelections: 1,
-                                       hasBeenEdited: false)
+                                       hasBeenEdited: false,
+                                       hasDecryptionError: false)
         
         let viewModel = TimelinePollViewModel(timelinePollDetails: poll)
         

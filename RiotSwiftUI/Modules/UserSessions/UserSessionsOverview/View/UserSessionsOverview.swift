@@ -216,7 +216,7 @@ struct UserSessionsOverview: View {
             } label: {
                 Text(VectorL10n.userSessionsOverviewLinkDevice)
             }
-            .buttonStyle(PrimaryActionButtonStyle(font: theme.fonts.bodySB))
+            .buttonStyle(PrimaryActionButtonStyle())
             .padding(.top, 28)
             .padding(.bottom, 12)
             .padding(.horizontal, 16)

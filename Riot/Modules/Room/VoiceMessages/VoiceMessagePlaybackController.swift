@@ -137,13 +137,15 @@ class VoiceMessagePlaybackController: VoiceMessageAudioPlayerDelegate, VoiceMess
     
     func audioPlayer(_ audioPlayer: VoiceMessageAudioPlayer, didFailWithError error: Error) {
         state = .error
-        MXLog.error("Failed playing voice message with error: \(error)")
+        MXLog.error("Failed playing voice message", context: error)
     }
     
     func audioPlayerDidFinishPlaying(_ audioPlayer: VoiceMessageAudioPlayer) {
         audioPlayer.seekToTime(0.0) { [weak self] _ in
             guard let self = self else { return }
             self.state = .stopped
+            // Reload its content if necessary, otherwise the seek won't work
+            self.audioPlayer?.reloadContentIfNeeded()
         }
     }
     

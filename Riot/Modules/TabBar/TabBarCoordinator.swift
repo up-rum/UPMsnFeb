@@ -23,12 +23,12 @@ import CommonKit
 import MatrixSDK
 
 @objcMembers
-final class TabBarCoordinator: NSObject, TabBarCoordinatorType {
+final class TabBarCoordinator: NSObject, SplitViewMasterCoordinatorProtocol {
     
     // MARK: - Properties
-    
+
     // MARK: Private
-    
+
     private let parameters: TabBarCoordinatorParameters
     private let activityIndicatorPresenter: ActivityIndicatorPresenterType
     private let indicatorPresenter: UserIndicatorTypePresenterProtocol
@@ -40,27 +40,27 @@ final class TabBarCoordinator: NSObject, TabBarCoordinatorType {
     private var hasStartedOnce: Bool {
         return self.masterTabBarController != nil
     }
-    
+
     // TODO: Move MasterTabBarController navigation code here
     // and if possible use a simple: `private let tabBarController: UITabBarController`
     private var masterTabBarController: MasterTabBarController!
-    
+
     // TODO: Embed UINavigationController in each tab like recommended by Apple and remove these properties. UITabBarViewController shoud not be embed in a UINavigationController (https://github.com/vector-im/riot-ios/issues/3086).
     private let navigationRouter: NavigationRouterType
     private let masterNavigationController: UINavigationController
-    
+
     private var currentSpaceId: String?
-    
+
     private weak var versionCheckCoordinator: VersionCheckCoordinator?
-    
+
     private var currentMatrixSession: MXSession? {
         return parameters.userSessionsService.mainUserSession?.matrixSession
     }
-    
+
     private var isTabBarControllerTopMostController: Bool {
         return self.navigationRouter.modules.last is MasterTabBarController
     }
-    
+
     private var detailUserIndicatorPresenter: UserIndicatorTypePresenterProtocol {
         guard let presenter = splitViewMasterPresentableDelegate?.detailUserIndicatorPresenter else {
             MXLog.debug("[TabBarCoordinator]: Missing detaul user indicator presenter")
@@ -68,24 +68,23 @@ final class TabBarCoordinator: NSObject, TabBarCoordinatorType {
         }
         return presenter
     }
-    
+
     private var indicators = [UserIndicator]()
-    private var signOutAlertPresenter = SignOutAlertPresenter()
-    
+
     // MARK: Public
 
     // Must be used only internally
     var childCoordinators: [Coordinator] = []
-    
-    weak var delegate: TabBarCoordinatorDelegate?
-    
+
+    weak var delegate: SplitViewMasterCoordinatorDelegate?
+
     weak var splitViewMasterPresentableDelegate: SplitViewMasterPresentableDelegate?
-    
+
     // MARK: - Setup
-        
+
     init(parameters: TabBarCoordinatorParameters) {
         self.parameters = parameters
-        
+
         let masterNavigationController = RiotNavigationController()
         self.navigationRouter = NavigationRouter(navigationController: masterNavigationController)
         self.masterNavigationController = masterNavigationController
@@ -93,62 +92,61 @@ final class TabBarCoordinator: NSObject, TabBarCoordinatorType {
         self.indicatorPresenter = UserIndicatorTypePresenter(presentingViewController: masterNavigationController)
         self.userIndicatorStore = UserIndicatorStore(presenter: indicatorPresenter)
     }
+
     
     // MARK: - Public methods
-    
+
     func start() {
         self.start(with: nil)
     }
-        
+
     func start(with spaceId: String?) {
-                
+
         // If start has been done once do not setup view controllers again
         if self.hasStartedOnce == false {
-            signOutAlertPresenter.delegate = self
-
             let masterTabBarController = self.createMasterTabBarController()
             masterTabBarController.masterTabBarDelegate = self
             self.masterTabBarController = masterTabBarController
             self.navigationRouter.setRootModule(masterTabBarController)
-            
+
             // Add existing Matrix sessions if any
             for userSession in self.parameters.userSessionsService.userSessions {
                 self.addMatrixSessionToMasterTabBarController(userSession.matrixSession)
             }
-            
+
             if BuildSettings.enableSideMenu {
                 self.setupSideMenuGestures()
             }
-            
+
             self.registerUserSessionsServiceNotifications()
             self.registerSessionChange()
-            
+
             self.updateMasterTabBarController(with: spaceId, forceReload: true)
         } else {
             self.updateMasterTabBarController(with: spaceId)
         }
-        
+
         self.currentSpaceId = spaceId
     }
-    
+
     func toPresentable() -> UIViewController {
         return self.navigationRouter.toPresentable()
     }
-    
+
     func releaseSelectedItems() {
         self.masterTabBarController.releaseSelectedItem()
     }
-    
+
     func popToHome(animated: Bool, completion: (() -> Void)?) {
-        
+
         // Force back to the main screen if this is not the one that is displayed
         if masterTabBarController != masterNavigationController.visibleViewController {
-            
+
             // Listen to the masterNavigationController changes
             // We need to be sure that masterTabBarController is back to the screen
-            
+
             let didPopToHome: (() -> Void) = {
-                
+
                 // For unknown reason, the navigation bar is not restored correctly by [popToViewController:animated:]
                 // when a ViewController has hidden it (see MXKAttachmentsViewController).
                 // Patch: restore navigation bar by default here.
@@ -156,10 +154,10 @@ final class TabBarCoordinator: NSObject, TabBarCoordinatorType {
 
                 // Release the current selected item (room/contact/...).
                 self.masterTabBarController.releaseSelectedItem()
-                
+
                 // Select home tab
                 self.masterTabBarController.selectTab(at: .home)
-                
+
                 completion?()
             }
 
@@ -169,26 +167,26 @@ final class TabBarCoordinator: NSObject, TabBarCoordinatorType {
                 didPopToHome()
             } else {
                 // Otherwise MasterTabBarController is not the top controller of the navigation controller
-                
+
                 // Waiting for `self.navigationRouter` popping to MasterTabBarController
                 var token: NSObjectProtocol?
                 token = NotificationCenter.default.addObserver(forName: NavigationRouter.didPopModule, object: self.navigationRouter, queue: OperationQueue.main) { [weak self] (notification) in
-                    
+
                     guard let self = self else {
                         return
                     }
-                    
+
                     // If MasterTabBarController is now the top most controller in navigation controller stack call the completion
                     if self.isTabBarControllerTopMostController {
-                        
+
                         didPopToHome()
-                        
+
                         if let token = token {
                             NotificationCenter.default.removeObserver(token)
                         }
                     }
                 }
-                
+
                 // Pop to root view controller
                 self.navigationRouter.popToRootModule(animated: animated)
             }
@@ -199,69 +197,69 @@ final class TabBarCoordinator: NSObject, TabBarCoordinatorType {
             completion?()
         }
     }
-    
+
     func showErroIndicator(with error: Error) {
         let error = error as NSError
-        
+
         // Ignore fake error, or connection cancellation error
         guard error.domain != NSURLErrorDomain || error.code != NSURLErrorCancelled else {
             return
         }
-        
+
         // Ignore GDPR Consent not given error. Already caught by kMXHTTPClientUserConsentNotGivenErrorNotification observation
         let mxError = MXError.isMXError(error) ? MXError(nsError: error) : nil
         guard mxError?.errcode != kMXErrCodeStringConsentNotGiven else {
             return
         }
-        
+
         let msg = error.userInfo[NSLocalizedFailureReasonErrorKey] as? String
         let localizedDescription = error.userInfo[NSLocalizedDescriptionKey] as? String
         let title = (error.userInfo[NSLocalizedFailureReasonErrorKey] as? String) ?? (msg ?? (localizedDescription ?? VectorL10n.error))
-        
+
         indicators.append(self.indicatorPresenter.present(.failure(label: title)))
     }
-    
+
     func showAppStateIndicator(with text: String, icon: UIImage?) {
         hideAppStateIndicator()
         appSateIndicator = self.indicatorPresenter.present(.custom(label: text, icon: icon))
     }
-    
+
     func hideAppStateIndicator() {
         appSateIndicator?.cancel()
         appSateIndicator = nil
     }
-    
+
     // MARK: - SplitViewMasterPresentable
-    
+
     var selectedNavigationRouter: NavigationRouterType? {
         return self.navigationRouter
     }
-    
+
     // MARK: - Private methods
-    
+
     private func createMasterTabBarController() -> MasterTabBarController {
         let tabBarController = MasterTabBarController()
-        
+
         createLeftButtonItem(for: tabBarController)
         createRightButtonItem(for: tabBarController)
 
         return tabBarController
     }
-    
+
     private func showInviteFriends(from sourceView: UIView?) {
         let myUserId = self.parameters.userSessionsService.mainUserSession?.userId ?? ""
-        
+
         let inviteFriendsPresenter = InviteFriendsPresenter()
         inviteFriendsPresenter.present(for: myUserId, from: self.navigationRouter.toPresentable(), sourceView: sourceView, animated: true)
     }
-    
+
     private func showBugReport() {
         let bugReportViewController = BugReportViewController()
-        
+
         // Show in fullscreen to animate presentation along side menu dismiss
         bugReportViewController.modalPresentationStyle = .fullScreen
         bugReportViewController.modalTransitionStyle = .crossDissolve
-        
+
         self.navigationRouter.present(bugReportViewController, animated: true)
     }
 
@@ -269,10 +267,10 @@ final class TabBarCoordinator: NSObject, TabBarCoordinatorType {
         guard let mxSession = mxSession, let userId = mxSession.myUserId, let mediaManager = mxSession.mediaManager, let myUser = mxSession.myUser else {
             return nil
         }
-        
+
         let userDisplayName = myUser.displayname
         let avatarUrl = myUser.avatarUrl
-        
+
         return UserAvatarViewData(userId: userId,
                                   displayName: userDisplayName,
                                   avatarUrl: avatarUrl,
@@ -282,20 +280,20 @@ final class TabBarCoordinator: NSObject, TabBarCoordinatorType {
     private func createVersionCheckCoordinator(withRootViewController rootViewController: UIViewController, bannerPresentrer: BannerPresentationProtocol) -> VersionCheckCoordinator {
         let versionCheckCoordinator = VersionCheckCoordinator(rootViewController: rootViewController,
                                                               bannerPresenter: bannerPresentrer,
-                                                              themeService: ThemeService.shared()) 
+                                                              themeService: ThemeService.shared())
         return versionCheckCoordinator
     }
     
-    private func createAllChatsViewController() -> AllChatsViewControllerWithBannerWrapperViewController {
-        let allChatsViewController = AllChatsViewController.instantiate()
-        allChatsViewController.tabBarItem.tag = Int(TABBAR_HOME_INDEX)
-        allChatsViewController.tabBarItem.image = allChatsViewController.tabBarItem.image
-        allChatsViewController.accessibilityLabel = VectorL10n.allChatsTitle
-        allChatsViewController.userIndicatorStore = UserIndicatorStore(presenter: indicatorPresenter)
-        
-        let wrapperViewController = AllChatsViewControllerWithBannerWrapperViewController(viewController: allChatsViewController)
-        return wrapperViewController
-    }
+//    private func createAllChatsViewController() -> AllChatsViewControllerWithBannerWrapperViewController {
+//        let allChatsViewController = AllChatsViewController.instantiate()
+//        allChatsViewController.tabBarItem.tag = Int(TABBAR_HOME_INDEX)
+//        allChatsViewController.tabBarItem.image = allChatsViewController.tabBarItem.image
+//        allChatsViewController.accessibilityLabel = VectorL10n.allChatsTitle
+//        allChatsViewController.userIndicatorStore = UserIndicatorStore(presenter: indicatorPresenter)
+//        
+//        let wrapperViewController = AllChatsViewControllerWithBannerWrapperViewController(viewController: allChatsViewController)
+//        return wrapperViewController
+//    }
     
     private func createHomeViewController() -> HomeViewControllerWithBannerWrapperViewController {
         let homeViewController: HomeViewController = HomeViewController.instantiate()
@@ -336,8 +334,8 @@ final class TabBarCoordinator: NSObject, TabBarCoordinatorType {
         let storyboard = UIStoryboard(name: "Main", bundle: Bundle.main)
        let callHistoryViewController = storyboard.instantiateViewController(withIdentifier: "MyRecentCallViewController") as? MyRecentCallViewController
 //        let callHistoryViewController: MyRecentCallViewController = MyRecentCallViewController()
-        callHistoryViewController?.tabBarItem.tag = Int(TABBAR_CALLHISTORY_INDEX)
-        callHistoryViewController?.accessibilityLabel = "Call History"
+//        callHistoryViewController?.tabBarItem.tag = Int(TABBAR_CALLHISTORY_INDEX)
+//        callHistoryViewController?.accessibilityLabel = "Call History"
 //        callHistoryViewController?.userIndicatorStore = UserIndicatorStore(presenter: indicatorPresenter)
 
         return callHistoryViewController!
@@ -378,7 +376,7 @@ final class TabBarCoordinator: NSObject, TabBarCoordinatorType {
     private func updateTabControllers(for tabBarController: MasterTabBarController, showCommunities: Bool) {
         var viewControllers: [UIViewController] = []
 
-        let homeViewController = BuildSettings.newAppLayoutEnabled ? self.createAllChatsViewController() : self.createHomeViewController()
+        let homeViewController = self.createHomeViewController()//BuildSettings.newAppLayoutEnabled ? self.createAllChatsViewController() : self.createHomeViewController()
         viewControllers.append(homeViewController)
         
         if !BuildSettings.newAppLayoutEnabled {
@@ -397,14 +395,14 @@ final class TabBarCoordinator: NSObject, TabBarCoordinatorType {
                 viewControllers.append(roomsViewController)
             }
 
-            if RiotSettings.shared.homeScreenShowCallHistoryTab {
-                let storyboard = UIStoryboard(name: "Main", bundle: Bundle.main)
-               let callHistoryViewController1 = storyboard.instantiateViewController(withIdentifier: "MyRecentCallViewController") as? MyRecentCallViewController
-                callHistoryViewController1?.tabBarItem.tag = Int(TABBAR_CALLHISTORY_INDEX)
-                callHistoryViewController1?.accessibilityLabel = "Call History"
-                let callHistoryViewController = callHistoryViewController1!//self.createCallHistoryViewController()
-                viewControllers.append(callHistoryViewController)
-            }
+//            if RiotSettings.shared.homeScreenShowCallHistoryTab {
+//                let storyboard = UIStoryboard(name: "Main", bundle: Bundle.main)
+//               let callHistoryViewController1 = storyboard.instantiateViewController(withIdentifier: "MyRecentCallViewController") as? MyRecentCallViewController
+//                callHistoryViewController1?.tabBarItem.tag = Int(TABBAR_CALLHISTORY_INDEX)
+//                callHistoryViewController1?.accessibilityLabel = "Call History"
+//                let callHistoryViewController = callHistoryViewController1!//self.createCallHistoryViewController()
+//                viewControllers.append(callHistoryViewController)
+//            }
         }
         
         tabBarController.updateViewControllers(viewControllers)
@@ -837,11 +835,11 @@ final class TabBarCoordinator: NSObject, TabBarCoordinatorType {
             return
         }
         
-        signOutAlertPresenter.present(for: keyBackup.state,
-                                      areThereKeysToBackup: keyBackup.hasKeysToBackup,
-                                      from: self.masterTabBarController,
-                                      sourceView: nil,
-                                      animated: true)
+//        signOutAlertPresenter.present(for: keyBackup.state,
+//                                      areThereKeysToBackup: keyBackup.hasKeysToBackup,
+//                                      from: presentingViewController,
+//                                      sourceView: sourceView ?? presentingViewController.view,
+//                                      animated: true)
     }
     
     // MARK: - SecureBackupSetupCoordinatorBridgePresenter
@@ -960,7 +958,7 @@ extension TabBarCoordinator: MasterTabBarControllerDelegate {
     }
         
     func masterTabBarControllerDidCompleteAuthentication(_ masterTabBarController: MasterTabBarController!) {
-        self.delegate?.tabBarCoordinatorDidCompleteAuthentication(self)
+//        self.delegate?.tabBarCoordinatorDidCompleteAuthentication(self)
     }
     
     func masterTabBarController(_ masterTabBarController: MasterTabBarController!, didSelectRoomWithId roomId: String!, andEventId eventId: String!, inMatrixSession matrixSession: MXSession!, completion: (() -> Void)!) {

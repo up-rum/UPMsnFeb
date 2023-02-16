@@ -25,9 +25,9 @@ struct UIKitTextInputConfiguration {
 }
 
 struct ThemableTextField: UIViewRepresentable {
-    
+
     // MARK: Properties
-    
+
     @State var placeholder: String?
     @Binding var text: String
     @State var configuration: UIKitTextInputConfiguration = UIKitTextInputConfiguration()
@@ -40,14 +40,14 @@ struct ThemableTextField: UIViewRepresentable {
     var onCommit: (() -> Void)?
 
     // MARK: Private
-    
+
     @Environment(\.theme) private var theme: ThemeSwiftUI
 
     private let textField: UITextField = UITextField()
     private let internalParams = InternalParams()
-    
+
     // MARK: Setup
-    
+
     init(placeholder: String? = nil,
          text: Binding<String>,
          configuration: UIKitTextInputConfiguration = UIKitTextInputConfiguration(),
@@ -55,7 +55,6 @@ struct ThemableTextField: UIViewRepresentable {
          usernameValidation: Binding<Bool> = .constant(false),
          tfCharValidation: Binding<String> = .constant(""),
          onEditingChanged: ((_ edit: Bool) -> Void)? = nil,
-//         shouldChange: ((_ regex: String) -> Void)? = nil,
          onCommit: (() -> Void)? = nil) {
         self._text = text
         self._placeholder = State(initialValue: placeholder)
@@ -68,9 +67,9 @@ struct ThemableTextField: UIViewRepresentable {
         self.onCommit = onCommit
         ResponderManager.register(view: textField)
     }
-    
+
     // MARK: UIViewRepresentable
-    
+
     func makeUIView(context: Context) -> UITextField {
         textField.delegate = context.coordinator
         textField.setContentHuggingPriority(.defaultHigh, for: .vertical)
@@ -85,7 +84,7 @@ struct ThemableTextField: UIViewRepresentable {
 
         return textField
     }
-    
+
     func updateUIView(_ uiView: UITextField, context: Context) {
         uiView.backgroundColor = .clear
         uiView.font = UIFont.preferredFont(forTextStyle: .callout)
@@ -96,7 +95,7 @@ struct ThemableTextField: UIViewRepresentable {
             uiView.text = self.text
         }
         uiView.placeholder = placeholder
-        
+
         uiView.keyboardType = configuration.keyboardType
         uiView.returnKeyType = configuration.returnKeyType
 
@@ -104,35 +103,35 @@ struct ThemableTextField: UIViewRepresentable {
         uiView.autocapitalizationType = configuration.autocapitalizationType
         uiView.autocorrectionType = configuration.autocorrectionType
     }
-    
+
     static func dismantleUIView(_ uiView: UITextField, coordinator: Coordinator) {
         ResponderManager.unregister(view: uiView)
     }
 
     // MARK: - Private
-    
+
     private func replaceText(with newText: String) {
         self.text = newText
     }
-    
+
     // MARK: - Coordinator
-    
+
     func makeCoordinator() -> Coordinator {
         return Coordinator(self)
     }
-    
+
     class Coordinator: NSObject, UITextFieldDelegate {
-        
+
         var parent: ThemableTextField
 
         init(_ parent: ThemableTextField) {
             self.parent = parent
         }
-        
+
         func textFieldDidBeginEditing(_ textField: UITextField) {
             parent.onEditingChanged?(true)
         }
-        
+
         func textFieldDidEndEditing(_ textField: UITextField) {
             parent.onEditingChanged?(false)
         }
@@ -165,22 +164,22 @@ struct ThemableTextField: UIViewRepresentable {
             }
             return true
         }
-        
+
         func textFieldShouldReturn(_ textField: UITextField) -> Bool {
             if parent.configuration.returnKeyType != .next || !ResponderManager.makeActiveNextResponder(of: textField) {
                 textField.resignFirstResponder()
             }
-            
+
             parent.onCommit?()
-            
+
             return true
         }
-        
+
         @objc func textFieldEditingChanged(sender: UITextField) {
             parent.replaceText(with: sender.text ?? "")
         }
     }
-    
+
     private class InternalParams {
         var isFirstResponder = false
     }
@@ -193,12 +192,12 @@ extension ThemableTextField {
     func makeFirstResponder() -> ThemableTextField {
         return makeFirstResponder(true)
     }
-    
+
     func makeFirstResponder(_ isFirstResponder: Bool) -> ThemableTextField {
         internalParams.isFirstResponder = isFirstResponder
         return self
     }
-    
+
     /// Adds a button button to the text field
     /// - Parameters:
     ///   - show: A boolean that can be used to dynamically show/hide the button. Defaults to `true`.

@@ -2913,7 +2913,21 @@ static CGSize kThreadListBarButtonItemImageSize;
         }
     }
 }
+#pragma mark - New discussion
+- (void)displayNewDirectChatWithTargetUser:(nonnull MXUser*)directChatTargetUser session:(nonnull MXSession*)session
+{
+    // Release existing room data source or preview
+    [self displayRoom:nil];
 
+    self.directChatTargetUser = directChatTargetUser;
+
+    self.eventsAcknowledgementEnabled = NO;
+
+    [self addMatrixSession:session];
+
+    [self refreshRoomTitle];
+    [self refreshRoomInputToolbar];
+}
 #pragma mark - MXKDataSourceDelegate
 
 - (Class<MXKCellRendering>)cellViewClassForCellData:(MXKCellData*)cellData

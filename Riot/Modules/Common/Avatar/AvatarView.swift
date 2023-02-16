@@ -19,23 +19,23 @@ import UIKit
 /// Base class to support an avatar view
 /// Note: This class is made to be sublcassed
 class AvatarView: UIView, Themable {
-    
+
     // MARK: - Properties
 
     // MARK: Outlets
-    
+
     @IBOutlet weak var avatarImageView: MXKImageView! {
         didSet {
             self.setupAvatarImageView()
         }
     }
-    
+
     // MARK: Private
 
     private(set) var theme: Theme?
-    
+
     // MARK: Public
-    
+
     override var isUserInteractionEnabled: Bool {
         get {
             return super.isUserInteractionEnabled
@@ -45,7 +45,7 @@ class AvatarView: UIView, Themable {
             self.updateAccessibilityTraits()
         }
     }
-    
+
     /// Indicate highlighted state
     var isHighlighted: Bool = false {
         didSet {
@@ -54,9 +54,9 @@ class AvatarView: UIView, Themable {
     }
 
     var action: (() -> Void)?
-    
+
     // MARK: - Setup
-    
+
     private func commonInit() {
         self.setupGestureRecognizer()
         self.updateAccessibilityTraits()
@@ -71,54 +71,44 @@ class AvatarView: UIView, Themable {
         super.init(frame: frame)
         self.commonInit()
     }
-    
+
     // MARK: - Lifecycle
-    
+
     override func layoutSubviews() {
         super.layoutSubviews()
-        
+
         self.avatarImageView.layer.cornerRadius = self.avatarImageView.bounds.height/2
     }
-    
+
     // MARK: - Public
-    
+
     func fill(with viewData: AvatarViewDataProtocol) {
         self.updateAvatarImageView(with: viewData)
         self.setNeedsLayout()
     }
-        
+
     func update(theme: Theme) {
         self.theme = theme
     }
-    
+
     func updateAccessibilityTraits() {
         // Override in subclass
     }
-    
+
     func setupAvatarImageView() {
         self.avatarImageView.defaultBackgroundColor = UIColor.clear
         self.avatarImageView.enableInMemoryCache = true
         self.avatarImageView.layer.masksToBounds = true
     }
-    
+
     func updateAvatarImageView(with viewData: AvatarViewDataProtocol) {
         guard let avatarImageView = self.avatarImageView else {
             return
         }
-        
-        let defaultAvatarImage: UIImage?
-        var defaultAvatarImageContentMode: UIView.ContentMode = .scaleAspectFill
-        
-        switch viewData.fallbackImage {
-        case .matrixItem(let matrixItemId, let matrixItemDisplayName):
-            defaultAvatarImage = AvatarGenerator.generateAvatar(forMatrixItem: matrixItemId, withDisplayName: matrixItemDisplayName)
-        case .image(let image, let contentMode):
-            defaultAvatarImage = image
-            defaultAvatarImageContentMode = contentMode ?? .scaleAspectFill
-        case .none:
-            defaultAvatarImage = nil
-        }
-                
+
+        let (defaultAvatarImage, defaultAvatarImageContentMode) = viewData.fallbackImageParameters() ?? (nil, .scaleAspectFill)
+        updateAvatarImageView(image: defaultAvatarImage, contentMode: defaultAvatarImageContentMode)
+
         if let avatarUrl = viewData.avatarUrl {
             avatarImageView.setImageURI(avatarUrl,
                                         withType: nil,
@@ -127,28 +117,35 @@ class AvatarView: UIView, Themable {
                                         with: MXThumbnailingMethodScale,
                                         previewImage: defaultAvatarImage,
                                         mediaManager: viewData.mediaManager)
-            avatarImageView.contentMode = .scaleAspectFill
-            avatarImageView.imageView?.contentMode = .scaleAspectFill
+            updateAvatarContentMode(contentMode: .scaleAspectFill)
         } else {
-            avatarImageView.image = defaultAvatarImage
-            avatarImageView.contentMode = defaultAvatarImageContentMode
-            avatarImageView.imageView?.contentMode = defaultAvatarImageContentMode
+            updateAvatarImageView(image: defaultAvatarImage, contentMode: defaultAvatarImageContentMode)
         }
     }
-    
+
     func updateView() {
         // Override in subclass if needed
         // TODO: Handle highlighted state
     }
-    
+
     // MARK: - Private
-    
+
     private func setupGestureRecognizer() {
         let gestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(buttonAction(_:)))
         gestureRecognizer.minimumPressDuration = 0
         self.addGestureRecognizer(gestureRecognizer)
     }
-        
+
+    private func updateAvatarImageView(image: UIImage?, contentMode: UIView.ContentMode) {
+        avatarImageView?.image = image
+        updateAvatarContentMode(contentMode: contentMode)
+    }
+
+    private func updateAvatarContentMode(contentMode: UIView.ContentMode) {
+        avatarImageView?.contentMode = contentMode
+        avatarImageView?.imageView?.contentMode = contentMode
+    }
+
     // MARK: - Actions
 
     @objc private func buttonAction(_ sender: UILongPressGestureRecognizer) {

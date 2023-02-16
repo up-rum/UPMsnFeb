@@ -25,7 +25,7 @@ enum RoomInfoListTarget: Equatable {
     case integrations
     case search
     case notifications
-    case timelimited
+    case pollHistory
     
     var tabIndex: UInt? {
         switch self {

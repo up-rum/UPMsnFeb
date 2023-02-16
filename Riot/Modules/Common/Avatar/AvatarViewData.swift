@@ -1,4 +1,4 @@
-// 
+//
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,16 +19,31 @@ import Foundation
 struct AvatarViewData: AvatarViewDataProtocol {
     /// Matrix item identifier (user id or room id)
     var matrixItemId: String
-    
+
     /// Matrix item display name (user or room display name)
     var displayName: String?
 
     /// Matrix item avatar URL (user or room avatar url)
     var avatarUrl: String?
-        
+
     /// Matrix media handler if exists
     var mediaManager: MXMediaManager?
-    
-    /// Fallback image used when avatarUrl is nil
-    var fallbackImage: AvatarFallbackImage?
+
+    /// Fallback images used when avatarUrl is nil
+    var fallbackImages: [AvatarFallbackImage]?
+}
+
+extension AvatarViewData {
+    init(matrixItemId: String,
+         displayName: String? = nil,
+         avatarUrl: String? = nil,
+         mediaManager: MXMediaManager? = nil,
+         fallbackImage: AvatarFallbackImage?) {
+
+        self.matrixItemId = matrixItemId
+        self.displayName = displayName
+        self.avatarUrl = avatarUrl
+        self.mediaManager = mediaManager
+        self.fallbackImages = fallbackImage.map { [$0] }
+    }
 }

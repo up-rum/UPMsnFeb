@@ -76,7 +76,9 @@ extension RoomViewController {
                     case .success:
                         break
                     case .failure:
-                        MXLog.error("[RoomViewController] sendAttributedTextMessage failed while updating event: \(eventModified.eventId ?? "N/A")")
+                        MXLog.error("[RoomViewController] sendAttributedTextMessage failed while updating event:", context: [
+                            "event_id": eventModified.eventId
+                        ])
                     }
                 }
             } else if self.inputToolbar?.sendMode == .edit, let eventModified = eventModified {
@@ -87,7 +89,7 @@ extension RoomViewController {
                         //
                     },
                     failure: { _ in
-                        MXLog.error("[RoomViewController] sendAttributedTextMessage failed while updating event: \(eventModified.eventId ?? "N/A")")
+//                        MXLog.error("[RoomViewController] sendAttributedTextMessage failed while updating event:", context: "\(eventModified.eventId)")
                 })
             } else {
                 roomDataSource.sendAttributedTextMessage(attributedTextMsg) { response in

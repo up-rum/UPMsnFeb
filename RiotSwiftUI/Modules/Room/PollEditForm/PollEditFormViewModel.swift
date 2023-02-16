@@ -35,13 +35,13 @@ class PollEditFormViewModel: PollEditFormViewModelType, PollEditFormViewModelPro
     // MARK: - Properties
 
     // MARK: Private
-
+    
     // MARK: Public
-
+    
     var completion: ((PollEditFormViewModelResult) -> Void)?
-
+    
     // MARK: - Setup
-
+    
     init(parameters: PollEditFormViewModelParameters) {
         let state = PollEditFormViewState(
             minAnswerOptionsCount: Constants.minAnswerOptionsCount,
@@ -53,12 +53,12 @@ class PollEditFormViewModel: PollEditFormViewModelType, PollEditFormViewModelPro
                 type: parameters.pollDetails.type
             )
         )
-
+        
         super.init(initialViewState: state)
     }
-
+    
     // MARK: - Public
-
+    
     override func process(viewAction: PollEditFormViewAction) {
         switch viewAction {
         case .cancel:
@@ -73,16 +73,16 @@ class PollEditFormViewModel: PollEditFormViewModelType, PollEditFormViewModelPro
             state.bindings.answerOptions.removeAll { $0 == answerOption }
         }
     }
-
+    
     // MARK: - PollEditFormViewModelProtocol
-
+    
     func startLoading() {
         state.showLoadingIndicator = true
     }
-
+    
     func stopLoading(errorAlertType: PollEditFormErrorAlertInfo.AlertType?) {
         state.showLoadingIndicator = false
-
+        
         switch errorAlertType {
         case .failedCreatingPoll:
             state.bindings.alertInfo = PollEditFormErrorAlertInfo(id: .failedCreatingPoll,
@@ -96,9 +96,9 @@ class PollEditFormViewModel: PollEditFormViewModelType, PollEditFormViewModelPro
             break
         }
     }
-
+    
     // MARK: - Private
-
+    
     private func buildPollDetails() -> EditFormPollDetails {
         EditFormPollDetails(type: state.bindings.type,
                             question: state.bindings.question.text.trimmingCharacters(in: .whitespacesAndNewlines),

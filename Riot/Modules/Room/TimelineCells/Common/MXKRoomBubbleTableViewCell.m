@@ -2,13 +2,13 @@
  Copyright 2015 OpenMarket Ltd
  Copyright 2017 Vector Creations Ltd
  Copyright 2018 New Vector Ltd
- 
+
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
  http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -77,7 +77,7 @@ static BOOL _disableLongPressGestureOnEvent;
 + (instancetype)roomBubbleTableViewCell
 {
     MXKRoomBubbleTableViewCell *instance = nil;
-    
+
     // Check whether a xib is defined
     if ([[self class] nib])
     {
@@ -87,12 +87,12 @@ static BOOL _disableLongPressGestureOnEvent;
         @catch (NSException *exception) {
         }
     }
-    
+
     if (!instance)
     {
         instance = [[self alloc] init];
     }
-    
+
     return instance;
 }
 
@@ -132,23 +132,23 @@ static BOOL _disableLongPressGestureOnEvent;
 - (void)awakeFromNib
 {
     [super awakeFromNib];
-    
+
     [self setupViews];
 }
 
 - (void)setupViews
 {
     [self setupSenderNameLabel];
-    
+
     [self setupAvatarView];
-    
+
     [self setupMessageTextView];
-    
+
     if (self.playIconView)
     {
         self.playIconView.image = [NSBundle mxk_imageFromMXKAssetsBundleWithName:@"play"];
     }
-    
+
     if (self.bubbleOverlayContainer)
     {
         // Add tap recognizer on overlay container
@@ -158,14 +158,14 @@ static BOOL _disableLongPressGestureOnEvent;
         [tapGesture setDelegate:self];
         [self.bubbleOverlayContainer addGestureRecognizer:tapGesture];
     }
-    
+
     // Listen to content view tap by default
     UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onContentViewTap:)];
     [tapGesture setNumberOfTouchesRequired:1];
     [tapGesture setNumberOfTapsRequired:1];
     [tapGesture setDelegate:self];
     [self.contentView addGestureRecognizer:tapGesture];
-    
+
     if (_disableLongPressGestureOnEvent == NO)
     {
         // Add a long gesture recognizer on text view (in order to display for example the event details)
@@ -173,7 +173,7 @@ static BOOL _disableLongPressGestureOnEvent;
         longPressGestureRecognizer.delegate = self;
         [self.contentView addGestureRecognizer:longPressGestureRecognizer];
     }
-    
+
     [self setupConstraintsConstantDefaultValues];
 }
 
@@ -183,13 +183,13 @@ static BOOL _disableLongPressGestureOnEvent;
     {
         return;
     }
-    
+
     // Listen to name tap
     UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onSenderNameTap:)];
     [tapGesture setNumberOfTouchesRequired:1];
     [tapGesture setNumberOfTapsRequired:1];
     [tapGesture setDelegate:self];
-    
+
     if (self.userNameTapGestureMaskView)
     {
         [self.userNameTapGestureMaskView addGestureRecognizer:tapGesture];
@@ -207,9 +207,9 @@ static BOOL _disableLongPressGestureOnEvent;
     {
         return;
     }
-    
+
     self.pictureView.mediaFolder = kMXMediaManagerAvatarThumbnailFolder;
-    
+
     // Listen to avatar tap
     UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onAvatarTap:)];
     [tapGesture setNumberOfTouchesRequired:1];
@@ -217,7 +217,7 @@ static BOOL _disableLongPressGestureOnEvent;
     [tapGesture setDelegate:self];
     [self.pictureView addGestureRecognizer:tapGesture];
     self.pictureView.userInteractionEnabled = YES;
-    
+
     // Add a long gesture recognizer on avatar (in order to display for example the member details)
     UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(onLongPressGesture:)];
     [self.pictureView addGestureRecognizer:longPress];
@@ -229,7 +229,7 @@ static BOOL _disableLongPressGestureOnEvent;
     {
         return;
     }
-    
+
     // Listen to textView tap
     UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onMessageTap:)];
     [tapGesture setNumberOfTouchesRequired:1];
@@ -237,13 +237,14 @@ static BOOL _disableLongPressGestureOnEvent;
     [tapGesture setDelegate:self];
     [self.messageTextView addGestureRecognizer:tapGesture];
     self.messageTextView.userInteractionEnabled = YES;
-    
+    self.messageTextView.clipsToBounds = NO;
+
     // Recognise and make tappable phone numbers, address, etc.
     self.messageTextView.dataDetectorTypes = UIDataDetectorTypeAll;
-    
+
     // Listen to link click
     self.messageTextView.delegate = self;
-    
+
     [self setupMessageTextViewLongPressGesture];
 }
 
@@ -253,11 +254,11 @@ static BOOL _disableLongPressGestureOnEvent;
     {
         return;
     }
-    
+
     // Add a long gesture recognizer on text view (in order to display for example the event details)
     UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(onLongPressGesture:)];
     longPress.delegate = self;
-    
+
     // MXKMessageTextView does not catch touches outside of links. Add a background view to handle long touch.
     if ([self.messageTextView isKindOfClass:[MXKMessageTextView class]])
     {
@@ -269,9 +270,9 @@ static BOOL _disableLongPressGestureOnEvent;
         [messageTextBackgroundView.rightAnchor constraintEqualToAnchor:self.messageTextView.rightAnchor].active = YES;
         [messageTextBackgroundView.topAnchor constraintEqualToAnchor:self.messageTextView.topAnchor].active = YES;
         [messageTextBackgroundView.bottomAnchor constraintEqualToAnchor:self.messageTextView.bottomAnchor].active = YES;
-        
+
         [messageTextBackgroundView addGestureRecognizer:longPress];
-        
+
         self.messageTextBackgroundView = messageTextBackgroundView;
     }
     else
@@ -283,7 +284,7 @@ static BOOL _disableLongPressGestureOnEvent;
 - (void)customizeTableViewCellRendering
 {
     [super customizeTableViewCellRendering];
-    
+
     // Clear the default background color of a MXKImageView instance
     self.pictureView.defaultBackgroundColor = [UIColor clearColor];
 }
@@ -291,7 +292,7 @@ static BOOL _disableLongPressGestureOnEvent;
 - (void)layoutSubviews
 {
     [super layoutSubviews];
-    
+
     if (self.pictureView)
     {
         // Round image view
@@ -347,7 +348,7 @@ static BOOL _disableLongPressGestureOnEvent;
                          UIView *sideBorderView = [[UIView alloc] initWithFrame:CGRectMake(5, textRect.origin.y, 4, textRect.size.height)];
                          sideBorderView.backgroundColor = self.bubbleData.eventFormatter.htmlBlockquoteBorderColor;
                          [sideBorderView setTranslatesAutoresizingMaskIntoConstraints:NO];
-                         
+
                          [self.messageTextView addSubview:sideBorderView];
 
                          if (!self->htmlBlockquoteSideBorderViews)
@@ -375,7 +376,7 @@ static BOOL _disableLongPressGestureOnEvent;
 {
     // remove any pending observers
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    
+
     delegate = nil;
 }
 
@@ -387,14 +388,14 @@ static BOOL _disableLongPressGestureOnEvent;
 - (void)setIsAutoAnimatedGif:(BOOL)isAutoAnimatedGif
 {
     _isAutoAnimatedGif = isAutoAnimatedGif;
-    
+
     [self renderGif];
 }
 
 - (void)setAllTextHighlighted:(BOOL)allTextHighlighted
 {
     _allTextHighlighted = allTextHighlighted;
-    
+
     if (self.messageTextView && bubbleData.textMessage.length != 0)
     {
         if (_allTextHighlighted)
@@ -431,25 +432,7 @@ static BOOL _disableLongPressGestureOnEvent;
         }
     }
 }
-- (NSString *)timeFormatted:(int)totalSeconds
-{
 
-    int seconds = totalSeconds % 60;
-    int minutes = (totalSeconds / 60) % 60;
-    int hours = totalSeconds / 3600;
-    NSString *timeStr = @"";
-    if (hours > 0) {
-        timeStr = [NSString stringWithFormat:@"%dh ",hours];
-    }
-    if (minutes > 0) {
-        timeStr = [NSString stringWithFormat:@"%@%dm ",timeStr,minutes];
-    }
-    if (seconds > 0) {
-        timeStr = [NSString stringWithFormat:@"%@%ds ",timeStr,seconds];
-    }
-
-    return [NSString stringWithFormat:@"%@", timeStr];
-}
 - (CGFloat)topPositionOfEvent:(NSString*)eventId
 {
     CGFloat topPositionOfEvent = 0;
@@ -475,11 +458,11 @@ static BOOL _disableLongPressGestureOnEvent;
 - (CGFloat)bottomPositionOfEvent:(NSString*)eventId
 {
     CGFloat bottomPositionOfEvent = self.frame.size.height - self.msgTextViewBottomConstraint.constant;
-    
+
     // Parse each component by the end of the array in order to compute the bottom position.
     NSArray *bubbleComponents = bubbleData.bubbleComponents;
     NSInteger index = bubbleComponents.count;
-    
+
     while (index --)
     {
         MXKRoomBubbleComponent *component = bubbleComponents[index];
@@ -499,14 +482,14 @@ static BOOL _disableLongPressGestureOnEvent;
 - (void)setSelected:(BOOL)selected animated:(BOOL)animated
 {
     [super setSelected:selected animated:animated];
-    
+
     // Configure the view for the selected state
 }
 
 - (void)render:(MXKCellData *)cellData
 {
     [self prepareRender:cellData];
-    
+
     if (bubbleData)
     {
         // Check conditions to display the message sender name
@@ -525,7 +508,7 @@ static BOOL _disableLongPressGestureOnEvent;
                 self.userNameTapGestureMaskView.userInteractionEnabled = NO;
             }
         }
-        
+
         // Check whether the sender's picture is actually displayed before loading it.
         if (self.pictureView)
         {
@@ -539,32 +522,32 @@ static BOOL _disableLongPressGestureOnEvent;
                              previewImage:bubbleData.senderAvatarPlaceholder ? bubbleData.senderAvatarPlaceholder : self.picturePlaceholder
                              mediaManager:bubbleData.mxSession.mediaManager];
         }
-        
+
         if (self.attachmentView && bubbleData.isAttachmentWithThumbnail)
         {
             // Set attached media folders
             self.attachmentView.mediaFolder = bubbleData.roomId;
-            
+
             self.attachmentView.backgroundColor = [UIColor clearColor];
-            
+
             // Retrieve the suitable content size for the attachment thumbnail
             CGSize contentSize = bubbleData.contentSize;
-            
+
             // Update image view frame in order to center loading wheel (if any)
             CGRect frame = self.attachmentView.frame;
             frame.size.width = contentSize.width;
             frame.size.height = contentSize.height;
             self.attachmentView.frame = frame;
-            
+
             // Set play icon visibility
             self.playIconView.hidden = (bubbleData.attachment.type != MXKAttachmentTypeVideo);
-            
+
             // Hide by default file type icon
             self.fileTypeIconView.hidden = YES;
-            
+
             // Display the attachment thumbnail
             [self.attachmentView setAttachmentThumb:bubbleData.attachment];
-            
+
             if (bubbleData.attachment.contentURL)
             {
                 // Add tap recognizer to open attachment
@@ -574,23 +557,23 @@ static BOOL _disableLongPressGestureOnEvent;
                 [tap setDelegate:self];
                 [self.attachmentView addGestureRecognizer:tap];
             }
-            
+
             [self startProgressUI];
-            
+
             // Adjust Attachment width constant
             self.attachViewWidthConstraint.constant = contentSize.width;
-            
+
             // Add a long gesture recognizer on progressView to cancel the current operation (Note: only the download can be cancelled).
             UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(onLongPressGesture:)];
             [self.progressView addGestureRecognizer:longPress];
-            
+
             if (_disableLongPressGestureOnEvent == NO)
             {
                 // Add a long gesture recognizer on attachment view in order to display for example the event details
                 longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(onLongPressGesture:)];
                 [self.attachmentView addGestureRecognizer:longPress];
             }
-            
+
             // Handle here the case of the attached gif
             [self renderGif];
         }
@@ -599,22 +582,23 @@ static BOOL _disableLongPressGestureOnEvent;
             // Compute message content size
             bubbleData.maxTextViewWidth = self.frame.size.width - (self.msgTextViewLeadingConstraint.constant + self.msgTextViewTrailingConstraint.constant);
             CGSize contentSize = bubbleData.contentSize;
-            
+
             // Prepare displayed text message
             NSAttributedString* newText = nil;
-            
+
             // Underline attached file name
             if (self.isBubbleDataContainsFileAttachment)
             {
                 NSMutableAttributedString *updatedText = [[NSMutableAttributedString alloc] initWithAttributedString:self.suitableAttributedTextMessage];
                 [updatedText addAttribute:NSUnderlineStyleAttributeName value:[NSNumber numberWithInteger:NSUnderlineStyleSingle] range:NSMakeRange(0, updatedText.length)];
-                
+
                 newText = updatedText;
             }
             else
             {
                 newText = self.suitableAttributedTextMessage;
             }
+
             MXEvent *event = self.bubbleData.events.firstObject;
             if (event.content[@"time_limit"] != nil) {
 
@@ -626,7 +610,7 @@ static BOOL _disableLongPressGestureOnEvent;
 
                 NSUInteger eventTime = [event.content[@"time_limit"] intValue] -  timeLimit;
                 if(([event.content[@"time_limit"] intValue] > timeLimit) && eventTime > 2000){
-                    
+
                     eventTime = eventTime/1000;
 
 
@@ -682,17 +666,17 @@ static BOOL _disableLongPressGestureOnEvent;
                     [self fixHTMLBlockQuoteRendering:YES];
                 }
             }
-            
+
             // Update msgTextView width constraint to align correctly the text
             if (self.msgTextViewWidthConstraint.constant != contentSize.width)
             {
                 self.msgTextViewWidthConstraint.constant = contentSize.width;
             }
         }
-        
+
         // Check and update each component position (used to align timestamps label in front of events, and to handle tap gesture on events)
         [bubbleData prepareBubbleComponentsPosition];
-        
+
         // Handle here timestamp display (only if a container has been defined)
         if (self.bubbleInfoContainer)
         {
@@ -701,7 +685,7 @@ static BOOL _disableLongPressGestureOnEvent;
             {
                 // Add datetime label for each component
                 self.bubbleInfoContainer.hidden = NO;
-                
+
                 // ensure that older subviews are removed
                 // They should be (they are removed when the is not anymore used).
                 // But, it seems that is not always true.
@@ -710,17 +694,17 @@ static BOOL _disableLongPressGestureOnEvent;
                 {
                     [view removeFromSuperview];
                 }
-                
+
                 for (MXKRoomBubbleComponent *component in bubbleData.bubbleComponents)
                 {
                     if (component.event.sentState != MXEventSentStateFailed)
                     {
                         CGFloat timeLabelOffset = 0;
-                        
+
                         if (component.date && bubbleData.showBubbleDateTime && !bubbleData.useCustomDateTimeLabel)
                         {
                             UILabel *dateTimeLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, component.position.y, self.bubbleInfoContainer.frame.size.width , 15)];
-                            
+
                             dateTimeLabel.text = [bubbleData.eventFormatter dateStringFromDate:component.date withTime:YES];
                             if (bubbleData.isIncoming)
                             {
@@ -734,7 +718,7 @@ static BOOL _disableLongPressGestureOnEvent;
                             dateTimeLabel.font = [UIFont systemFontOfSize:11];
                             dateTimeLabel.adjustsFontSizeToFitWidth = YES;
                             dateTimeLabel.minimumScaleFactor = 0.6;
-                            
+
                             [dateTimeLabel setTranslatesAutoresizingMaskIntoConstraints:NO];
                             [self.bubbleInfoContainer addSubview:dateTimeLabel];
                             // Force dateTimeLabel in full width (to handle auto-layout in case of screen rotation)
@@ -768,16 +752,16 @@ static BOOL _disableLongPressGestureOnEvent;
                                                                                                multiplier:1.0
                                                                                                  constant:15];
                             [NSLayoutConstraint activateConstraints:@[leftConstraint, rightConstraint, topConstraint, heightConstraint]];
-                            
+
                             timeLabelOffset += 15;
                         }
-                        
+
                         if (bubbleData.showBubbleReceipts && !bubbleData.useCustomReceipts)
                         {
                             NSMutableArray* roomMembers = nil;
                             NSMutableArray* placeholders = nil;
                             NSArray<MXReceiptData*> *receipts = bubbleData.readReceipts[component.event.eventId];
-                            
+
                             // Check whether some receipts are found
                             if (receipts.count)
                             {
@@ -800,15 +784,15 @@ static BOOL _disableLongPressGestureOnEvent;
                                     }
                                 }
                             }
-                            
+
                             if (roomMembers.count)
                             {
                                 MXKReceiptSendersContainer* avatarsContainer = [[MXKReceiptSendersContainer alloc] initWithFrame:CGRectMake(0, component.position.y + timeLabelOffset, self.bubbleInfoContainer.frame.size.width , 15) andMediaManager:bubbleData.mxSession.mediaManager];
-                                
+
                                 [avatarsContainer refreshReceiptSenders:roomMembers withPlaceHolders:placeholders andAlignment:self.readReceiptsAlignment];
-                                
+
                                 [self.bubbleInfoContainer addSubview:avatarsContainer];
-                                
+
                                 // Force dateTimeLabel in full width (to handle auto-layout in case of screen rotation)
                                 NSLayoutConstraint *leftConstraint = [NSLayoutConstraint constraintWithItem:avatarsContainer
                                                                                                   attribute:NSLayoutAttributeLeading
@@ -832,7 +816,7 @@ static BOOL _disableLongPressGestureOnEvent;
                                                                                                  attribute:NSLayoutAttributeTop
                                                                                                 multiplier:1.0
                                                                                                   constant:(component.position.y + timeLabelOffset)];
-                                
+
                                 NSLayoutConstraint *heightConstraint = [NSLayoutConstraint constraintWithItem:avatarsContainer
                                                                                                     attribute:NSLayoutAttributeHeight
                                                                                                     relatedBy:NSLayoutRelationEqual
@@ -840,7 +824,7 @@ static BOOL _disableLongPressGestureOnEvent;
                                                                                                     attribute:NSLayoutAttributeNotAnAttribute
                                                                                                    multiplier:1.0
                                                                                                      constant:15];
-                                
+
                                 [NSLayoutConstraint activateConstraints:@[leftConstraint, rightConstraint, topConstraint, heightConstraint]];
                             }
                         }
@@ -859,7 +843,7 @@ static BOOL _disableLongPressGestureOnEvent;
 {
     // Sanity check: accept only object of MXKRoomBubbleCellData classes or sub-classes
     NSParameterAssert([cellData isKindOfClass:[MXKRoomBubbleCellData class]]);
-    
+
     bubbleData = (MXKRoomBubbleCellData*)cellData;
     mxkCellData = cellData;
 }
@@ -877,8 +861,8 @@ static BOOL _disableLongPressGestureOnEvent;
         {
             mimetype = bubbleData.attachment.contentInfo[@"mimetype"];
         }
-        
-        if ([mimetype isEqualToString:@"image/gif"])
+
+        if ([mimetype isKindOfClass:[NSString class]] && [mimetype isEqualToString:@"image/gif"])
         {
             if (_isAutoAnimatedGif)
             {
@@ -886,7 +870,7 @@ static BOOL _disableLongPressGestureOnEvent;
                 self.fileTypeIconView.hidden = YES;
                 [self stopProgressUI];
                 [[NSNotificationCenter defaultCenter] removeObserver:self name:kMXMediaLoaderStateDidChangeNotification object:nil];
-                
+
                 // Animated gif is displayed in a webview added on the attachment view
                 self.attachmentWebView = [[WKWebView alloc] initWithFrame:self.attachmentView.bounds];
                 self.attachmentWebView.opaque = NO;
@@ -896,12 +880,12 @@ static BOOL _disableLongPressGestureOnEvent;
                 self.attachmentWebView.userInteractionEnabled = NO;
                 self.attachmentWebView.hidden = YES;
                 [self.attachmentView addSubview:self.attachmentWebView];
-                
+
                 __weak WKWebView *weakAnimatedGifViewer = self.attachmentWebView;
                 __weak typeof(self) weakSelf = self;
-                
+
                 void (^onDownloaded)(NSData *) = ^(NSData *data){
-                    
+
                     if (weakAnimatedGifViewer && weakAnimatedGifViewer.superview)
                     {
                         WKWebView *strongAnimatedGifViewer = weakAnimatedGifViewer;
@@ -909,14 +893,14 @@ static BOOL _disableLongPressGestureOnEvent;
                         [strongAnimatedGifViewer loadData:data MIMEType:@"image/gif" characterEncodingName:@"UTF-8" baseURL:[NSURL URLWithString:@"http://"]];
                     }
                 };
-                
+
                 void (^onFailure)(NSError *) = ^(NSError *error){
-                    
+
                     MXLogDebug(@"[MXKRoomBubbleTableViewCell] gif download failed");
                     // Notify the end user
                     [[NSNotificationCenter defaultCenter] postNotificationName:kMXKErrorNotification object:error];
                 };
-                
+
                 [bubbleData.attachment getAttachmentData:^(NSData *data) {
                     onDownloaded(data);
                 } failure:^(NSError *error) {
@@ -927,7 +911,7 @@ static BOOL _disableLongPressGestureOnEvent;
             {
                 self.fileTypeIconView.image = [NSBundle mxk_imageFromMXKAssetsBundleWithName:@"filetype-gif"];
                 self.fileTypeIconView.hidden = NO;
-                
+
                 // Check whether a download is in progress
                 [self startProgressUI];
             }
@@ -939,33 +923,33 @@ static BOOL _disableLongPressGestureOnEvent;
 {
     // Sanity check: accept only object of MXKRoomBubbleCellData classes or sub-classes
     NSParameterAssert([cellData isKindOfClass:[MXKRoomBubbleCellData class]]);
-    
+
     MXKRoomBubbleCellData *bubbleData = (MXKRoomBubbleCellData*)cellData;
     MXKRoomBubbleTableViewCell* cell = [self cellWithOriginalXib];
     CGFloat rowHeight = cell.frame.size.height;
-    
+
     if (cell.attachmentView && bubbleData.isAttachmentWithThumbnail)
     {
         // retrieve the suggested image view height
         rowHeight = bubbleData.contentSize.height;
-        
+
         // Check here the minimum height defined in cell view for text message
         if (cell.attachViewMinHeightConstraint && rowHeight < cell.attachViewMinHeightConstraint.constant)
         {
             rowHeight = cell.attachViewMinHeightConstraint.constant;
         }
-        
+
         // Finalize the row height by adding the vertical constraints.
         rowHeight += cell.attachViewTopConstraint.constant + cell.attachViewBottomConstraint.constant;
     }
     else if (cell.messageTextView)
     {
         CGFloat maxTextViewWidth;
-        
+
         RoomTimelineConfiguration *timelineConfiguration = [RoomTimelineConfiguration shared];
-        
+
         id<RoomCellLayoutUpdating> cellLayoutUpdater = timelineConfiguration.currentStyle.cellLayoutUpdater;
-        
+
         // Handle updated text view layout if needed
         if (cellLayoutUpdater)
         {
@@ -975,40 +959,40 @@ static BOOL _disableLongPressGestureOnEvent;
         {
             maxTextViewWidth = maxWidth - (cell.msgTextViewLeadingConstraint.constant + cell.msgTextViewTrailingConstraint.constant);
         }
-        
+
         // Update maximum width available for the textview
         bubbleData.maxTextViewWidth = maxTextViewWidth;
-        
+
         // Retrieve the suggested height of the message content
         rowHeight = bubbleData.contentSize.height;
-        
+
         // Consider here the minimum height defined in cell view for text message
         if (cell.msgTextViewMinHeightConstraint && rowHeight < cell.msgTextViewMinHeightConstraint.constant)
         {
             rowHeight = cell.msgTextViewMinHeightConstraint.constant;
         }
-        
+
         // Finalize the row height by adding the top and bottom constraints of the message text view in cell
         rowHeight += cell.msgTextViewTopConstraint.constant + cell.msgTextViewBottomConstraint.constant;
     }
-    
+
     return rowHeight;
 }
 
 - (void)prepareForReuse
 {
     [super prepareForReuse];
-    
+
     bubbleData = nil;
     delegate = nil;
-    
+
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    
+
     self.readReceiptsAlignment = ReadReceiptAlignmentLeft;
-    
+
     _allTextHighlighted = NO;
     _isAutoAnimatedGif = NO;
-    
+
     [self removeHTMLBlockquoteSideBorderViews];
     [self removeTemporarySubviews];
     [self cleanAttachmentView];
@@ -1016,7 +1000,7 @@ static BOOL _disableLongPressGestureOnEvent;
     [self clearBubbleOverlayContainer];
     [self resetConstraintsConstantToDefault];
     [self clearAttachmentWebView];
-    
+
     [self didEndDisplay];
 }
 
@@ -1024,7 +1008,7 @@ static BOOL _disableLongPressGestureOnEvent;
 {
     [self removeReadMarkerView];
     [self cleanProgressView];
-    
+
     // TODO: Stop gif animation
 }
 
@@ -1034,17 +1018,17 @@ static BOOL _disableLongPressGestureOnEvent;
 }
 
 - (BOOL)shouldInteractWithURL:(NSURL *)URL urlItemInteractionValue:(NSNumber*)urlItemInteractionValue associatedEvent:(MXEvent*)associatedEvent
-{    
+{
     NSMutableDictionary *userInfo = [@{
                                kMXKRoomBubbleCellUrl:URL,
                                kMXKRoomBubbleCellUrlItemInteraction:urlItemInteractionValue
                                } mutableCopy];
-    
+
     if (associatedEvent)
     {
         userInfo[kMXKRoomBubbleCellEventKey] = associatedEvent;
     }
-    
+
     return [delegate cell:self shouldDoAction:kMXKRoomBubbleCellShouldInteractWithURL userInfo:userInfo defaultValue:YES];
 }
 
@@ -1057,25 +1041,25 @@ static BOOL _disableLongPressGestureOnEvent;
 {
     CGPoint tapPoint = [gestureRecognizer locationInView:view];
     MXKRoomBubbleComponent *tappedComponent;
-    
+
     if (tapPoint.y >= 0 && tapPoint.y <= view.frame.size.height)
     {
         tappedComponent = [self closestBubbleComponentAtPosition:tapPoint];
     }
-    
+
     return tappedComponent;
 }
 
 - (MXKRoomBubbleComponent*)closestBubbleComponentAtPosition:(CGPoint)position
 {
     MXKRoomBubbleComponent *tappedComponent;
-    
+
     NSArray *bubbleComponents = bubbleData.bubbleComponents;
-    
+
     if (bubbleComponents.count == 1) {
         return bubbleComponents.firstObject;
     }
-    
+
     // The position check below fails for bubble data with a single component when message
     // bubbles are enabled, thus the early bailout above
     for (MXKRoomBubbleComponent *component in bubbleComponents)
@@ -1085,15 +1069,15 @@ static BOOL _disableLongPressGestureOnEvent;
         {
             continue;
         }
-        
+
         if (component.position.y > position.y)
         {
             break;
         }
-        
+
         tappedComponent = component;
     }
-    
+
     return tappedComponent;
 }
 
@@ -1118,7 +1102,7 @@ static BOOL _disableLongPressGestureOnEvent;
     {
         self.tmpSubviews = [NSMutableArray new];
     }
-    
+
     [self.tmpSubviews addObject:subview];
 }
 
@@ -1166,7 +1150,7 @@ static BOOL _disableLongPressGestureOnEvent;
         {
             [self.attachmentView removeGestureRecognizer:self.attachmentView.gestureRecognizers[0]];
         }
-        
+
         // Prevent the cell from displaying again the image in case of reuse.
         self.attachmentView.image = nil;
     }
@@ -1178,7 +1162,7 @@ static BOOL _disableLongPressGestureOnEvent;
     if (self.bubbleInfoContainer && self.bubbleInfoContainer.subviews.count > 0)
     {
         NSArray* subviews = self.bubbleInfoContainer.subviews;
-             
+
         for (UIView *view in subviews)
         {
             [view removeFromSuperview];
@@ -1193,12 +1177,12 @@ static BOOL _disableLongPressGestureOnEvent;
     if (self.bubbleOverlayContainer)
     {
         NSArray* subviews = self.bubbleOverlayContainer.subviews;
-        
+
         for (UIView *view in subviews)
         {
             [view removeFromSuperview];
         }
-        
+
         self.bubbleOverlayContainer.hidden = YES;
     }
 }
@@ -1208,7 +1192,7 @@ static BOOL _disableLongPressGestureOnEvent;
     if (self.progressView)
     {
         [self stopProgressUI];
-        
+
         // Remove long tap gesture on the progressView
         while (self.progressView.gestureRecognizers.count)
         {
@@ -1232,36 +1216,36 @@ static BOOL _disableLongPressGestureOnEvent;
 - (void)updateProgressUI:(NSDictionary*)statisticsDict
 {
     self.progressView.hidden = !statisticsDict;
-    
+
     NSNumber* downloadRate = [statisticsDict valueForKey:kMXMediaLoaderCurrentDataRateKey];
-    
+
     NSNumber* completedBytesCount = [statisticsDict valueForKey:kMXMediaLoaderCompletedBytesCountKey];
     NSNumber* totalBytesCount = [statisticsDict valueForKey:kMXMediaLoaderTotalBytesCountKey];
-    
+
     NSMutableString* text = [[NSMutableString alloc] init];
-    
+
     if (completedBytesCount && totalBytesCount)
     {
         NSString* progressString = [NSString stringWithFormat:@"%@ / %@", [NSByteCountFormatter stringFromByteCount:completedBytesCount.longLongValue countStyle:NSByteCountFormatterCountStyleFile], [NSByteCountFormatter stringFromByteCount:totalBytesCount.longLongValue countStyle:NSByteCountFormatterCountStyleFile]];
-        
+
         [text appendString:progressString];
     }
-    
+
     if (downloadRate && downloadRate.longLongValue)
     {
         [text appendFormat:@"\n%@/s", [NSByteCountFormatter stringFromByteCount:downloadRate.longLongValue countStyle:NSByteCountFormatterCountStyleFile]];
-        
+
         if (completedBytesCount && totalBytesCount)
         {
             CGFloat remainimgTime = ((totalBytesCount.floatValue - completedBytesCount.floatValue)) / downloadRate.floatValue;
             [text appendFormat:@"\n%@", [MXKTools formatSecondsInterval:remainimgTime]];
         }
     }
-    
+
     self.statsLabel.text = text;
-    
+
     NSNumber* progressNumber = [statisticsDict valueForKey:kMXMediaLoaderProgressValueKey];
-    
+
     if (progressNumber)
     {
         self.progressChartView.progress = progressNumber.floatValue;
@@ -1290,20 +1274,20 @@ static BOOL _disableLongPressGestureOnEvent;
 - (void)startProgressUI
 {
     self.progressView.hidden = YES;
-    
+
     // there is an attachment URL
     if (bubbleData.attachment.contentURL)
     {
         // remove any pending observers
         [[NSNotificationCenter defaultCenter] removeObserver:self name:kMXMediaLoaderStateDidChangeNotification object:nil];
-        
+
         // check if there is a download in progress
         MXMediaLoader *loader = [MXMediaManager existingDownloaderWithIdentifier:bubbleData.attachment.downloadId];
         if (loader)
         {
             // defines the text to display
             [self updateProgressUI:loader.statisticsDict];
-            
+
             // anyway listen to the progress event
             [[NSNotificationCenter defaultCenter] addObserver:self
                                                      selector:@selector(onAttachmentLoaderStateChange:)
@@ -1316,7 +1300,7 @@ static BOOL _disableLongPressGestureOnEvent;
 - (void)stopProgressUI
 {
     self.progressView.hidden = YES;
-    
+
     // do not remove the observer here
     // the download could restart without recomposing the cell
 }
@@ -1332,20 +1316,20 @@ static NSMutableDictionary *childClasses;
 + (MXKRoomBubbleTableViewCell*)cellWithOriginalXib
 {
     MXKRoomBubbleTableViewCell *cellWithOriginalXib;
-    
+
     @synchronized(self)
     {
         if (childClasses == nil)
         {
             childClasses = [NSMutableDictionary dictionary];
         }
-        
+
         // To save memory, use only one original instance per child class
         cellWithOriginalXib = childClasses[NSStringFromClass(self.class)];
         if (nil == cellWithOriginalXib)
         {
             cellWithOriginalXib = [self roomBubbleTableViewCell];
-            
+
             childClasses[NSStringFromClass(self.class)] = cellWithOriginalXib;
         }
     }
@@ -1367,7 +1351,7 @@ static NSMutableDictionary *childClasses;
         else
         {
             NSURL *tappedUrl;
-            
+
             // Hyperlinks in UITextView does not respond instantly to touch.
             // To overcome this, check manually if a link has been touched in UITextView when performing a quick tap.
             // Otherwise UITextViewDelegate method `- (BOOL)textView:shouldInteractWithURL:inRange:interaction:` is still called for long press and force touch.
@@ -1377,10 +1361,10 @@ static NSMutableDictionary *childClasses;
                 CGPoint tapLocation = [sender locationInView:textView];
                 tappedUrl = [textView urlForLinkAtLocation:tapLocation];
             }
-            
+
             MXKRoomBubbleComponent *tappedComponent = [self closestBubbleComponentForGestureRecognizer:sender locationInView:sender.view];
             MXEvent *tappedEvent = tappedComponent.event;
-            
+
             // If a link has been touched warn delegate immediately.
             if (tappedUrl)
             {
@@ -1440,7 +1424,7 @@ static NSMutableDictionary *childClasses;
     {
         // Check whether a bubble component is displayed at the level of the tapped line.
         MXKRoomBubbleComponent *tappedComponent = nil;
-        
+
         if (self.attachmentView)
         {
             // Check whether the user tapped on the side of the attachment.
@@ -1449,7 +1433,7 @@ static NSMutableDictionary *childClasses;
         else if (self.messageTextView)
         {
             // NOTE: A tap on messageTextView using `MXKMessageTextView` class fallback here if the user does not tap on a link.
-            
+
             // Use the same hack as `onMessageTap:`, check whether the current displayed text corresponds to an attached file
             // NOTE: This assumes that a cell with attachment has only one `MXKRoomBubbleComponent`
             if (self.isBubbleDataContainsFileAttachment)
@@ -1468,7 +1452,7 @@ static NSMutableDictionary *childClasses;
         {
             tappedComponent = [self.bubbleData getFirstBubbleComponentWithDisplay];
         }
-        
+
         [delegate cell:self didRecognizeAction:kMXKRoomBubbleCellTapOnContentView userInfo:(tappedComponent ? @{kMXKRoomBubbleCellEventKey:tappedComponent.event} : nil)];
     }
 }
@@ -1478,7 +1462,7 @@ static NSMutableDictionary *childClasses;
     if (longPressGestureRecognizer.state == UIGestureRecognizerStateBegan && delegate)
     {
         UIView* view = longPressGestureRecognizer.view;
-        
+
         // Check the view on which long press has been detected
         if (view == self.progressView)
         {
@@ -1488,7 +1472,7 @@ static NSMutableDictionary *childClasses;
         {
             MXKRoomBubbleComponent *tappedComponent = [self closestBubbleComponentForGestureRecognizer:longPressGestureRecognizer locationInView:view];
             MXEvent *selectedEvent = tappedComponent.event;
-            
+
             if (selectedEvent)
             {
                 [delegate cell:self didRecognizeAction:kMXKRoomBubbleCellLongPressOnEvent userInfo:@{kMXKRoomBubbleCellEventKey:selectedEvent}];
@@ -1502,7 +1486,7 @@ static NSMutableDictionary *childClasses;
         {
             // Check whether a bubble component is displayed at the level of the tapped line.
             MXKRoomBubbleComponent *tappedComponent = nil;
-            
+
             if (self.attachmentView)
             {
                 // Check whether the user tapped on the side of the attachment.
@@ -1517,7 +1501,7 @@ static NSMutableDictionary *childClasses;
             {
                 tappedComponent = [self.bubbleData getFirstBubbleComponentWithDisplay];
             }
-            
+
             [delegate cell:self didRecognizeAction:kMXKRoomBubbleCellLongPressOnEvent userInfo:(tappedComponent ? @{kMXKRoomBubbleCellEventKey:tappedComponent.event} : nil)];
         }
     }
@@ -1528,18 +1512,18 @@ static NSMutableDictionary *childClasses;
 - (BOOL)textView:(UITextView *)textView shouldInteractWithURL:(NSURL *)URL inRange:(NSRange)characterRange interaction:(UITextItemInteraction)interaction
 {
     BOOL shouldInteractWithURL = YES;
-    
+
     if (delegate && URL)
     {
         MXEvent *associatedEvent;
-        
+
         if ([textView isMemberOfClass:[MXKMessageTextView class]])
         {
             MXKMessageTextView *mxkMessageTextView = (MXKMessageTextView *)textView;
             MXKRoomBubbleComponent *bubbleComponent = [self closestBubbleComponentAtPosition:mxkMessageTextView.lastHitTestLocation];
             associatedEvent = bubbleComponent.event;
         }
-        
+
         // Tapping a file attachment who's name triggers a data detector will try to open that URL.
         // Detect this and instead map the interaction into a tap on the cell.
         if (associatedEvent.isMediaAttachment)
@@ -1547,11 +1531,11 @@ static NSMutableDictionary *childClasses;
             [delegate cell:self didRecognizeAction:kMXKRoomBubbleCellTapOnAttachmentView userInfo:nil];
             return NO;
         }
-        
+
         // Ask the delegate if iOS can open the link
         shouldInteractWithURL = [self shouldInteractWithURL:URL urlItemInteraction:interaction associatedEvent:associatedEvent];
     }
-    
+
     return shouldInteractWithURL;
 }
 
@@ -1572,40 +1556,40 @@ static NSMutableDictionary *childClasses;
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch
 {
     UIView *recognizerView = gestureRecognizer.view;
-    
+
     if ([recognizerView isDescendantOfView:self.contentView])
     {
         UIView *touchedView = touch.view;
-        
+
         if ([touchedView isKindOfClass:[UIButton class]])
         {
             return NO;
         }
-        
+
         // Prevent gesture recognizer to be recognized by a custom view added to the cell contentView and with user interaction enabled
         for (UIView *tmpSubview in self.tmpSubviews)
         {
             if (tmpSubview.isUserInteractionEnabled && [tmpSubview isDescendantOfView:self.contentView])
             {
                 CGPoint touchedPoint = [touch locationInView:tmpSubview];
-                
+
                 if (CGRectContainsPoint(tmpSubview.bounds, touchedPoint))
                 {
                     return NO;
                 }
             }
         }
-        
+
         // Prevent gesture recognizer to be recognized when user hits a link in a UITextView, let UITextViewDelegate handle links.
         if ([touchedView isKindOfClass:[UITextView class]])
         {
             UITextView *textView = (UITextView*)touchedView;
             CGPoint touchLocation = [touch locationInView:textView];
-            
+
             return [textView isThereALinkNearLocation:touchLocation] == NO;
         }
     }
-    
+
     return YES;
 }
 

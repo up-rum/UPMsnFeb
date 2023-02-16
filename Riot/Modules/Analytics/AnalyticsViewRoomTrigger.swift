@@ -1,4 +1,4 @@
-// 
+//
 // Copyright 2022 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,6 +44,7 @@ import AnalyticsEvents
     case linkShare
     case exploreRooms
     case spaceMembers
+    case spaceBottomSheet
 
     var trigger: AnalyticsEvent.ViewRoom.Trigger? {
         switch self {
@@ -99,6 +100,8 @@ import AnalyticsEvents
             return .MobileExploreRooms
         case .spaceMembers:
             return .MobileSpaceMembers
+        case .spaceBottomSheet:
+            return .MobileSpaceBottomSheet
         }
     }
 }

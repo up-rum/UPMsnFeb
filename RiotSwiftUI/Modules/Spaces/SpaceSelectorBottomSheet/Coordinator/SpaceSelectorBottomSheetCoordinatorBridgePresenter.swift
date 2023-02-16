@@ -30,36 +30,36 @@ import Foundation
 @objcMembers
 final class SpaceSelectorBottomSheetCoordinatorBridgePresenter: NSObject {
     // MARK: - Properties
-
+    
     // MARK: Private
-
+    
     private let session: MXSession
     private let selectedSpaceId: String?
     private let showHomeSpace: Bool
     private var coordinator: SpaceSelectorBottomSheetCoordinator?
-
+    
     // MARK: Public
-
+    
     weak var delegate: SpaceSelectorBottomSheetCoordinatorBridgePresenterDelegate?
-
+    
     // MARK: - Setup
-
+    
     init(session: MXSession, selectedSpaceId: String?, showHomeSpace: Bool) {
         self.session = session
         self.selectedSpaceId = selectedSpaceId
         self.showHomeSpace = showHomeSpace
-
+        
         super.init()
     }
-
+    
     // MARK: - Public
-
+    
     func present(from viewController: UIViewController, animated: Bool) {
         let parameters = SpaceSelectorBottomSheetCoordinatorParameters(session: session, selectedSpaceId: selectedSpaceId, showHomeSpace: showHomeSpace)
         let coordinator = SpaceSelectorBottomSheetCoordinator(parameters: parameters)
         coordinator.completion = { [weak self] result in
             guard let self = self else { return }
-
+            
             switch result {
             case .cancel:
                 self.delegate?.spaceSelectorBottomSheetCoordinatorBridgePresenterDidCancel(self)
@@ -76,10 +76,10 @@ final class SpaceSelectorBottomSheetCoordinatorBridgePresenter: NSObject {
         let presentable = coordinator.toPresentable()
         viewController.present(presentable, animated: animated, completion: nil)
         coordinator.start()
-
+        
         self.coordinator = coordinator
     }
-
+    
     func dismiss(animated: Bool, completion: (() -> Void)?) {
         guard let coordinator = coordinator else {
             return

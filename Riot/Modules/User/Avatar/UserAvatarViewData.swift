@@ -1,4 +1,4 @@
-// 
+//
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,12 +21,12 @@ struct UserAvatarViewData: AvatarViewDataProtocol {
     let displayName: String?
     let avatarUrl: String?
     let mediaManager: MXMediaManager?
-    
+
     var matrixItemId: String {
         return userId
     }
-    
-    var fallbackImage: AvatarFallbackImage? {
-        return .matrixItem(matrixItemId, displayName)
+
+    var fallbackImages: [AvatarFallbackImage]? {
+        [.matrixItem(matrixItemId, displayName), .image(Asset.Images.tabPeople.image, .scaleAspectFill)]
     }
 }

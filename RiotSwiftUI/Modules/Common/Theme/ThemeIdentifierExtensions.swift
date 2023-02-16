@@ -1,4 +1,4 @@
-// 
+//
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,17 +14,17 @@
 // limitations under the License.
 //
 
-import Foundation
 import DesignKit
+import Foundation
 
 extension ThemeIdentifier {
-    fileprivate static let defaultTheme = DarkThemeSwiftUI()//DefaultThemeSwiftUI()
+    fileprivate static let defaultTheme = DefaultThemeSwiftUI()
     fileprivate static let darkTheme = DarkThemeSwiftUI()
     /// Extension to `ThemeIdentifier` for getting the SwiftUI theme.
     public var themeSwiftUI: ThemeSwiftUI {
         switch self {
         case .light:
-            return Self.darkTheme
+            return Self.defaultTheme
         case .dark, .black:
             return Self.darkTheme
         }

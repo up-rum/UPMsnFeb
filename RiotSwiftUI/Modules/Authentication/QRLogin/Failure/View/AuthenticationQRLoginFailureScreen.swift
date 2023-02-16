@@ -85,7 +85,7 @@ struct AuthenticationQRLoginFailureScreen: View {
                 Button(action: retry) {
                     Text(VectorL10n.authenticationQrLoginFailureRetry)
                 }
-                .buttonStyle(PrimaryActionButtonStyle(font: theme.fonts.bodySB))
+                .buttonStyle(PrimaryActionButtonStyle())
                 .accessibilityIdentifier("retryButton")
             }
 

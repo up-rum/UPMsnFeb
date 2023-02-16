@@ -4524,4 +4524,35 @@ ChangePasswordCoordinatorBridgePresenterDelegate>
     self.changePasswordBridgePresenter = nil;
 }
 
+#pragma mark - User sessions management
+
+- (void)showUserSessionsFlow
+{
+    if (!self.mainSession)
+    {
+        MXLogError(@"[SettingsViewController] Cannot show user sessions flow, no user session available");
+        return;
+    }
+
+    if (!self.navigationController)
+    {
+        MXLogError(@"[SettingsViewController] Cannot show user sessions flow, no navigation controller available");
+        return;
+    }
+
+    UserSessionsFlowCoordinatorBridgePresenter *userSessionsFlowCoordinatorBridgePresenter = [[UserSessionsFlowCoordinatorBridgePresenter alloc] initWithMxSession:self.mainSession];
+
+    MXWeakify(self);
+
+    userSessionsFlowCoordinatorBridgePresenter.completion = ^{
+        MXStrongifyAndReturnIfNil(self);
+
+        self.userSessionsFlowCoordinatorBridgePresenter = nil;
+    };
+
+    self.userSessionsFlowCoordinatorBridgePresenter = userSessionsFlowCoordinatorBridgePresenter;
+
+    [self.userSessionsFlowCoordinatorBridgePresenter pushFrom:self.navigationController animated:YES];
+}
+
 @end

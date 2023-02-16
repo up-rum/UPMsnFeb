@@ -227,12 +227,14 @@ final class BuildSettings: NSObject {
     
     /// Force non-jailbroken app usage
     static let forceNonJailbrokenUsage: Bool = true
-    
+
     static let allowSendingStickers: Bool = true
-    
+
     static let allowLocalContactsAccess: Bool = true
-    
+
     static let allowInviteExernalUsers: Bool = true
+
+    static let allowBackgroundAudioMessagePlayback: Bool = true
     
     // MARK: - Side Menu
     static let enableSideMenu: Bool = true && !newAppLayoutEnabled
@@ -388,41 +390,55 @@ final class BuildSettings: NSObject {
     
     // MARK: - Unified Search
     static let unifiedSearchScreenShowPublicDirectory = true
-    
+
     // MARK: - Secrets Recovery
     static let secretsRecoveryAllowReset = true
-    
+
     // MARK: - UISI Autoreporting
     static let cryptoUISIAutoReportingEnabled = false
-    
+
     // MARK: - Polls
-    
+
     static let pollsEnabled = true
-    
+
     // MARK: - Location Sharing
-    
+
     /// Overwritten by the home server's .well-known configuration (if any exists)
     static let defaultTileServerMapStyleURL = URL(string: "https://api.maptiler.com/maps/streets/style.json?key=fU3vlMsMn4Jb6dnEIFsx")!
-    
+
     static let locationSharingEnabled = true
 
     // MARK: - Voice Broadcast
     static let voiceBroadcastChunkLength: Int = 120
     static let voiceBroadcastMaxLength: UInt = 14400 // 240min.
-    
+
     // MARK: - MXKAppSettings
     static let enableBotCreation: Bool = false
     static let maxAllowedMediaCacheSize: Int = 1073741824
     static let presenceColorForOfflineUser: Int = 15020851
     static let presenceColorForOnlineUser: Int = 3401011
     static let presenceColorForUnavailableUser: Int = 15066368
-    static let showAllEventsInRoomHistory: Bool = true//Rum
+    static let showAllEventsInRoomHistory: Bool = false //Rum - true
     static let showLeftMembersInRoomMemberList: Bool = false
     static let showRedactionsInRoomHistory: Bool = true
     static let showUnsupportedEventsInRoomHistory: Bool = false
     static let sortRoomMembersUsingLastSeenTime: Bool = true
     static let syncLocalContacts: Bool = false
-    
+
     // MARK: - New App Layout
-    static let newAppLayoutEnabled = false
+    static let newAppLayoutEnabled = true
+
+    // MARK: - QR Login
+
+    /// Flag indicating whether the QR login enabled from login screen
+    static let qrLoginEnabledFromNotAuthenticated = true
+    /// Flag indicating whether the QR login enabled from Device Manager screen
+    static let qrLoginEnabledFromAuthenticated = false
+    /// Flag indicating whether displaying QRs enabled for the QR login screens
+    static let qrLoginEnableDisplayingQRs = false
+
+    static let rendezvousServerBaseURL = URL(string: "https://rendezvous.lab.element.dev/")!
+
+    // MARK: - Alerts
+    static let showUnverifiedSessionsAlert = true
 }

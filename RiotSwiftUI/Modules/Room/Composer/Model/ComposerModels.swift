@@ -37,7 +37,7 @@ enum FormatType {
     case unorderedList
     case orderedList
     case indent
-    case unIndent
+    case unindent
     case inlineCode
     case codeBlock
     case quote
@@ -46,6 +46,18 @@ enum FormatType {
 
 extension FormatType: CaseIterable, Identifiable {
     var id: Self { self }
+}
+
+extension FormatType {
+    /// Return true if the format type is an indentation action.
+    var isIndentType: Bool {
+        switch self {
+        case .indent, .unindent:
+            return true
+        default:
+            return false
+        }
+    }
 }
 
 extension FormatItem: Identifiable {
@@ -70,7 +82,7 @@ extension FormatItem {
             return Asset.Images.numberedList.name
         case .indent:
             return Asset.Images.indentIncrease.name
-        case .unIndent:
+        case .unindent:
             return Asset.Images.indentDecrease.name
         case .inlineCode:
             return Asset.Images.code.name
@@ -82,7 +94,7 @@ extension FormatItem {
             return Asset.Images.link.name
         }
     }
-    
+
     var accessibilityIdentifier: String {
         switch type {
         case .bold:
@@ -99,7 +111,7 @@ extension FormatItem {
             return "orderedListButton"
         case .indent:
             return "indentListButton"
-        case .unIndent:
+        case .unindent:
             return "unIndentButton"
         case .inlineCode:
             return "inlineCodeButton"
@@ -111,7 +123,7 @@ extension FormatItem {
             return "linkButton"
         }
     }
-    
+
     var accessibilityLabel: String {
         switch type {
         case .bold:
@@ -128,7 +140,7 @@ extension FormatItem {
             return VectorL10n.wysiwygComposerFormatActionOrderedList
         case .indent:
             return VectorL10n.wysiwygComposerFormatActionIndent
-        case .unIndent:
+        case .unindent:
             return VectorL10n.wysiwygComposerFormatActionUnIndent
         case .inlineCode:
             return VectorL10n.wysiwygComposerFormatActionInlineCode
@@ -160,7 +172,7 @@ extension FormatType {
             return .orderedList
         case .indent:
             return .indent
-        case .unIndent:
+        case .unindent:
             return .unIndent
         case .inlineCode:
             return .inlineCode
@@ -172,7 +184,7 @@ extension FormatType {
             return .link
         }
     }
-    
+
     // TODO: We probably don't need to expose this, clean up.
     /// Convenience method to map it to the external rust binging action
     var composerAction: ComposerAction {
@@ -191,7 +203,7 @@ extension FormatType {
             return .orderedList
         case .indent:
             return .indent
-        case .unIndent:
+        case .unindent:
             return .unIndent
         case .inlineCode:
             return .inlineCode
@@ -227,7 +239,7 @@ enum ComposerViewModelResult: Equatable {
 
 final class LinkActionWrapper: NSObject {
     let linkAction: LinkAction
-    
+
     init(_ linkAction: LinkAction) {
         self.linkAction = linkAction
         super.init()

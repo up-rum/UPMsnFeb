@@ -7,7 +7,7 @@
  You may obtain a copy of the License at
 
  http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,6 +28,7 @@
 
 @protocol Configurable;
 @protocol LegacyAppDelegateDelegate;
+@protocol SplitViewMasterViewControllerProtocol;
 @class CallBar;
 @class CallPresenter;
 @class RoomNavigationParameters;
@@ -69,7 +70,7 @@ UINavigationControllerDelegate
 /**
  Application main view controller
  */
-@property (nonatomic, readonly) MasterTabBarController *masterTabBarController;
+@property (nonatomic, readonly) UIViewController<SplitViewMasterViewControllerProtocol>* masterTabBarController;
 
 @property (strong, nonatomic) UIWindow *window;
 
@@ -194,7 +195,9 @@ UINavigationControllerDelegate
 - (BOOL)presentIncomingKeyVerificationRequest:(id<MXKeyVerificationRequest>)incomingKeyVerificationRequest
                                     inSession:(MXSession*)session;
 
-- (BOOL)presentUserVerificationForRoomMember:(MXRoomMember*)roomMember session:(MXSession*)mxSession;
+- (BOOL)presentUserVerificationForRoomMember:(MXRoomMember*)roomMember
+                                     session:(MXSession*)mxSession
+                                  completion:(void (^)(void))completion;
 
 - (BOOL)presentCompleteSecurityForSession:(MXSession*)mxSession;
 
@@ -216,9 +219,6 @@ UINavigationControllerDelegate
 // Restore display and show the room
 - (void)showRoom:(NSString*)roomId andEventId:(NSString*)eventId withMatrixSession:(MXSession*)mxSession;
 
-// Creates a new direct chat with the provided user id
-- (void)createDirectChatWithUserId:(NSString*)userId completion:(void (^)(void))completion;
-
 // Show room preview
 - (void)showRoomPreviewWithParameters:(RoomPreviewNavigationParameters*)parameters completion:(void (^)(void))completion;
 
@@ -226,6 +226,12 @@ UINavigationControllerDelegate
 
 // Restore display and show the room preview
 - (void)showRoomPreview:(RoomPreviewData*)roomPreviewData;
+
+// Display a new direct room with a target user without associated room.
+- (void)showNewDirectChat:(NSString*)userId withMatrixSession:(MXSession*)mxSession completion:(void (^)(void))completion;
+
+// Creates a new direct room with the provided user id
+- (void)createDirectChatWithUserId:(NSString*)userId completion:(void (^)(NSString *roomId))completion;
 
 // Reopen an existing direct room with this userId or creates a new one (if it doesn't exist)
 - (void)startDirectChatWithUserId:(NSString*)userId completion:(void (^)(void))completion;
@@ -249,7 +255,7 @@ UINavigationControllerDelegate
 
 /**
  Process universal link.
- 
+
  @param parameters the universal link parameters.
  @return YES in case of processing success.
  */
@@ -257,10 +263,10 @@ UINavigationControllerDelegate
 
 /**
  Open the dedicated space with the given ID.
- 
+
  This method will open only joined or invited spaces.
  @note this method is temporary and should be moved to a dedicated coordinator
- 
+
  @param spaceId ID of the space.
  */
 - (void)openSpaceWithId:(NSString*)spaceId;

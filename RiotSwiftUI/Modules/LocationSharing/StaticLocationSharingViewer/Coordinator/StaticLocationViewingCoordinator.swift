@@ -15,9 +15,9 @@
 //
 
 import Foundation
-import UIKit
-import SwiftUI
 import MatrixSDK
+import SwiftUI
+import UIKit
 
 struct StaticLocationViewingCoordinatorParameters {
     let session: MXSession
@@ -28,25 +28,24 @@ struct StaticLocationViewingCoordinatorParameters {
 }
 
 final class StaticLocationViewingCoordinator: Coordinator, Presentable {
-    
     // MARK: - Properties
-    
+
     // MARK: Private
-    
+
     private let parameters: StaticLocationViewingCoordinatorParameters
     private let staticLocationViewingHostingController: UIViewController
     private var staticLocationViewingViewModel: StaticLocationViewingViewModelProtocol
-    
+
     private let shareLocationActivityControllerBuilder = ShareLocationActivityControllerBuilder()
-    
+
     // MARK: Public
 
     // Must be used only internally
     var childCoordinators: [Coordinator] = []
     var completion: (() -> Void)?
-    
+
     // MARK: - Setup
-    
+
     init(parameters: StaticLocationViewingCoordinatorParameters) {
         self.parameters = parameters
 
@@ -54,14 +53,17 @@ final class StaticLocationViewingCoordinator: Coordinator, Presentable {
             mapStyleURL: parameters.session.vc_homeserverConfiguration().tileServer.mapStyleURL,
             avatarData: parameters.avatarData,
             location: parameters.location,
-            coordinateType: parameters.coordinateType)
+            coordinateType: parameters.coordinateType
+        )
         let view = StaticLocationView(viewModel: viewModel.context)
-            .addDependency(AvatarService.instantiate(mediaManager: parameters.mediaManager))
+            .environmentObject(AvatarViewModel(avatarService: AvatarService(mediaManager: parameters.mediaManager)))
+
         staticLocationViewingViewModel = viewModel
         staticLocationViewingHostingController = VectorHostingController(rootView: view)
     }
-    
+
     // MARK: - Public
+
     func start() {
         MXLog.debug("[StaticLocationSharingViewerCoordinator] did start.")
         staticLocationViewingViewModel.completion = { [weak self] result in
@@ -75,15 +77,14 @@ final class StaticLocationViewingCoordinator: Coordinator, Presentable {
             }
         }
     }
-    
+
     func toPresentable() -> UIViewController {
-        return self.staticLocationViewingHostingController
+        staticLocationViewingHostingController
     }
-    
+
     func presentLocationActivityController(with coordinate: CLLocationCoordinate2D) {
-        
         let shareActivityController = shareLocationActivityControllerBuilder.build(with: coordinate)
-        
-        self.staticLocationViewingHostingController.present(shareActivityController, animated: true)
+
+        staticLocationViewingHostingController.present(shareActivityController, animated: true)
     }
 }
