@@ -84,7 +84,7 @@ struct AuthenticationQRLoginStartScreen: View {
             Button(action: scanQR) {
                 Text(VectorL10n.authenticationQrLoginStartTitle)
             }
-            .buttonStyle(PrimaryActionButtonStyle())
+            .buttonStyle(PrimaryActionButtonStyle(font: theme.fonts.bodySB))
             .padding(.bottom, 8)
             .accessibilityIdentifier("scanQRButton")
             

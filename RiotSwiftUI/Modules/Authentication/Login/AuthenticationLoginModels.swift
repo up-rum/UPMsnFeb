@@ -27,11 +27,12 @@ enum AuthenticationLoginViewModelResult: CustomStringConvertible {
     case forgotPassword
     /// Login using the supplied credentials.
     case login(username: String, password: String)
-    case gotoroot
     /// Continue using the supplied SSO provider.
     case continueWithSSO(SSOIdentityProvider)
     /// Continue using the fallback page
     case fallback
+    /// Continue with QR login
+    case qrLogin
     
     /// A string representation of the result, ignoring any associated values that could leak PII.
     var description: String {
@@ -44,12 +45,12 @@ enum AuthenticationLoginViewModelResult: CustomStringConvertible {
             return "forgotPassword"
         case .login:
             return "login"
-        case .gotoroot:
-            return "gotoroot"
         case .continueWithSSO(let provider):
             return "continueWithSSO: \(provider)"
         case .fallback:
             return "fallback"
+        case .qrLogin:
+            return "qrLogin"
         }
     }
 }
@@ -60,7 +61,7 @@ struct AuthenticationLoginViewState: BindableState {
     /// Data about the selected homeserver.
     var homeserver: AuthenticationHomeserverViewData
     /// Whether a new homeserver is currently being loaded.
-    var isLoading: Bool = false
+    var isLoading = false
     /// View state that can be bound to from SwiftUI.
     var bindings: AuthenticationLoginBindings
     
@@ -82,9 +83,9 @@ struct AuthenticationLoginViewState: BindableState {
 
 struct AuthenticationLoginBindings {
     /// The username input by the user.
-    var username:String = UserDefaults.standard.value(forKey: "upusername") as! String
+    var username = ""
     /// The password input by the user.
-    var password:String = ""
+    var password = ""
     /// Information describing the currently displayed alert.
     var alertInfo: AlertInfo<AuthenticationLoginErrorType>?
 }
@@ -98,11 +99,12 @@ enum AuthenticationLoginViewAction {
     case forgotPassword
     /// Continue using the input username and password.
     case next
-    case poptoroot
     /// Continue using the fallback page
     case fallback
     /// Continue using the supplied SSO provider.
     case continueWithSSO(SSOIdentityProvider)
+    /// Continue using QR login
+    case qrLogin
 }
 
 enum AuthenticationLoginErrorType: Hashable {

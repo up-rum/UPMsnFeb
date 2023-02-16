@@ -162,7 +162,7 @@ struct AuthenticationQRLoginScanScreen: View {
                 Button(action: goToSettings) {
                     Text(VectorL10n.settings)
                 }
-                .buttonStyle(PrimaryActionButtonStyle())
+                .buttonStyle(PrimaryActionButtonStyle(font: theme.fonts.bodySB))
                 .padding(.bottom, 8)
                 .accessibilityIdentifier("openSettingsButton")
             }

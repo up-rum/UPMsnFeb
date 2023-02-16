@@ -1,13 +1,13 @@
 /*
  Copyright 2015 OpenMarket Ltd
  Copyright 2019 New Vector Ltd
-
+ 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
-
+ 
  http://www.apache.org/licenses/LICENSE-2.0
-
+ 
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -63,24 +63,24 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
 - (instancetype)initWithEvent:(MXEvent *)event andRoomState:(MXRoomState *)roomState andRoomDataSource:(MXKRoomDataSource *)roomDataSource
 {
     self = [super initWithEvent:event andRoomState:roomState andRoomDataSource:roomDataSource];
-
+    
     if (self)
     {
         self.displayTimestampForSelectedComponentOnLeftWhenPossible = YES;
-
+        
         switch (event.eventType)
         {
             case MXEventTypeRoomMember:
             {
                 // Membership events have their own cell type
                 self.tag = RoomBubbleCellDataTagMembership;
-
+                
                 // Membership events can be collapsed together
                 self.collapsable = YES;
-
+                
                 // Collapse them by default
                 self.collapsed = YES;
-
+                
                 //  find the room create event in stateEvents
                 MXEvent *roomCreateEvent = [roomState.stateEvents filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"wireType == %@", kMXEventTypeStringRoomCreate]].firstObject;
                 NSString *creatorUserId = [MXRoomCreateContent modelFromJSON:roomCreateEvent.content].creatorUserId;
@@ -100,7 +100,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
             case MXEventTypeRoomCreate:
             {
                 MXRoomCreateContent *createContent = [MXRoomCreateContent modelFromJSON:event.content];
-
+                
                 if (createContent.roomPredecessorInfo)
                 {
                     self.tag = RoomBubbleCellDataTagRoomCreateWithPredecessor;
@@ -109,10 +109,10 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
                 {
                     self.tag = RoomBubbleCellDataTagRoomCreationIntro;
                 }
-
+                
                 // Membership events can be collapsed together
                 self.collapsable = YES;
-
+                
                 // Collapse them by default
                 self.collapsed = YES;
             }
@@ -126,10 +126,10 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
             case MXEventTypeRoomJoinRules:
             {
                 self.tag = RoomBubbleCellDataTagRoomCreateConfiguration;
-
+                
                 // Membership events can be collapsed together
                 self.collapsable = YES;
-
+                
                 // Collapse them by default
                 self.collapsed = YES;
             }
@@ -140,13 +140,13 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
             case MXEventTypeCallReject:
             {
                 self.tag = RoomBubbleCellDataTagCall;
-
+                
                 // Call events can be collapsed together
                 self.collapsable = YES;
-
+                
                 // Collapse them by default
                 self.collapsed = YES;
-
+                
                 // Show timestamps always on right
                 self.displayTimestampForSelectedComponentOnLeftWhenPossible = NO;
                 break;
@@ -157,7 +157,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
                 self.tag = RoomBubbleCellDataTagPoll;
                 self.collapsable = NO;
                 self.collapsed = NO;
-
+                
                 break;
             }
             case MXEventTypeBeaconInfo:
@@ -165,7 +165,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
                 self.tag = RoomBubbleCellDataTagLiveLocation;
                 self.collapsable = NO;
                 self.collapsed = NO;
-
+                
                 [self updateBeaconInfoSummaryWithId:event.eventId andEvent:event];
                 break;
             }
@@ -179,7 +179,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
                         [widget.type isEqualToString:kWidgetTypeJitsiV2])
                     {
                         self.tag = RoomBubbleCellDataTagGroupCall;
-
+                        
                         // Show timestamps always on right
                         self.displayTimestampForSelectedComponentOnLeftWhenPossible = NO;
                     }
@@ -187,7 +187,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
                 else if ([event.type isEqualToString:VoiceBroadcastSettings.voiceBroadcastInfoContentKeyType])
                 {
                     VoiceBroadcastInfo *voiceBroadcastInfo = [VoiceBroadcastInfo modelFromJSON: event.content];
-
+                    
                     // Check if the state event corresponds to the beginning of a voice broadcast
                     if ([VoiceBroadcastInfo isStartedFor:voiceBroadcastInfo.state])
                     {
@@ -197,15 +197,15 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
                         {
                             lastVoiceBroadcastInfoEvent = event;
                         }
-
+                        
                         VoiceBroadcastInfo *lastVoiceBroadcastInfo = [VoiceBroadcastInfo modelFromJSON: lastVoiceBroadcastInfoEvent.content];
-
+                        
                         // Handle the specific case where the state event is a started voice broadcast (the voiceBroadcastId is the event id itself).
                         if (!lastVoiceBroadcastInfo.voiceBroadcastId)
                         {
                             lastVoiceBroadcastInfo.voiceBroadcastId = lastVoiceBroadcastInfoEvent.eventId;
                         }
-
+                        
                         // Check if the voice broadcast is still alive.
                         if ([lastVoiceBroadcastInfo.voiceBroadcastId isEqualToString:event.eventId] && ![VoiceBroadcastInfo isStoppedFor:lastVoiceBroadcastInfo.state])
                         {
@@ -219,7 +219,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
                             {
                                 self.tag = RoomBubbleCellDataTagVoiceBroadcastPlayback;
                             }
-
+                            
                             self.voiceBroadcastState = lastVoiceBroadcastInfo.state;
                         }
                         else
@@ -231,7 +231,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
                     else
                     {
                         self.tag = RoomBubbleCellDataTagVoiceBroadcastNoDisplay;
-
+                        
                         if ([VoiceBroadcastInfo isStoppedFor:voiceBroadcastInfo.state])
                         {
                             // This state event corresponds to the end of a voice broadcast
@@ -243,10 +243,10 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
                     }
                     self.collapsable = NO;
                     self.collapsed = NO;
-
+                    
                     break;
                 }
-
+                
                 break;
             }
             case MXEventTypeRoomMessage:
@@ -263,13 +263,13 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
                     self.collapsable = NO;
                     self.collapsed = NO;
                 }
-
+                
                 break;
             }
             default:
                 break;
         }
-
+        
         [self keyVerificationDidUpdate];
 
         // Increase maximum number of components
@@ -277,11 +277,11 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
 
         // Indicate that the text message layout should be recomputed.
         [self invalidateTextLayout];
-
+        
         // Load a url preview if necessary.
         [self refreshURLPreviewForEventId:event.eventId];
     }
-
+    
     return self;
 }
 
@@ -291,12 +291,12 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
 
     // Update any URL preview data as necessary.
     [self refreshURLPreviewForEventId:event.eventId];
-
+    
     if (self.tag == RoomBubbleCellDataTagLiveLocation)
     {
         [self updateBeaconInfoSummaryWithId:eventId andEvent:event];
     }
-
+    
     // Handle here the case where an audio chunk of a voice broadcast have been decrypted with delay
     // We take the opportunity of this update to disable the display of this chunk in the room timeline
     if (event.eventType == MXEventTypeRoomMessage && event.content[VoiceBroadcastSettings.voiceBroadcastContentKeyChunkType]) {
@@ -326,31 +326,31 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
         {
             [self refreshBubbleComponentsPosition];
         }
-
+        
         shouldUpdateComponentsPosition = NO;
     }
-
+    
     [self updateAdditionalContentHeightIfNeeded];
 }
 
 - (NSAttributedString*)attributedTextMessage
 {
     [self buildAttributedStringIfNeeded];
-
+    
     return attributedTextMessage;
 }
 
 - (NSAttributedString*)attributedTextMessageWithoutPositioningSpace
 {
     [self buildAttributedStringIfNeeded];
-
+    
     return attributedTextMessageWithoutPositioningSpace;
 }
 
 - (BOOL)hasNoDisplay
 {
     BOOL hasNoDisplay = YES;
-
+    
     switch (self.tag)
     {
         case RoomBubbleCellDataTagKeyVerificationNoDisplay:
@@ -364,7 +364,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
             {
                 hasNoDisplay = NO;
             }
-
+            
             break;
         case RoomBubbleCellDataTagLocation:
             hasNoDisplay = NO;
@@ -375,7 +375,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
             {
                 hasNoDisplay = NO;
             }
-
+            
             break;
         case RoomBubbleCellDataTagVoiceBroadcastRecord:
         case RoomBubbleCellDataTagVoiceBroadcastPlayback:
@@ -387,7 +387,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
             hasNoDisplay = [super hasNoDisplay];
             break;
     }
-
+    
     return hasNoDisplay;
 }
 
@@ -404,7 +404,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
         //  do not consider this cell data if in a thread view
         return NO;
     }
-
+    
     return super.hasThreadRoot;
 }
 
@@ -454,12 +454,12 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
 
         return [eventContent1.callId isEqualToString:eventContent2.callId];
     }
-
+    
     if (self.tag == RoomBubbleCellDataTagRoomCreateWithPredecessor || cellData.tag == RoomBubbleCellDataTagRoomCreateWithPredecessor)
     {
         return NO;
     }
-
+    
     return [super collapseWith:cellData];
 }
 
@@ -493,20 +493,20 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
     if (self.collapsed && self.collapsedAttributedTextMessage && self.nextCollapsableCellData)
     {
         NSAttributedString *attributedString = super.collapsedAttributedTextMessage;
-
+        
         self.attributedTextMessage = attributedString;
         self.attributedTextMessageWithoutPositioningSpace = attributedString;
-
+        
         return;
     }
 
     NSMutableAttributedString *currentAttributedTextMsg;
-
+    
     NSMutableAttributedString *currentAttributedTextMsgWithoutVertSpace = [NSMutableAttributedString new];
-
+    
     NSInteger selectedComponentIndex = self.selectedComponentIndex;
     NSInteger lastMessageIndex = self.containsLastMessage ? self.mostRecentComponentIndex : NSNotFound;
-
+    
     MXKRoomBubbleComponent *component;
     NSAttributedString *componentString;
     NSUInteger index = 0;
@@ -514,7 +514,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
     {
         component = bubbleComponents[index];
         componentString = component.attributedTextMessage;
-
+        
         if (componentString)
         {
             // Check whether another component than this one is selected
@@ -532,39 +532,39 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
                 // PillTextAttachment are not created again every time, we have to set alpha back to standard if needed.
                 [PillsFormatter setPillAlpha:1.f inAttributedString:componentString];
             }
-
+            
             // Check whether the timestamp is displayed for this component, and check whether a vertical whitespace is required
             if (((selectedComponentIndex == index && self.addVerticalWhitespaceForSelectedComponentTimestamp) || lastMessageIndex == index) && (self.shouldHideSenderInformation || self.shouldHideSenderName))
             {
                 currentAttributedTextMsg = [[NSMutableAttributedString alloc] initWithAttributedString:[RoomBubbleCellData timestampVerticalWhitespace]];
                 [currentAttributedTextMsg appendAttributedString:componentString];
-
+                
                 [currentAttributedTextMsgWithoutVertSpace appendAttributedString:componentString];
             }
             else
             {
                 // Init attributed string with the first text component
                 currentAttributedTextMsg = [[NSMutableAttributedString alloc] initWithAttributedString:componentString];
-
+                
                 [currentAttributedTextMsgWithoutVertSpace appendAttributedString:componentString];
             }
 
             [self addVerticalWhitespaceToString:currentAttributedTextMsg forEvent:component.event.eventId];
-
+            
             // The first non empty component has been handled.
             break;
         }
     }
-
+    
     for (index++; index < bubbleComponents.count; index++)
     {
         component = bubbleComponents[index];
         componentString = component.attributedTextMessage;
-
+        
         if (componentString)
         {
             [currentAttributedTextMsg appendAttributedString:[MXKRoomBubbleCellDataWithAppendingMode messageSeparator]];
-
+            
             // Check whether another component than this one is selected
             if (selectedComponentIndex != NSNotFound && selectedComponentIndex != index && componentString.length)
             {
@@ -579,31 +579,31 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
                 // PillTextAttachment are not created again every time, we have to set alpha back to standard if needed.
                 [PillsFormatter setPillAlpha:1.f inAttributedString:componentString];
             }
-
+            
             // Check whether the timestamp is displayed
             if ((selectedComponentIndex == index && self.addVerticalWhitespaceForSelectedComponentTimestamp) || lastMessageIndex == index)
             {
                 [currentAttributedTextMsg appendAttributedString:[RoomBubbleCellData timestampVerticalWhitespace]];
             }
-
+            
             // Append attributed text
             [currentAttributedTextMsg appendAttributedString:componentString];
-
+            
             [self addVerticalWhitespaceToString:currentAttributedTextMsg forEvent:component.event.eventId];
-
+            
             [currentAttributedTextMsgWithoutVertSpace appendAttributedString:componentString];
         }
     }
-
+    
     // With bubbles the text is truncated with quote messages containing vertical border view
     // Add horizontal space to fix the issue
     if (self.displayFix & MXKRoomBubbleComponentDisplayFixHtmlBlockquote)
     {
         [currentAttributedTextMsgWithoutVertSpace appendString:@"       "];
     }
-
+        
     self.attributedTextMessage = currentAttributedTextMsg;
-
+    
     self.attributedTextMessageWithoutPositioningSpace = currentAttributedTextMsgWithoutVertSpace;
 }
 
@@ -634,11 +634,11 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
 - (NSInteger)firstVisibleComponentIndex
 {
     __block NSInteger firstVisibleComponentIndex = NSNotFound;
-
+    
     MXEvent *firstEvent = self.events.firstObject;
     BOOL isPoll = firstEvent.isTimelinePollEvent;
     BOOL isVoiceBroadcast = (firstEvent.eventType == MXEventTypeCustom && [firstEvent.type isEqualToString: VoiceBroadcastSettings.voiceBroadcastInfoContentKeyType]);
-
+    
     if ((isPoll || self.attachment || isVoiceBroadcast) && self.bubbleComponents.count)
     {
         firstVisibleComponentIndex = 0;
@@ -646,9 +646,9 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
     else
     {
         [self.bubbleComponents enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-
+            
             MXKRoomBubbleComponent *component = (MXKRoomBubbleComponent*)obj;
-
+            
             if (component.attributedTextMessage)
             {
                 firstVisibleComponentIndex = idx;
@@ -656,18 +656,18 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
             }
         }];
     }
-
+    
     return firstVisibleComponentIndex;
 }
 
 - (void)refreshBubbleComponentsPosition
 {
     // CAUTION: This method must be called on the main thread.
-
+    
     @synchronized(bubbleComponents)
     {
         NSInteger bubbleComponentsCount = bubbleComponents.count;
-
+        
         // Check whether there is at least one component.
         if (bubbleComponentsCount)
         {
@@ -675,21 +675,21 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
             CGFloat positionY = (self.attachment == nil || self.attachment.type == MXKAttachmentTypeFile || self.attachment.type == MXKAttachmentTypeAudio) ? MXKROOMBUBBLECELLDATA_TEXTVIEW_DEFAULT_VERTICAL_INSET : 0;
             MXKRoomBubbleComponent *component;
             NSUInteger index = 0;
-
+            
             // Use same position for first components without render (redacted)
             for (; index < bubbleComponentsCount; index++)
             {
                 // Compute the vertical position for next component
                 component = bubbleComponents[index];
-
+                
                 component.position = CGPointMake(0, positionY);
-
+                
                 if (component.attributedTextMessage)
                 {
                     break;
                 }
             }
-
+            
             // Check whether the position of other components need to be refreshed
             if (!self.attachment && index < bubbleComponentsCount)
             {
@@ -702,36 +702,36 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
                 {
                     // Compute the vertical position for next component
                     component = bubbleComponents[index];
-
+                    
                     if (component.attributedTextMessage)
                     {
                         // Prepare its attributed string by considering potential vertical margin required to display timestamp.
                         NSAttributedString *componentString = component.attributedTextMessage;
 
                         // Check whether the timestamp is displayed for this component, and check whether a vertical whitespace is required
-
+                        
                         if (((selectedComponentIndex == index && self.addVerticalWhitespaceForSelectedComponentTimestamp) || lastMessageIndex == index)
                             && !(visibleMessageIndex == 0 && !(self.shouldHideSenderInformation || self.shouldHideSenderName)))
                         {
                             [attributedString appendAttributedString:[RoomBubbleCellData timestampVerticalWhitespace]];
                         }
-
+                        
                         // Append this attributed string.
                         [attributedString appendAttributedString:componentString];
-
+                        
                         // Compute the height of the resulting string.
                         CGFloat cumulatedHeight = [self rawTextHeight:attributedString];
-
+                        
                         // Deduce the position of the beginning of this component.
                         positionY = MXKROOMBUBBLECELLDATA_TEXTVIEW_DEFAULT_VERTICAL_INSET + (cumulatedHeight - [self rawTextHeight:componentString]);
-
+                        
                         component.position = CGPointMake(0, positionY);
-
+                        
                         // Vertical whitespace is added in case of read receipts or reactions
                         [self addVerticalWhitespaceToString:attributedString forEvent:component.event.eventId];
-
+                        
                         [attributedString appendAttributedString:[MXKRoomBubbleCellDataWithAppendingMode messageSeparator]];
-
+                        
                         visibleMessageIndex++;
                     }
                     else
@@ -747,7 +747,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
 - (void)addVerticalWhitespaceToString:(NSMutableAttributedString *)attributedString forEvent:(NSString *)eventId
 {
     CGFloat additionalVerticalHeight = 0;
-
+    
     // Add vertical whitespace in case of a url preview.
     additionalVerticalHeight+= [self urlPreviewHeightForEventId:eventId];
     // Add vertical whitespace in case of reactions.
@@ -758,7 +758,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
     additionalVerticalHeight+= [self fromAThreadViewHeightForEventId:eventId];
     // Add vertical whitespace in case of read receipts.
     additionalVerticalHeight+= [self readReceiptHeightForEventId:eventId];
-
+    
     if (additionalVerticalHeight)
     {
         [attributedString appendAttributedString:[RoomBubbleCellData verticalWhitespaceForHeight: additionalVerticalHeight]];
@@ -768,18 +768,18 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
 - (CGFloat)computeAdditionalHeight
 {
     CGFloat height = 0;
-
+    
     for (MXKRoomBubbleComponent *bubbleComponent in self.bubbleComponents)
     {
         NSString *eventId = bubbleComponent.event.eventId;
-
+        
         height+= [self urlPreviewHeightForEventId:eventId];
         height+= [self reactionHeightForEventId:eventId];
         height+= [self threadSummaryViewHeightForEventId:eventId];
         height+= [self fromAThreadViewHeightForEventId:eventId];
         height+= [self readReceiptHeightForEventId:eventId];
     }
-
+    
     return height;
 }
 
@@ -790,7 +790,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
         void(^updateAdditionalHeight)(void) = ^() {
             self.additionalContentHeight = [self computeAdditionalHeight];
         };
-
+        
         // The additional height depends on the room read receipts and reactions view which must be calculated on the main thread.
         // Check here the current thread, this is just a sanity check because this method is called during the rendering step
         // which takes place on the main thread.
@@ -805,7 +805,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
         {
             updateAdditionalHeight();
         }
-
+        
         self.shouldUpdateAdditionalContentHeight = NO;
     }
 }
@@ -876,7 +876,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
     {
         return 0;
     }
-
+    
     return PlainRoomCellLayoutConstants.urlPreviewViewTopMargin + [URLPreviewView contentViewHeightFor:component.urlPreviewData
                                                                                        fitting:self.maxTextViewWidth];
 }
@@ -884,17 +884,17 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
 - (CGFloat)reactionHeightForEventId:(NSString*)eventId
 {
     CGFloat height = 0;
-
+    
     NSUInteger reactionCount = self.reactions[eventId].reactions.count;
-
+    
     MXAggregatedReactions *aggregatedReactions = self.reactions[eventId];
-
+    
     if (reactionCount)
     {
         CGFloat reactionsViewWidth = self.maxTextViewWidth - 4;
-
+        
         static RoomReactionsViewSizer *reactionsViewSizer;
-
+        
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
             reactionsViewSizer = [RoomReactionsViewSizer new];
@@ -904,19 +904,19 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
         RoomReactionsViewModel *viewModel = [[RoomReactionsViewModel alloc] initWithAggregatedReactions:aggregatedReactions eventId:eventId showAll:showAllReactions];
         height = [reactionsViewSizer heightForViewModel:viewModel fittingWidth:reactionsViewWidth] + PlainRoomCellLayoutConstants.reactionsViewTopMargin;
     }
-
+    
     return height;
 }
 
 - (CGFloat)readReceiptHeightForEventId:(NSString*)eventId
 {
     CGFloat height = 0;
-
+    
     if (self.readReceipts[eventId].count)
     {
         height = PlainRoomCellLayoutConstants.readReceiptsViewHeight + PlainRoomCellLayoutConstants.readReceiptsViewTopMargin;
     }
-
+    
     return height;
 }
 
@@ -927,7 +927,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
     {
         // Update flag
         _containsLastMessage = containsLastMessage;
-
+        
         // Indicate that the text message layout should be recomputed.
         [self invalidateTextLayout];
     }
@@ -937,10 +937,10 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
 {
     // Check whether there is something to do
     if (_selectedEventId || selectedEventId.length)
-    {
+    { 
         // Update flag
         _selectedEventId = selectedEventId;
-
+        
         // Indicate that the text message layout should be recomputed.
         [self invalidateTextLayout];
     }
@@ -950,7 +950,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
 {
     // Update the related component index
     NSInteger oldestComponentIndex = NSNotFound;
-
+    
     NSArray *components = self.bubbleComponents;
     NSInteger index = 0;
     while (index < components.count)
@@ -963,7 +963,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
         }
         index++;
     }
-
+    
     return oldestComponentIndex;
 }
 
@@ -971,7 +971,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
 {
     // Update the related component index
     NSInteger mostRecentComponentIndex = NSNotFound;
-
+    
     NSArray *components = self.bubbleComponents;
     NSInteger index = components.count;
     while (index--)
@@ -983,7 +983,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
             break;
         }
     }
-
+    
     return mostRecentComponentIndex;
 }
 
@@ -991,7 +991,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
 {
     // Update the related component index
     NSInteger selectedComponentIndex = NSNotFound;
-
+    
     if (_selectedEventId)
     {
         NSArray *components = self.bubbleComponents;
@@ -1006,7 +1006,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
             }
         }
     }
-
+    
     return selectedComponentIndex;
 }
 
@@ -1017,13 +1017,13 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
     {
         return nil;
     }
-
+    
     MXKRoomBubbleComponent *component = self.bubbleComponents[index];
     if (!component.link)
     {
         return nil;
     }
-
+    
     return component;
 }
 
@@ -1046,15 +1046,15 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
 {
     UIFont *sizingFont = [UIFont systemFontOfSize:2];
     CGFloat returnHeight = sizingFont.lineHeight;
-
+    
     NSUInteger returns = (NSUInteger)round(height/returnHeight);
     NSMutableString *returnString = [NSMutableString string];
-
+    
     for (NSUInteger i = 0; i < returns; i++)
     {
         [returnString appendString:@"\n"];
     }
-
+    
     return [[NSAttributedString alloc] initWithString:returnString attributes:@{NSForegroundColorAttributeName : [UIColor blackColor],
                                                                                 NSFontAttributeName: sizingFont}];
 }
@@ -1066,7 +1066,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
         // We do not want to merge membership event cells with other cell types
         return NO;
     }
-
+    
     if (self.tag == RoomBubbleCellDataTagRoomCreateWithPredecessor || bubbleCellData.tag == RoomBubbleCellDataTagRoomCreateWithPredecessor)
     {
         // We do not want to merge room create event cells with other cell types
@@ -1090,13 +1090,13 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
         return NO;
     }
     RoomTimelineConfiguration *timelineConfiguration = [RoomTimelineConfiguration shared];
-
+    
     if (NO == [timelineConfiguration.currentStyle canAddEvent:event and:roomState to:self]) {
         return NO;
     }
-
+    
     BOOL shouldAddEvent = YES;
-
+    
     switch (self.tag)
     {
         case RoomBubbleCellDataTagKeyVerificationNoDisplay:
@@ -1142,7 +1142,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
         default:
             break;
     }
-
+    
     // If the current bubbleData supports adding events then check
     // if the incoming event can be added in
     if (shouldAddEvent)
@@ -1155,9 +1155,9 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
                     shouldAddEvent = NO;
                     break;
                 }
-
+                
                 NSString *messageType = event.content[kMXMessageTypeKey];
-
+                
                 if ([messageType isEqualToString:kMXMessageTypeKeyVerificationRequest])
                 {
                     shouldAddEvent = NO;
@@ -1220,25 +1220,25 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
                 break;
         }
     }
-
+    
     if (shouldAddEvent)
     {
         shouldAddEvent = [super addEvent:event andRoomState:roomState];
-
+        
         // If the event was added, load any url preview data if necessary.
         if (shouldAddEvent)
         {
             [self refreshURLPreviewForEventId:event.eventId];
         }
     }
-
+    
     return shouldAddEvent;
 }
 
 - (void)setKeyVerification:(MXKeyVerification *)keyVerification
 {
     _keyVerification = keyVerification;
-
+    
     [self keyVerificationDidUpdate];
 }
 
@@ -1246,20 +1246,20 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
 {
     MXEvent *event = self.getFirstBubbleComponentWithDisplay.event;
     MXKeyVerification *keyVerification = _keyVerification;
-
+    
     if (!event)
     {
         return;
     }
-
+    
     switch (event.eventType)
     {
         case MXEventTypeKeyVerificationCancel:
         {
             RoomBubbleCellDataTag cellDataTag;
-
+            
             MXTransactionCancelCode *transactionCancelCode = keyVerification.transaction.reasonCancelCode;
-
+            
             if (transactionCancelCode
                 && ([transactionCancelCode isEqual:[MXTransactionCancelCode mismatchedSas]]
                     || [transactionCancelCode isEqual:[MXTransactionCancelCode mismatchedKeys]]
@@ -1273,14 +1273,14 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
             {
                 cellDataTag = RoomBubbleCellDataTagKeyVerificationNoDisplay;
             }
-
+            
             self.tag = cellDataTag;
         }
             break;
         case MXEventTypeKeyVerificationDone:
         {
             RoomBubbleCellDataTag cellDataTag;
-
+            
             // Avoid to display incoming and outgoing done, only display the incoming one.
             if (self.isIncoming && keyVerification && (keyVerification.state == MXKeyVerificationStateVerified))
             {
@@ -1290,18 +1290,18 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
             {
                 cellDataTag = RoomBubbleCellDataTagKeyVerificationNoDisplay;
             }
-
+            
             self.tag = cellDataTag;
         }
             break;
         case MXEventTypeRoomMessage:
         {
             NSString *msgType = event.content[kMXMessageTypeKey];
-
+            
             if ([msgType isEqualToString:kMXMessageTypeKeyVerificationRequest])
             {
                 RoomBubbleCellDataTag cellDataTag;
-
+                
                 if (self.isIncoming && !self.isKeyVerificationOperationPending && keyVerification && keyVerification.state == MXKeyVerificationRequestStatePending)
                 {
                     cellDataTag = RoomBubbleCellDataTagKeyVerificationRequestIncomingApproval;
@@ -1310,7 +1310,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
                 {
                     cellDataTag = RoomBubbleCellDataTagKeyVerificationRequest;
                 }
-
+                
                 self.tag = cellDataTag;
             }
         }
@@ -1318,7 +1318,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
         default:
             break;
     }
-
+    
 }
 
 #pragma mark - Show all reactions
@@ -1404,52 +1404,52 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
     {
         return;
     }
-
+    
     // Don't show the preview if they're disabled globally or this one has been dismissed previously.
     component.showURLPreview = RiotSettings.shared.roomScreenShowsURLPreviews && [URLPreviewService.shared shouldShowPreviewFor:component.event];
     if (!component.showURLPreview)
     {
         return;
     }
-
+    
     // If there is existing preview data, the message has been edited.
     // Clear the data to show the loading state when the preview isn't cached.
     if (component.urlPreviewData)
     {
         component.urlPreviewData = nil;
     }
-
+    
     // Set the preview data.
     MXWeakify(self);
-
+    
     NSDictionary<NSString *, NSString*> *userInfo = @{
         @"eventId": eventId,
         @"roomId": self.roomId
     };
-
+    
     [URLPreviewService.shared previewFor:component.link
                                      and:component.event
                                     with:self.mxSession
                                  success:^(URLPreviewData * _Nonnull urlPreviewData) {
         MXStrongifyAndReturnIfNil(self);
-
+        
         // Update the preview data, indicate that the message layout needs refreshing and send a notification for refresh
         component.urlPreviewData = urlPreviewData;
         [self invalidateLayout];
-
+        
         dispatch_async(dispatch_get_main_queue(), ^{
             [NSNotificationCenter.defaultCenter postNotificationName:URLPreviewDidUpdateNotification object:nil userInfo:userInfo];
         });
-
+        
     } failure:^(NSError * _Nullable error) {
         MXStrongifyAndReturnIfNil(self);
-
+        
         MXLogDebug(@"[RoomBubbleCellData] Failed to get url preview")
-
+        
         // Remove the loading URLPreviewView, indicate that the layout needs refreshing and send a notification for refresh
         component.showURLPreview = NO;
         [self invalidateLayout];
-
+        
         dispatch_async(dispatch_get_main_queue(), ^{
             [NSNotificationCenter.defaultCenter postNotificationName:URLPreviewDidUpdateNotification object:nil userInfo:userInfo];
         });
@@ -1465,13 +1465,13 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
         });
         return;
     }
-
+    
     id<MXBeaconInfoSummaryProtocol> beaconInfoSummary = [self.mxSession.aggregations.beaconAggregations beaconInfoSummaryFor:eventId inRoomWithId:self.roomId];
-
+    
     if (!beaconInfoSummary)
     {
         MXBeaconInfo *beaconInfo = [[MXBeaconInfo alloc] initWithMXEvent:event];
-
+        
         // A start beacon info event (isLive == true) should have an associated BeaconInfoSummary
         if (beaconInfo && beaconInfo.isLive)
         {
@@ -1480,7 +1480,7 @@ NSString *const URLPreviewDidUpdateNotification = @"URLPreviewDidUpdateNotificat
             });
         }
     }
-
+    
     self.beaconInfoSummary = beaconInfoSummary;
 }
 

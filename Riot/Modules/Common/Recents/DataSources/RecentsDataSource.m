@@ -1,13 +1,13 @@
 /*
  Copyright 2015 OpenMarket Ltd
  Copyright 2017 Vector Creations Ltd
-
+ 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
-
+ 
  http://www.apache.org/licenses/LICENSE-2.0
-
+ 
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,11 +48,11 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
 @interface RecentsDataSource() <SecureBackupBannerCellDelegate, CrossSigningSetupBannerCellDelegate, RecentsListServiceDelegate>
 {
     dispatch_queue_t processingQueue;
-
+    
     NSInteger shrinkedSectionsBitMask;
 
     NSMutableDictionary<NSString*, id> *roomTagsListenerByUserId;
-
+    
     // Timer to not refresh publicRoomsDirectoryDataSource on every keystroke.
     NSTimer *publicRoomsTriggerTimer;
 }
@@ -79,25 +79,25 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
     if (self = [super initWithMatrixSession:mxSession])
     {
         processingQueue = dispatch_queue_create("RecentsDataSource", DISPATCH_QUEUE_SERIAL);
-
+        
         _sections = [[RecentsDataSourceSections alloc] initWithSectionTypes:@[]];
         _crossSigningBannerDisplay = CrossSigningBannerDisplayNone;
         _secureBackupBannerDisplay = SecureBackupBannerDisplayNone;
-
+        
         _areSectionsShrinkable = !BuildSettings.newAppLayoutEnabled;
         shrinkedSectionsBitMask = 0;
-
+        
         roomTagsListenerByUserId = [[NSMutableDictionary alloc] init];
-
+        
         _crossSigningService = [CrossSigningService new];
-
+        
         // Set default data and view classes
         [self registerCellDataClass:RecentCellData.class forCellIdentifier:kMXKRecentCellIdentifier];
-
+        
         [self registerSpaceServiceDidBuildGraphNotification];
         self.recentsListService = theRecentsListService;
         [self.recentsListService addDelegate:self];
-
+        
         [self registerAllChatsSettingsUpdateNotification];
         self.allChatsFilterOptions = [AllChatsFilterOptions new];
     }
@@ -179,7 +179,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
         [types addObject:@(RecentsDataSourceSectionTypeInvites)];
         return [[RecentsDataSourceSections alloc] initWithSectionTypes:types.copy];
     }
-
+    
     if (self.crossSigningBannerDisplay != CrossSigningBannerDisplayNone)
     {
         [types addObject:@(RecentsDataSourceSectionTypeCrossSigningBanner)];
@@ -188,12 +188,12 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
     {
         [types addObject:@(RecentsDataSourceSectionTypeSecureBackupBanner)];
     }
-
+    
     if (self.invitesCellDataArray.count > 0)
     {
         [types addObject:@(RecentsDataSourceSectionTypeInvites)];
     }
-
+    
     if (self.breadcrumbsRoomCellDataArray.count > 0 && _recentsDataSourceMode == RecentsDataSourceModeAllChats)
     {
         AllChatsLayoutSettings *settings = AllChatsLayoutSettingsManager.shared.allChatLayoutSettings;
@@ -234,7 +234,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
     {
         [types addObject:@(RecentsDataSourceSectionTypeAllChats)];
     }
-
+    
     if (self.currentSpace != nil && self.suggestedRoomCellDataArray.count > 0)
     {
         [types addObject:@(RecentsDataSourceSectionTypeSuggestedRooms)];
@@ -265,7 +265,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
 - (void)setRecentsDataSourceMode:(RecentsDataSourceMode)recentsDataSourceMode
 {
     _recentsDataSourceMode = recentsDataSourceMode;
-
+    
     // Register to key backup state changes only on in home mode.
     if (recentsDataSourceMode == RecentsDataSourceModeHome)
     {
@@ -343,7 +343,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
 {
     // Check homeserver update in background
     [self.mxSession.crypto.backup forceRefresh:nil failure:nil];
-
+    
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyBackupStateDidChangeNotification:) name:kMXKeyBackupDidStateChangeNotification object:nil];
 }
 
@@ -363,11 +363,11 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
 - (BOOL)updateSecureBackupBanner
 {
     SecureBackupBannerDisplay secureBackupBanner = SecureBackupBannerDisplayNone;
-
+    
     if (self.recentsDataSourceMode == RecentsDataSourceModeHome)
     {
         SecureBackupBannerPreferences *secureBackupBannersPreferences = SecureBackupBannerPreferences.shared;
-
+        
         // Display the banner only if we can set up 4S, if there are messages keys to backup and key backup is disabled
         if (!secureBackupBannersPreferences.hideSetupBanner
             && [self.mxSession vc_canSetupSecureBackup]
@@ -378,18 +378,18 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
             secureBackupBanner = SecureBackupBannerDisplaySetup;
         }
     }
-
+    
     BOOL updated = (self.secureBackupBannerDisplay != secureBackupBanner);
-
+    
     self.secureBackupBannerDisplay = secureBackupBanner;
-
+    
     return updated;
 }
 
 - (void)hideKeyBackupBannerWithDisplay:(SecureBackupBannerDisplay)secureBackupBannerDisplay
 {
     SecureBackupBannerPreferences *keyBackupBannersPreferences = SecureBackupBannerPreferences.shared;
-
+    
     switch (secureBackupBannerDisplay) {
         case SecureBackupBannerDisplaySetup:
             keyBackupBannersPreferences.hideSetupBanner = YES;
@@ -397,7 +397,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
         default:
             break;
     }
-
+    
     [self updateSecureBackupBanner];
     [self forceRefresh];
 }
@@ -409,15 +409,15 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
     if (self.recentsDataSourceMode == RecentsDataSourceModeHome)
     {
         CrossSigningBannerPreferences *crossSigningBannerPreferences = CrossSigningBannerPreferences.shared;
-
+        
         if (!crossSigningBannerPreferences.hideSetupBanner)
         {
             [self.crossSigningService canSetupCrossSigningFor:self.mxSession success:^(BOOL canSetupCrossSigning) {
 
                 CrossSigningBannerDisplay crossSigningBannerDisplay = canSetupCrossSigning ? CrossSigningBannerDisplaySetup : CrossSigningBannerDisplayNone;
-
+                
                 [self updateCrossSigningBannerDisplay:crossSigningBannerDisplay];
-
+                
             } failure:^(NSError * _Nonnull error) {
                 MXLogDebug(@"[RecentsDataSource] refreshCrossSigningBannerDisplay: Fail to verify if cross signing banner can be displayed");
             }];
@@ -439,7 +439,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
     {
         return;
     }
-
+    
     self.crossSigningBannerDisplay = crossSigningBannerDisplay;
     [self forceRefresh];
 }
@@ -448,7 +448,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
 - (void)hideCrossSigningBannerWithDisplay:(CrossSigningBannerDisplay)crossSigningBannerDisplay
 {
     CrossSigningBannerPreferences *crossSigningBannerPreferences = CrossSigningBannerPreferences.shared;
-
+    
     switch (crossSigningBannerDisplay) {
         case CrossSigningBannerDisplaySetup:
             crossSigningBannerPreferences.hideSetupBanner = YES;
@@ -456,7 +456,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
         default:
             break;
     }
-
+    
     [self refreshCrossSigningBannerDisplay];
 }
 
@@ -474,26 +474,26 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
         _publicRoomsDirectoryDataSource.showNSFWRooms = RiotSettings.shared.showNSFWPublicRooms;
         _publicRoomsDirectoryDataSource.delegate = self;
     }
-
+    
     return recentsDataSource;
 }
 
 - (void)removeMatrixSession:(MXSession*)matrixSession
 {
     [super removeMatrixSession:matrixSession];
-
+    
     // sanity check
     if (matrixSession.myUser && matrixSession.myUser.userId)
     {
         id roomTagListener = roomTagsListenerByUserId[matrixSession.myUser.userId];
-
+        
         if (roomTagListener)
         {
             [matrixSession removeListener:roomTagListener];
             [roomTagsListenerByUserId removeObjectForKey:matrixSession.myUser.userId];
         }
     }
-
+    
     if (_publicRoomsDirectoryDataSource.mxSession == matrixSession)
     {
         [_publicRoomsDirectoryDataSource destroy];
@@ -569,13 +569,13 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
         // The view controller of this table view is not the current selected one in the tab bar controller.
         return 0;
     }
-
+    
     // Check whether all data sources are ready before rendering recents
     if (self.state != MXKDataSourceStateReady)
     {
         return 0;
     }
-
+    
     self.sections = [self makeDataSourceSections];
     return self.sections.count;
 }
@@ -588,7 +588,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
         // The view controller of this table view is not the current selected one in the tab bar controller.
         return 0;
     }
-
+    
     NSUInteger count = 0;
 
     RecentsDataSourceSectionType sectionType = [self.sections sectionTypeForSectionIndex:section];
@@ -646,18 +646,18 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
     {
         count = self.allChatsRoomCellDataArray.count ?: 1;
     }
-
+    
     // Adjust this count according to the potential dragged cell.
     if ([self isMovingCellSection:section])
     {
         count++;
     }
-
+    
     if (count && [self isHiddenCellSection:section])
     {
         count--;
     }
-
+    
     return count;
 }
 
@@ -681,7 +681,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
             return RECENTSDATASOURCE_ALL_CHATS_SECTION_BOTTOM_VIEW_HEIGHT;
         }
     }
-
+    
     return RECENTSDATASOURCE_DEFAULT_SECTION_HEADER_HEIGHT;
 }
 
@@ -690,7 +690,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
     NSAttributedString *sectionTitle;
     NSString *title;
     NSUInteger count = 0;
-
+    
     RecentsDataSourceSectionType sectionType = [self.sections sectionTypeForSectionIndex:section];
     if (sectionType == RecentsDataSourceSectionTypeFavorites)
     {
@@ -705,7 +705,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
     else if (sectionType == RecentsDataSourceSectionTypeConversation)
     {
         count = self.recentsListService.conversationRoomListData.counts.total.numberOfRooms;
-
+        
         if (_recentsDataSourceMode == RecentsDataSourceModePeople)
         {
             title = [VectorL10n peopleConversationSection];
@@ -732,7 +732,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
     else if (sectionType == RecentsDataSourceSectionTypeInvites)
     {
         count = self.recentsListService.invitedRoomListData.counts.total.numberOfRooms;
-
+        
         if (_recentsDataSourceMode == RecentsDataSourceModePeople)
         {
             title = [VectorL10n peopleInvitesSection];
@@ -758,7 +758,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
         title = [VectorL10n allChatsSectionTitle];
     }
 
-
+    
     if (count && !(sectionType == RecentsDataSourceSectionTypeInvites) && !BuildSettings.newAppLayoutEnabled)
     {
         NSString *roomCount = [NSString stringWithFormat:@"   %tu", count];
@@ -778,7 +778,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
                                                        attributes:@{NSForegroundColorAttributeName : ThemeService.shared.theme.headerTextPrimaryColor,
                                                                     NSFontAttributeName: [ThemeService shared].theme.fonts.calloutSB}];
     }
-
+    
     return sectionTitle;
 }
 
@@ -825,7 +825,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
     // Invites are counted as highlights for the badge view display.
     NSUInteger numberOfNotifications = counts.total.numberOfNotifications + counts.total.numberOfInvitedRooms;
     NSUInteger numberOfHighlights = counts.total.numberOfHighlights + counts.total.numberOfInvitedRooms;
-
+    
     if (numberOfNotifications)
     {
         UILabel *missedNotifAndUnreadBadgeLabel = [[UILabel alloc] init];
@@ -840,16 +840,16 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
         {
             missedNotifAndUnreadBadgeLabel.text = [NSString stringWithFormat:@"%tu", numberOfNotifications];
         }
-
+        
         [missedNotifAndUnreadBadgeLabel sizeToFit];
-
+        
         CGFloat bgViewWidth = missedNotifAndUnreadBadgeLabel.frame.size.width + 18;
-
+        
         BOOL highlight = numberOfHighlights > 0;
         missedNotifAndUnreadBadgeBgView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, bgViewWidth, 20)];
         [missedNotifAndUnreadBadgeBgView.layer setCornerRadius:10];
         missedNotifAndUnreadBadgeBgView.backgroundColor = highlight ? ThemeService.shared.theme.noticeColor : ThemeService.shared.theme.noticeSecondaryColor;
-
+        
         [missedNotifAndUnreadBadgeBgView addSubview:missedNotifAndUnreadBadgeLabel];
         missedNotifAndUnreadBadgeLabel.center = missedNotifAndUnreadBadgeBgView.center;
         [missedNotifAndUnreadBadgeLabel.centerXAnchor constraintEqualToAnchor:missedNotifAndUnreadBadgeBgView.centerXAnchor
@@ -857,7 +857,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
         [missedNotifAndUnreadBadgeLabel.centerYAnchor constraintEqualToAnchor:missedNotifAndUnreadBadgeBgView.centerYAnchor
                                                                      constant:0].active = YES;
     }
-
+    
     return missedNotifAndUnreadBadgeBgView;
 }
 
@@ -873,7 +873,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
     {
         return nil;
     }
-
+    
     SectionHeaderView *sectionHeader = [tableView dequeueReusableHeaderFooterViewWithIdentifier:SectionHeaderView.defaultReuseIdentifier];
     if (sectionHeader == nil)
     {
@@ -929,7 +929,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
             sectionBitwise = RECENTSDATASOURCE_SECTION_ALL_CHATS;
         }
     }
-
+    
     if (sectionBitwise)
     {
         // Add shrink button
@@ -939,7 +939,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
         shrinkButton.tag = sectionBitwise;
         sectionHeader.topSpanningView = shrinkButton;
         sectionHeader.userInteractionEnabled = YES;
-
+        
         // Add shrink icon
         UIImage *chevron;
         if (shrinkedSectionsBitMask & sectionBitwise)
@@ -955,7 +955,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
         chevronView.contentMode = UIViewContentModeCenter;
         sectionHeader.accessoryView = chevronView;
     }
-
+    
     if (_recentsDataSourceMode == RecentsDataSourceModeHome
         || _recentsDataSourceMode == RecentsDataSourceModePeople
         || _recentsDataSourceMode == RecentsDataSourceModeRooms)
@@ -968,7 +968,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
             sectionHeader.rightAccessoryView = badgeView;
         }
     }
-
+    
     if (_recentsDataSourceMode == RecentsDataSourceModeAllChats && sectionType == RecentsDataSourceSectionTypeAllChats) {
         if (!self.allChatsOptionsView) {
             self.allChatsOptionsView = [self.allChatsFilterOptions createFilterListView];
@@ -987,7 +987,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
     {
         sectionHeader.bottomView = nil;
     }
-
+    
     if (!BuildSettings.newAppLayoutEnabled || !sectionHeader.bottomView)
     {
         // Add label
@@ -1014,7 +1014,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
         // Return a fake cell to prevent app from crashing
         return [[UITableViewCell alloc] init];
     }
-
+    
     RecentsDataSourceSectionType sectionType = [self.sections sectionTypeForSectionIndex:indexPath.section];
     if (sectionType == RecentsDataSourceSectionTypeCrossSigningBanner)
     {
@@ -1037,14 +1037,14 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
     else if (self.droppingCellIndexPath && [indexPath isEqual:self.droppingCellIndexPath])
     {
         static NSString* cellIdentifier = @"RiotRecentsMovingCell";
-
+        
         UITableViewCell* cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"RiotRecentsMovingCell"];
-
+        
         // add an imageview of the cell.
         // The image is a shot of the genuine cell.
         // Thus, this cell has the same look as the genuine cell without computing it.
         UIImageView* imageView = [cell viewWithTag:[cellIdentifier hash]];
-
+        
         if (!imageView || (imageView != self.droppingCellBackGroundView))
         {
             if (imageView)
@@ -1054,11 +1054,11 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
             self.droppingCellBackGroundView.tag = [cellIdentifier hash];
             [cell.contentView addSubview:self.droppingCellBackGroundView];
         }
-
+        
         self.droppingCellBackGroundView.frame = self.droppingCellBackGroundView.frame;
         cell.contentView.backgroundColor = [UIColor clearColor];
         cell.backgroundColor = [UIColor clearColor];
-
+        
         return cell;
     }
     else if ((sectionType == RecentsDataSourceSectionTypeConversation && !self.conversationCellDataArray.count)
@@ -1072,7 +1072,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
             tableViewCell.textLabel.font = [UIFont systemFontOfSize:15.0];
             tableViewCell.selectionStyle = UITableViewCellSelectionStyleNone;
         }
-
+        
         // Check whether a search session is in progress
         if (self.searchPatternsList)
         {
@@ -1086,12 +1086,12 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
         {
             tableViewCell.textLabel.text = [VectorL10n roomRecentsNoConversation];
         }
-
+        
         return tableViewCell;
     }
     else if (sectionType == RecentsDataSourceSectionTypeAllChats && !self.allChatsRoomCellDataArray.count) {
         RecentEmptySectionTableViewCell *tableViewCell = [tableView dequeueReusableCellWithIdentifier:[RecentEmptySectionTableViewCell defaultReuseIdentifier]];
-
+        
         if (self.searchPatternsList)
         {
             tableViewCell.iconView.image = [UIImage systemImageNamed:@"magnifyingglass"];
@@ -1105,7 +1105,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
             tableViewCell.iconView.image = [ThemeService.shared isCurrentThemeDark] ? AssetImages.allChatsEmptySpaceArtworkDark.image : AssetImages.allChatsEmptySpaceArtwork.image;
             tableViewCell.titleLabel.text = [VectorL10n allChatsEmptyViewTitle: self.currentSpace.summary.displayname];
             tableViewCell.messageLabel.text = VectorL10n.allChatsEmptySpaceInformation;
-
+            
             return tableViewCell;
         }
         else
@@ -1120,12 +1120,12 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
     else if (sectionType == RecentsDataSourceSectionTypeInvites && self.recentsDataSourceMode == RecentsDataSourceModeAllChats)
     {
         RecentsInvitesTableViewCell *tableViewCell = [tableView dequeueReusableCellWithIdentifier:[RecentsInvitesTableViewCell defaultReuseIdentifier]];
-
+        
         tableViewCell.invitesCount = self.recentsListService.invitedRoomListData.counts.total.numberOfRooms;
 
         return tableViewCell;
     }
-
+    
     return [super tableView:tableView cellForRowAtIndexPath:indexPath];
 }
 
@@ -1135,7 +1135,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
     NSUInteger cellDataIndex = indexPath.row;
     NSInteger tableSection = indexPath.section;
     RecentsDataSourceSectionType sectionType = [self.sections sectionTypeForSectionIndex:tableSection];
-
+    
     // Compute the actual cell data index by taking into account the current droppingCellIndexPath and hiddenCellIndexPath (if any).
     if ([self isMovingCellSection:tableSection] && (cellDataIndex > self.droppingCellIndexPath.row))
     {
@@ -1145,7 +1145,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
     {
         cellDataIndex ++;
     }
-
+    
     if (sectionType == RecentsDataSourceSectionTypeFavorites)
     {
         if (cellDataIndex < self.favoriteCellDataArray.count)
@@ -1240,14 +1240,14 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
     {
         return 32.0;
     }
-
+    
     // Override this method here to use our own cellDataAtIndexPath
     id<MXKRecentCellDataStoring> cellData = [self cellDataAtIndexPath:indexPath];
-
+    
     if (cellData && self.delegate)
     {
         Class<MXKCellRendering> class = [self.delegate cellViewClassForCellData:cellData];
-
+        
         return [class heightForCellData:cellData withMaximumWidth:0];
     }
 
@@ -1262,7 +1262,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
         // The view controller of this table view is not the current selected one in the tab bar controller.
         return NO;
     }
-
+    
     // Invited rooms are not editable.
     return ([self.sections sectionTypeForSectionIndex:indexPath.section] != RecentsDataSourceSectionTypeInvites);
 }
@@ -1396,7 +1396,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
             indexPath = [NSIndexPath indexPathForRow:index inSection:sectionIndex];
         }
     }
-
+    
     if (!indexPath && ([self.sections contains:RecentsDataSourceSectionTypeBreadcrumbs]))
     {
         index = [self cellIndexPosWithRoomId:roomId andMatrixSession:matrixSession within:self.breadcrumbsRoomCellDataArray];
@@ -1412,7 +1412,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
             indexPath = [NSIndexPath indexPathForRow:index inSection:sectionIndex];
         }
     }
-
+    
     if (!indexPath && ([self.sections contains:RecentsDataSourceSectionTypeAllChats]))
     {
         index = [self cellIndexPosWithRoomId:roomId andMatrixSession:matrixSession within:self.allChatsRoomCellDataArray];
@@ -1441,7 +1441,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
     {
         return;
     }
-
+    
     // FIXME : manage multi accounts
     // to manage multi accounts
     // this method in MXKInterleavedRecentsDataSource must be split in two parts
@@ -1452,7 +1452,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
     // this class will inherit of this new method
     // 1 - call [super thisNewMethod]
     // 2 - call [self refreshRoomsSections]
-
+    
     // Call super to keep update readyRecentsDataSourceArray.
     [super dataSource:dataSource didCellChange:changes];
 }
@@ -1477,7 +1477,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
     {
         UIButton *shrinkButton = (UIButton*)sender;
         NSInteger selectedSectionBit = shrinkButton.tag;
-
+        
         if (shrinkedSectionsBitMask & selectedSectionBit)
         {
             // Disclose the section
@@ -1488,7 +1488,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
             // Shrink this section
             shrinkedSectionsBitMask |= selectedSectionBit;
         }
-
+        
         // Inform the delegate about the update
         [self.delegate dataSource:self didCellChange:nil];
     }
@@ -1523,7 +1523,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
 
     [publicRoomsTriggerTimer invalidate];
     publicRoomsTriggerTimer = nil;
-
+    
     [self.recentsListService stop];
 }
 
@@ -1532,9 +1532,9 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
 - (void)searchWithPatterns:(NSArray *)patternsList
 {
     [super searchWithPatterns:patternsList];
-
+    
     NSString *searchPattern = [patternsList componentsJoinedByString:@" "];
-
+    
     [self.recentsListService updateQuery:searchPattern];
 
     if (_publicRoomsDirectoryDataSource)
@@ -1566,17 +1566,17 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
 - (BOOL)canCellMoveFrom:(NSIndexPath*)oldPath to:(NSIndexPath*)newPath
 {
     BOOL res = [self isDraggableCellAt:oldPath] && [self isDraggableCellAt:newPath];
-
+    
     // the both index pathes are movable
     if (res)
     {
         // only the favorites cell can be moved within the same section
         RecentsDataSourceSectionType sectionType = [self.sections sectionTypeForSectionIndex:oldPath.section];
         res &= (sectionType == RecentsDataSourceSectionTypeFavorites) || (newPath.section != oldPath.section);
-
+        
         // other cases ?
     }
-
+    
     return res;
 }
 
@@ -1595,7 +1595,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
     {
         return kMXRoomTagServerNotice;
     }
-
+    
     return nil;
 }
 
@@ -1639,7 +1639,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
 - (void)moveRoomCell:(MXRoom*)room from:(NSIndexPath*)oldPath to:(NSIndexPath*)newPath success:(void (^)(void))moveSuccess failure:(void (^)(NSError *error))moveFailure;
 {
     MXLogDebug(@"[RecentsDataSource] moveCellFrom (%tu, %tu) to (%tu, %tu)", oldPath.section, oldPath.row, newPath.section, newPath.row);
-
+    
     if ([self canCellMoveFrom:oldPath to:newPath] && ![newPath isEqual:oldPath])
     {
         if ([self.sections sectionTypeForSectionIndex:newPath.section] == RecentsDataSourceSectionTypePeople)
@@ -1648,16 +1648,16 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
                    withUserId:nil
                       success:moveSuccess
                       failure:^(NSError *error) {
-
+                          
                           MXLogDebug(@"[RecentsDataSource] Failed to mark as direct");
-
+                          
                           if (moveFailure)
                           {
                               moveFailure(error);
                           }
-
+                          
                           [self forceRefresh];
-
+                          
                           // Notify user
                           [[AppDelegate theDelegate] showErrorAsAlert:error];
                       }];
@@ -1667,36 +1667,36 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
             NSString* oldRoomTag = [self roomTagAt:oldPath];
             NSString* dstRoomTag = [self roomTagAt:newPath];
             NSUInteger oldPos = (oldPath.section == newPath.section) ? oldPath.row : NSNotFound;
-
+            
             NSString* tagOrder = [room.mxSession tagOrderToBeAtIndex:newPath.row from:oldPos withTag:dstRoomTag];
-
+            
             MXLogDebug(@"[RecentsDataSource] Update the room %@ [%@] tag from %@ to %@ with tag order %@", room.roomId, room.summary.displayname, oldRoomTag, dstRoomTag, tagOrder);
-
+            
             [room replaceTag:oldRoomTag
                        byTag:dstRoomTag
                    withOrder:tagOrder
                      success: ^{
-
+                         
                          MXLogDebug(@"[RecentsDataSource] move is done");
-
+                         
                          if (moveSuccess)
                          {
                              moveSuccess();
                          }
-
+                         
                          // wait the server echo to reload the tableview.
-
+                         
                      } failure:^(NSError *error) {
-
+                         
                          MXLogDebug(@"[RecentsDataSource] Failed to update the tag %@ of room (%@)", dstRoomTag, room.roomId);
-
+                         
                          if (moveFailure)
                          {
                              moveFailure(error);
                          }
-
+                         
                          [self forceRefresh];
-
+                         
                          // Notify user
                          [[AppDelegate theDelegate] showErrorAsAlert:error];
                      }];
@@ -1705,12 +1705,12 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
     else
     {
         MXLogDebug(@"[RecentsDataSource] cannot move this cell");
-
+        
         if (moveFailure)
         {
             moveFailure(nil);
         }
-
+        
         [self forceRefresh];
     }
 }
@@ -1752,7 +1752,7 @@ NSString *const kRecentsDataSourceTapOnDirectoryServerChange = @"kRecentsDataSou
         [self.delegate dataSource:self didCellChange:nil];
         return;
     }
-
+    
     RecentsDataSourceSectionType sectionType = [self sectionTypeForServiceSection:section];
     NSInteger sectionIndex = [self.sections sectionIndexForSectionType:sectionType];
     if (sectionIndex >= 0)

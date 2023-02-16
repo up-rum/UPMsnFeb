@@ -19,29 +19,29 @@ import WysiwygComposer
 
 struct Composer: View {
     // MARK: - Properties
-
+    
     // MARK: Private
     @ObservedObject private var viewModel: ComposerViewModelType.Context
     @ObservedObject private var wysiwygViewModel: WysiwygComposerViewModel
     private let resizeAnimationDuration: Double
-
+    
     private let sendMessageAction: (WysiwygComposerContent) -> Void
     private let showSendMediaActions: () -> Void
-
+    
     @Environment(\.theme) private var theme: ThemeSwiftUI
-
+    
     @State private var isActionButtonShowing = false
-
+    
     private let horizontalPadding: CGFloat = 12
     private let borderHeight: CGFloat = 40
     private var verticalPadding: CGFloat {
         (borderHeight - wysiwygViewModel.minHeight) / 2
     }
-
+    
     private var topPadding: CGFloat {
         viewModel.viewState.shouldDisplayContext ? 0 : verticalPadding
     }
-
+    
     private var cornerRadius: CGFloat {
         if shouldFixRoundCorner {
             return 14
@@ -49,27 +49,27 @@ struct Composer: View {
             return borderHeight / 2
         }
     }
-
+    
     private var shouldFixRoundCorner: Bool {
         viewModel.viewState.shouldDisplayContext || wysiwygViewModel.idealHeight > wysiwygViewModel.minHeight
     }
-
+    
     private var actionButtonAccessibilityIdentifier: String {
         viewModel.viewState.sendMode == .edit ? "editButton" : "sendButton"
     }
-
+    
     private var toggleButtonAcccessibilityIdentifier: String {
         wysiwygViewModel.maximised ? "minimiseButton" : "maximiseButton"
     }
-
+    
     private var toggleButtonImageName: String {
         wysiwygViewModel.maximised ? Asset.Images.minimiseComposer.name : Asset.Images.maximiseComposer.name
     }
-
+    
     private var borderColor: Color {
         viewModel.focused ? theme.colors.quarterlyContent : theme.colors.quinaryContent
     }
-
+    
     private var formatItems: [FormatItem] {
         return FormatType.allCases
             // Exclude indent type outside of lists.
@@ -81,7 +81,7 @@ struct Composer: View {
                 )
             }
     }
-
+    
     private var composerContainer: some View {
         let rect = RoundedRectangle(cornerRadius: cornerRadius)
         return VStack(spacing: 12) {
@@ -150,7 +150,7 @@ struct Composer: View {
             }
         }
     }
-
+    
     private var sendMediaButton: some View {
         return Button {
             showSendMediaActions()
@@ -165,7 +165,7 @@ struct Composer: View {
         .padding(.trailing, 8)
         .accessibilityLabel(VectorL10n.create)
     }
-
+    
     private var sendButton: some View {
         return Button {
             sendMessageAction(wysiwygViewModel.content)
@@ -189,9 +189,9 @@ struct Composer: View {
             }
         }
     }
-
+    
     // MARK: Public
-
+    
     init(
         viewModel: ComposerViewModelType.Context,
         wysiwygViewModel: WysiwygComposerViewModel,
@@ -204,7 +204,7 @@ struct Composer: View {
             self.sendMessageAction = sendMessageAction
             self.showSendMediaActions = showSendMediaActions
         }
-
+    
     var body: some View {
         VStack(spacing: 8) {
             if wysiwygViewModel.maximised {
@@ -249,11 +249,11 @@ struct Composer: View {
             }
         }
     }
-
+    
     private func storeCurrentSelection() {
         viewModel.send(viewAction: .storeSelection(selection: wysiwygViewModel.attributedContent.selection))
     }
-
+    
     private func sendLinkAction() {
         let linkAction = wysiwygViewModel.getLinkAction()
         viewModel.send(viewAction: .linkTapped(linkAction: linkAction))

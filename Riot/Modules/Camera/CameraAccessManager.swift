@@ -64,6 +64,7 @@ final class CameraAccessManager {
             return false
         }
     }
+    
     // MARK: - Private
     
     private func requestCameraAccess(completion: @escaping (_ granted: Bool) -> Void) {

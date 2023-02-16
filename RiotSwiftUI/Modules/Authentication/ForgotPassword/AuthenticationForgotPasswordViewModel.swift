@@ -17,8 +17,8 @@
 import SwiftUI
 
 typealias AuthenticationForgotPasswordViewModelType = StateStoreViewModel<AuthenticationForgotPasswordViewState, AuthenticationForgotPasswordViewAction>
-class AuthenticationForgotPasswordViewModel: AuthenticationForgotPasswordViewModelType, AuthenticationForgotPasswordViewModelProtocol {
 
+class AuthenticationForgotPasswordViewModel: AuthenticationForgotPasswordViewModelType, AuthenticationForgotPasswordViewModelProtocol {
     // MARK: - Properties
 
     // MARK: Private
@@ -31,16 +31,15 @@ class AuthenticationForgotPasswordViewModel: AuthenticationForgotPasswordViewMod
 
     init(homeserver: AuthenticationHomeserverViewData, emailAddress: String = "") {
         let viewState = AuthenticationForgotPasswordViewState(homeserver: homeserver,
-                                                              bindings: AuthenticationForgotPasswordBindings(emailAddress: emailAddress, showingAlert: false))
+                                                              bindings: AuthenticationForgotPasswordBindings(emailAddress: emailAddress))
         super.init(initialViewState: viewState)
     }
 
     // MARK: - Public
     
-     override func process(viewAction: AuthenticationForgotPasswordViewAction) {
+    override func process(viewAction: AuthenticationForgotPasswordViewAction) {
         switch viewAction {
         case .send:
-//            Task { await self.forgotPasswordApi(username: state.bindings.emailAddress) }
             Task { await callback?(.send(state.bindings.emailAddress)) }
         case .resend:
             Task { await callback?(.send(state.bindings.emailAddress)) }
@@ -60,37 +59,12 @@ class AuthenticationForgotPasswordViewModel: AuthenticationForgotPasswordViewMod
     @MainActor func goBackToEnterEmailForm() {
         state.hasSentEmail = false
     }
-    @MainActor func forgotPasswordApi(username:String) {
-        APIServices.shared.upForgotPasswordApi(username: username) { response in
-
-            if response != nil {
-//                print(response)
-                self.state.bindings.showingAlert = true
-            }
-                          else{
-                self.state.bindings.showingAlert = true
-            }
-        }
-            failure: { error in
-//               print(error)
-                MXLog.warning("up==forgot==er = \(error)")
-//                self.state.bindings.showingAlert = true
-                self.displayError(.mxError("Request successfully sent, please check your mail."))
-            }
-    }
-
-    @MainActor func displayAlert() {
-        state.bindings.showingAlert = true
-//        self.goBackToEnterEmailForm()
-
-    }
-
+    
     @MainActor func displayError(_ type: AuthenticationForgotPasswordErrorType) {
-        self.goBackToEnterEmailForm()
         switch type {
         case .mxError(let message):
             state.bindings.alertInfo = AlertInfo(id: type,
-                                                 title: "",
+                                                 title: VectorL10n.error,
                                                  message: message)
         case .unknown:
             state.bindings.alertInfo = AlertInfo(id: type)

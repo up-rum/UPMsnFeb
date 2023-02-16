@@ -18,18 +18,18 @@ import SwiftUI
 
 struct SearchBar: View {
     // MARK: - Properties
-
+    
     var placeholder: String
     @Binding var text: String
 
     // MARK: - Private
-
+    
     @Environment(\.theme) private var theme: ThemeSwiftUI
     @State private var isEditing = false
     var onTextChanged: ((String) -> Void)?
 
     // MARK: - Public
-
+    
     var body: some View {
         HStack {
             TextField(placeholder, text: $text) { isEditing in
@@ -47,7 +47,7 @@ struct SearchBar: View {
                         .renderingMode(.template)
                         .foregroundColor(theme.colors.quarterlyContent)
                         .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-
+             
                     if isEditing, !text.isEmpty {
                         Button(action: {
                             self.text = ""

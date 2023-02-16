@@ -26,7 +26,6 @@ class VoiceBroadcastPlaybackOutgoingWithoutSenderInfoBubbleCell: VoiceBroadcastP
         // TODO: VB update margins attributes
         let leftMargin: CGFloat = BubbleRoomCellLayoutConstants.outgoingBubbleBackgroundMargins.left + BubbleRoomCellLayoutConstants.pollBubbleBackgroundInsets.left
         let rightMargin: CGFloat = BubbleRoomCellLayoutConstants.outgoingBubbleBackgroundMargins.right + BubbleRoomCellLayoutConstants.pollBubbleBackgroundInsets.right
-
         
         roomCellContentView?.innerContentViewTrailingConstraint.constant = rightMargin
         roomCellContentView?.innerContentViewLeadingConstraint.constant = leftMargin

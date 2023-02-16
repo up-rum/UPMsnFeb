@@ -29,23 +29,23 @@ struct StaticLocationViewingCoordinatorParameters {
 
 final class StaticLocationViewingCoordinator: Coordinator, Presentable {
     // MARK: - Properties
-
+    
     // MARK: Private
-
+    
     private let parameters: StaticLocationViewingCoordinatorParameters
     private let staticLocationViewingHostingController: UIViewController
     private var staticLocationViewingViewModel: StaticLocationViewingViewModelProtocol
-
+    
     private let shareLocationActivityControllerBuilder = ShareLocationActivityControllerBuilder()
-
+    
     // MARK: Public
 
     // Must be used only internally
     var childCoordinators: [Coordinator] = []
     var completion: (() -> Void)?
-
+    
     // MARK: - Setup
-
+    
     init(parameters: StaticLocationViewingCoordinatorParameters) {
         self.parameters = parameters
 
@@ -61,7 +61,7 @@ final class StaticLocationViewingCoordinator: Coordinator, Presentable {
         staticLocationViewingViewModel = viewModel
         staticLocationViewingHostingController = VectorHostingController(rootView: view)
     }
-
+    
     // MARK: - Public
 
     func start() {
@@ -77,14 +77,14 @@ final class StaticLocationViewingCoordinator: Coordinator, Presentable {
             }
         }
     }
-
+    
     func toPresentable() -> UIViewController {
         staticLocationViewingHostingController
     }
-
+    
     func presentLocationActivityController(with coordinate: CLLocationCoordinate2D) {
         let shareActivityController = shareLocationActivityControllerBuilder.build(with: coordinate)
-
+        
         staticLocationViewingHostingController.present(shareActivityController, animated: true)
     }
 }

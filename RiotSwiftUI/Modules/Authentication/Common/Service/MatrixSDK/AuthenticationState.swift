@@ -1,4 +1,4 @@
-// 
+//
 // Copyright 2022 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,7 +29,7 @@ struct AuthenticationState {
     
     init(flow: AuthenticationFlow, homeserverAddress: String, identityServer: String? = nil) {
         self.flow = flow
-        self.homeserver = Homeserver(address: homeserverAddress)
+        homeserver = Homeserver(address: homeserverAddress)
         self.identityServer = identityServer
     }
     
@@ -46,12 +46,15 @@ struct AuthenticationState {
         var addressFromUser: String?
         /// The homeserver's address formatted to be displayed to the user in labels, text fields etc.
         var displayableAddress: String {
-            let address = "https://matrix.unpluggedsystems.app"//addressFromUser ?? address
+            let address = addressFromUser ?? address
             return address.replacingOccurrences(of: "https://", with: "") // Only remove https. Leave http to indicate the server doesn't use SSL.
         }
         
         /// The preferred login mode for the server
         var preferredLoginMode: LoginMode = .unknown
+
+        /// Flag indicating whether the homeserver supports logging in via a QR code.
+        var supportsQRLogin = false
         
         /// The response returned when querying the homeserver for registration flows.
         var registrationFlow: RegistrationResult?
@@ -67,12 +70,13 @@ struct AuthenticationState {
             AuthenticationHomeserverViewData(address: displayableAddress,
                                              showLoginForm: preferredLoginMode.supportsPasswordFlow,
                                              showRegistrationForm: registrationFlow != nil && !needsRegistrationFallback,
+                                             showQRLogin: supportsQRLogin,
                                              ssoIdentityProviders: preferredLoginMode.ssoIdentityProviders ?? [])
         }
 
         /// Needs authentication fallback for login
         var needsLoginFallback: Bool {
-            return preferredLoginMode.isUnsupported
+            preferredLoginMode.isUnsupported
         }
 
         /// Needs authentication fallback for registration

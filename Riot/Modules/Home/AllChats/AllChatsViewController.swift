@@ -27,7 +27,6 @@ protocol AllChatsViewControllerDelegate: AnyObject {
 }
 
 class AllChatsViewController: HomeViewController {
-    
     // MARK: - Class methods
     
     static override func nib() -> UINib! {
@@ -41,31 +40,34 @@ class AllChatsViewController: HomeViewController {
         }
         return viewController
     }
+    
     // MARK: - Properties
-
+    
     weak var allChatsDelegate: AllChatsViewControllerDelegate?
     
     // MARK: - Private
     
     private let searchController = UISearchController(searchResultsController: nil)
+    
     private let spaceActionProvider = AllChatsSpaceActionProvider()
+    
     private let editActionProvider = AllChatsEditActionProvider()
 
     private var spaceSelectorBridgePresenter: SpaceSelectorBottomSheetCoordinatorBridgePresenter?
     
     private var childCoordinators: [Coordinator] = []
-
+    
     private let tableViewPaginationThrottler = MXThrottler(minimumDelay: 0.1)
-
+    
     private let reviewSessionAlertSnoozeController = ReviewSessionAlertSnoozeController()
-
+    
     private var bannerView: UIView? {
         didSet {
             bannerView?.translatesAutoresizingMaskIntoConstraints = false
             set(tableHeadeView: bannerView)
         }
     }
-
+    
     private var isOnboardingCoordinatorPreparing: Bool = false
 
     private var theme: Theme {
@@ -81,51 +83,53 @@ class AllChatsViewController: HomeViewController {
             }
         }
     }
-
+    
     private func setToolbarHidden(_ isHidden: Bool, animated: Bool) {
         UIView.animate(withDuration: animated ? 0.3 : 0) {
             self.isToolbarHidden = isHidden
         }
 
     }
-
+    
     // MARK: - SplitViewMasterViewControllerProtocol
-
+    
     // References on the currently selected room
     private(set) var selectedRoomId: String?
     private(set) var selectedEventId: String?
     private(set) var selectedRoomSession: MXSession?
     private(set) var selectedRoomPreviewData: RoomPreviewData?
-
+    
     // References on the currently selected contact
     private(set) var selectedContact: MXKContact?
-
+    
     // Reference to the current onboarding flow. It is always nil unless the flow is being presented.
     private(set) var onboardingCoordinatorBridgePresenter: OnboardingCoordinatorBridgePresenter?
-
+    
     // Tell whether the onboarding screen is preparing.
     private(set) var isOnboardingInProgress: Bool = false
-
+    
     private var toolbarHeight: CGFloat = 0
+
     // MARK: - Lifecycle
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
         editActionProvider.delegate = self
         spaceActionProvider.delegate = self
-
+        
         recentsTableView.tag = RecentsDataSourceMode.allChats.rawValue
         recentsTableView.clipsToBounds = false
         recentsTableView.register(RecentEmptySectionTableViewCell.nib, forCellReuseIdentifier: RecentEmptySectionTableViewCell.reuseIdentifier)
         recentsTableView.register(RecentEmptySpaceSectionTableViewCell.nib, forCellReuseIdentifier: RecentEmptySpaceSectionTableViewCell.reuseIdentifier)
         recentsTableView.register(RecentsInvitesTableViewCell.nib, forCellReuseIdentifier: RecentsInvitesTableViewCell.reuseIdentifier)
         recentsTableView.contentInsetAdjustmentBehavior = .automatic
-
+        
         toolbarHeight = toolbar.frame.height
         emptyViewBottomAnchor = toolbar.topAnchor
-        
+
         updateUI()
+        
         navigationItem.largeTitleDisplayMode = .automatic
         navigationController?.navigationBar.prefersLargeTitles = true
 
@@ -135,25 +139,11 @@ class AllChatsViewController: HomeViewController {
 
         NotificationCenter.default.addObserver(self, selector: #selector(self.setupEditOptions), name: AllChatsLayoutSettingsManager.didUpdateSettings, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(self.updateBadgeButton), name: MXSpaceNotificationCounter.didUpdateNotificationCount, object: nil)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-
-        let gracePeriod = UserDefaults.standard.integer(forKey: "grace_period") ?? -1
-        if gracePeriod == 0 {
-            let storyboard = UIStoryboard(name: "UPMain", bundle: Bundle.main)
-            guard let updateViewController = storyboard.instantiateViewController(withIdentifier: "UPVersionUpdateViewController") as? UPVersionUpdateViewController else {
-                return
-            }
-            updateViewController.modalPresentationStyle = .fullScreen
-
-                self.present(updateViewController, animated: true)
-            }
-        }
-//        self.navigationController?.pushViewController(updateViewController, animated: true)
     }
-
+    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-
+        
         self.toolbar.tintColor = theme.colors.accent
         if self.navigationItem.searchController == nil {
             self.navigationItem.searchController = searchController
@@ -161,13 +151,13 @@ class AllChatsViewController: HomeViewController {
 
         NotificationCenter.default.addObserver(self, selector: #selector(self.spaceListDidChange), name: MXSpaceService.didInitialise, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(self.spaceListDidChange), name: MXSpaceService.didBuildSpaceGraph, object: nil)
-
+        
         set(tableHeadeView: self.bannerView)
     }
-
+    
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-
+        
         // Check whether we're not logged in
         let authIsShown: Bool
         if MXKAccountManager.shared().accounts.isEmpty {
@@ -183,25 +173,25 @@ class AllChatsViewController: HomeViewController {
                 authIsShown = false
             }
         }
-
+        
         guard !authIsShown else {
             return
         }
 
         AppDelegate.theDelegate().checkAppVersion()
     }
-
+    
     override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
         super.viewWillTransition(to: size, with: coordinator)
-
+        
         coordinator.animate { context in
             self.recentsTableView?.tableHeaderView?.layoutIfNeeded()
             self.recentsTableView?.tableHeaderView = self.recentsTableView?.tableHeaderView
         }
     }
-
+    
     // MARK: - Public
-
+    
     func switchSpace(withId spaceId: String?) {
         searchController.isActive = false
 
@@ -216,20 +206,20 @@ class AllChatsViewController: HomeViewController {
             MXLog.warning("[AllChatsViewController] switchSpace: no space found with id \(spaceId)")
             return
         }
-
+        
         dataSource?.currentSpace = space
         updateUI()
-
+        
         self.recentsTableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .top, animated: true)
     }
 
     override var recentsDataSourceMode: RecentsDataSourceMode {
         .allChats
     }
-
+    
     override func addMatrixSession(_ mxSession: MXSession!) {
         super.addMatrixSession(mxSession)
-
+        
         if let dataSource = dataSource, !dataSource.mxSessions.contains(where: { $0 as? MXSession == mxSession }) {
             dataSource.addMatrixSession(mxSession)
             // Setting the delegate is required to send a RecentsViewControllerDataReadyNotification.
@@ -239,36 +229,36 @@ class AllChatsViewController: HomeViewController {
             initDataSource()
         }
     }
-
+    
     override func removeMatrixSession(_ mxSession: MXSession!) {
         super.removeMatrixSession(mxSession)
-
+        
         guard let dataSource = dataSource else { return }
         dataSource.removeMatrixSession(mxSession)
-
+        
         if dataSource.mxSessions.isEmpty {
             // The user logged out -> we need to reset the data source
             displayList(nil)
         }
     }
-
+    
     private func initDataSource() {
         guard self.dataSource == nil, let mainSession = self.mxSessions.first as? MXSession else {
             return
         }
-
+        
         MXLog.debug("[AllChatsViewController] initDataSource")
         let recentsListService = RecentsListService(withSession: mainSession)
         let recentsDataSource = RecentsDataSource(matrixSession: mainSession, recentsListService: recentsListService)
         displayList(recentsDataSource)
         recentsDataSource?.setDelegate(self, andRecentsDataSourceMode: self.recentsDataSourceMode)
     }
-
+    
     @objc private func spaceListDidChange() {
         guard self.editActionProvider.shouldUpdate(with: self.mainSession, parentSpace: self.dataSource?.currentSpace) else {
             return
         }
-
+        
         updateUI()
     }
 
@@ -289,23 +279,16 @@ class AllChatsViewController: HomeViewController {
             RecentsDataSourceSectionType.breadcrumbs.rawValue
         ]
     }
-
+    
     override func startActivityIndicator() {
         super.startActivityIndicator()
     }
-
+    
     // MARK: - Actions
     
     @objc private func showSpaceSelectorAction(sender: AnyObject) {
-        let currentSpaceId = self.dataSource.currentSpace?.spaceId ?? SpaceSelectorConstants.homeSpaceId
-        let spaceSelectorBridgePresenter = SpaceSelectorBottomSheetCoordinatorBridgePresenter(session: self.mainSession, selectedSpaceId: currentSpaceId, showHomeSpace: true)
-        spaceSelectorBridgePresenter.present(from: self, animated: true)
-        spaceSelectorBridgePresenter.delegate = self
-        self.spaceSelectorBridgePresenter = spaceSelectorBridgePresenter
-    }
-
-    private func showUPSpaceSelectorAction() {
-        let currentSpaceId = self.dataSource.currentSpace?.spaceId ?? SpaceSelectorConstants.homeSpaceId
+        Analytics.shared.viewRoomTrigger = .roomList
+        let currentSpaceId = dataSource?.currentSpace?.spaceId ?? SpaceSelectorConstants.homeSpaceId
         let spaceSelectorBridgePresenter = SpaceSelectorBottomSheetCoordinatorBridgePresenter(session: self.mainSession, selectedSpaceId: currentSpaceId, showHomeSpace: true)
         spaceSelectorBridgePresenter.present(from: self, animated: true)
         spaceSelectorBridgePresenter.delegate = self
@@ -313,45 +296,45 @@ class AllChatsViewController: HomeViewController {
     }
     
     // MARK: - UITableViewDataSource
-
+    
     private func sectionType(forSectionAt index: Int) -> RecentsDataSourceSectionType? {
         guard let recentsDataSource = dataSource as? RecentsDataSource else {
             return nil
         }
-
+        
         return recentsDataSource.sections.sectionType(forSectionIndex: index)
     }
-
+    
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         guard let sectionType = sectionType(forSectionAt: section), sectionType == .invites else {
             return super.tableView(tableView, numberOfRowsInSection: section)
         }
-
+        
         return dataSource?.tableView(tableView, numberOfRowsInSection: section) ?? 0
     }
-
+    
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let sectionType = sectionType(forSectionAt: indexPath.section), sectionType == .invites else {
             return super.tableView(tableView, cellForRowAt: indexPath)
         }
-
+        
         guard let dataSource = dataSource else {
             MXLog.failure("Missing data source")
             return UITableViewCell()
         }
         return dataSource.tableView(tableView, cellForRowAt: indexPath)
     }
-
+    
     // MARK: - UITableViewDelegate
-
+    
     override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         guard let sectionType = sectionType(forSectionAt: indexPath.section), sectionType == .invites else {
             return super.tableView(tableView, heightForRowAt: indexPath)
         }
-
+        
         return dataSource?.cellHeight(at: indexPath) ?? 0
     }
-
+    
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         guard let sectionType = sectionType(forSectionAt: indexPath.section), sectionType == .invites else {
             super.tableView(tableView, didSelectRowAt: indexPath)
@@ -360,29 +343,29 @@ class AllChatsViewController: HomeViewController {
 
         showRoomInviteList()
     }
-
+    
     override func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         super.tableView(tableView, willDisplay: cell, forRowAt: indexPath)
 
         guard let recentsDataSource = dataSource as? RecentsDataSource else {
             return
         }
-
+        
         let sectionType = recentsDataSource.sections.sectionType(forSectionIndex: indexPath.section)
         // We need to trottle a bit earlier so the next section is not visible even if the tableview scrolls faster
         guard sectionType == .allChats, let numberOfRowsInSection = recentsDataSource.recentsListService.allChatsRoomListData?.counts.numberOfRooms, indexPath.row == numberOfRowsInSection - 4 else {
             return
         }
-
+        
         tableViewPaginationThrottler.throttle {
             recentsDataSource.paginate(inSection: indexPath.section)
         }
     }
 
     // MARK: - Toolbar animation
-
+    
     private var initialScrollPosition: Double = 0
-
+    
     private func scrollPosition(of scrollView: UIScrollView) -> Double {
         return scrollView.contentOffset.y + scrollView.adjustedContentInset.top
     }
@@ -391,7 +374,7 @@ class AllChatsViewController: HomeViewController {
         guard scrollView == recentsTableView else {
             return
         }
-
+        
         initialScrollPosition = scrollPosition(of: scrollView)
     }
 
@@ -401,9 +384,9 @@ class AllChatsViewController: HomeViewController {
         guard scrollView == recentsTableView else {
             return
         }
-
+        
         let scrollPosition = scrollPosition(of: scrollView)
-
+        
         if !self.recentsTableView.isDragging && scrollPosition == 0 && self.isToolbarHidden == true {
             self.setToolbarHidden(false, animated: true)
         }
@@ -421,15 +404,14 @@ class AllChatsViewController: HomeViewController {
             self.setToolbarHidden(isToolBarHidden, animated: true)
         }
     }
-
-
+    
     // MARK: - Empty view management
-
+    
     override func updateEmptyView() {
         guard let mainSession = self.mainSession else {
             return
         }
-
+        
         let title: String
         let informationText: String
         if let currentSpace = self.dataSource?.currentSpace {
@@ -442,12 +424,12 @@ class AllChatsViewController: HomeViewController {
             title = VectorL10n.homeEmptyViewTitle(appName, displayName)
             informationText = VectorL10n.allChatsEmptyViewInformation
         }
-
+        
         self.emptyView?.fill(with: emptyViewArtwork,
                              title: title,
                              informationText: informationText)
     }
-
+    
     private var emptyViewArtwork: UIImage {
         if self.dataSource?.currentSpace == nil {
             return ThemeService.shared().isCurrentThemeDark() ? Asset.Images.allChatsEmptyScreenArtworkDark.image : Asset.Images.allChatsEmptyScreenArtwork.image
@@ -455,10 +437,10 @@ class AllChatsViewController: HomeViewController {
             return ThemeService.shared().isCurrentThemeDark() ? Asset.Images.allChatsEmptySpaceArtworkDark.image : Asset.Images.allChatsEmptySpaceArtwork.image
         }
     }
-
+    
     override func shouldShowEmptyView() -> Bool {
         let shouldShowEmptyView = super.shouldShowEmptyView() && !AllChatsLayoutSettingsManager.shared.hasAnActiveFilter
-
+        
         if shouldShowEmptyView {
             self.navigationItem.searchController = nil
             navigationItem.largeTitleDisplayMode = .never
@@ -470,29 +452,30 @@ class AllChatsViewController: HomeViewController {
         return shouldShowEmptyView
     }
     
-    // MARK: - Theme management
 
+    // MARK: - Theme management
+    
     override func userInterfaceThemeDidChange() {
         super.userInterfaceThemeDidChange()
-
+        
         guard self.toolbarItems != nil else {
             return
         }
-
+        
         self.update(with: theme)
     }
-
+    
     private func update(with theme: Theme) {
         self.navigationController?.toolbar?.tintColor = theme.colors.accent
     }
-
+    
     // MARK: - Private
-
+    
     private func set(tableHeadeView: UIView?) {
         guard let tableView = recentsTableView else {
             return
         }
-
+        
         tableView.tableHeaderView = tableHeadeView
         tableView.tableHeaderView?.widthAnchor.constraint(equalTo: tableView.widthAnchor).isActive = true
         tableView.tableHeaderView?.layoutIfNeeded()
@@ -504,7 +487,7 @@ class AllChatsViewController: HomeViewController {
             updateRightNavigationItem(with: AllChatsActionProvider().menu)
             return
         }
-
+        
         updateRightNavigationItem(with: spaceActionProvider.updateMenu(with: mainSession, space: currentSpace) { [weak self] menu in
             self?.updateRightNavigationItem(with: menu)
         })
@@ -513,7 +496,7 @@ class AllChatsViewController: HomeViewController {
     private func updateUI() {
         let currentSpace = self.dataSource?.currentSpace
         self.title = currentSpace?.summary?.displayname ?? VectorL10n.allChatsTitle
-
+        
         setupEditOptions()
         updateToolbar(with: editActionProvider.updateMenu(with: mainSession, parentSpace: currentSpace, completion: { [weak self] menu in
             self?.updateToolbar(with: menu)
@@ -521,11 +504,11 @@ class AllChatsViewController: HomeViewController {
         updateEmptyView()
         updateBadgeButton()
     }
-
+    
     private func updateRightNavigationItem(with menu: UIMenu) {
         self.navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "ellipsis.circle"), menu: menu)
     }
-
+    
     private lazy var spacesButton: BadgedBarButtonItem = {
         let innerButton = UIButton(type: .system)
         innerButton.accessibilityLabel = VectorL10n.spaceSelectorTitle
@@ -533,17 +516,17 @@ class AllChatsViewController: HomeViewController {
         innerButton.setImage(Asset.Images.allChatsSpacesIcon.image, for: .normal)
         return BadgedBarButtonItem(withBaseButton: innerButton, theme: theme)
     }()
-
+    
     @objc private func updateBadgeButton() {
         guard isViewLoaded, let session = mainSession else {
             return
         }
-
+        
         let notificationCount = session.spaceService.missedNotificationsCount
         let hasSpaceInvite = session.spaceService.hasSpaceInvite
         let isBadgeHighlighed = session.spaceService.hasHighlightNotification || hasSpaceInvite
         let badgeValue: String
-
+        
         switch notificationCount {
         case 0:
             badgeValue = hasSpaceInvite ? "!" : "0"
@@ -552,19 +535,19 @@ class AllChatsViewController: HomeViewController {
         default:
             badgeValue = "\(Constants.spacesButtonMaxCount)+"
         }
-
+        
         spacesButton.badgeText = badgeValue
         spacesButton.badgeBackgroundColor = isBadgeHighlighed ? theme.noticeColor : theme.noticeSecondaryColor
     }
-
+    
     private func updateToolbar(with menu: UIMenu) {
         guard isViewLoaded else {
             return
         }
-
+        
         self.isToolbarHidden = false
         self.update(with: theme)
-
+        
         self.toolbar.items = [
             spacesButton,
             UIBarButtonItem.flexibleSpace(),
@@ -580,7 +563,7 @@ class AllChatsViewController: HomeViewController {
             guard let self = self else {
                 return
             }
-
+            
             coordinator.toPresentable().dismiss(animated: true) {
                 self.remove(childCoordinator: coordinator)
                 switch result {
@@ -598,12 +581,13 @@ class AllChatsViewController: HomeViewController {
     private func add(childCoordinator: Coordinator) {
         self.childCoordinators.append(childCoordinator)
     }
-
+    
     private func remove(childCoordinator: Coordinator) {
         self.childCoordinators.append(childCoordinator)
     }
+    
     private func showSpaceInvite() {
-        guard let session = mainSession, let spaceRoom = dataSource.currentSpace?.room else {
+        guard let session = mainSession, let spaceRoom = dataSource?.currentSpace?.room else {
             return
         }
         
@@ -613,18 +597,12 @@ class AllChatsViewController: HomeViewController {
         add(childCoordinator: coordinator)
         present(coordinator.toPresentable(), animated: true)
     }
-
-    private func showUPCallHistory() {
-        let storyboard = UIStoryboard(name: "Main", bundle: Bundle.main)
-        let callHistoryViewController = (storyboard.instantiateViewController(withIdentifier: "MyRecentCallViewController") as? MyRecentCallViewController)!
-        self.navigationController?.pushViewController(callHistoryViewController, animated: true)
-    }
     
     private func showSpaceMembers() {
         guard let session = mainSession, let spaceId = dataSource?.currentSpace?.spaceId else {
             return
         }
-
+        
         let coordinator = SpaceMembersCoordinator(parameters: SpaceMembersCoordinatorParameters(userSessionsService: UserSessionsService.shared, session: session, spaceId: spaceId))
         coordinator.delegate = self
         let presentable = coordinator.toPresentable()
@@ -638,30 +616,30 @@ class AllChatsViewController: HomeViewController {
         guard let session = mainSession, let spaceId = dataSource?.currentSpace?.spaceId else {
             return
         }
-
+        
         let coordinator = SpaceSettingsModalCoordinator(parameters: SpaceSettingsModalCoordinatorParameters(session: session, spaceId: spaceId, parentSpaceId: nil))
         coordinator.callback = { [weak self] result in
             guard let self = self else { return }
-
+            
             coordinator.toPresentable().dismiss(animated: true) {
                 self.remove(childCoordinator: coordinator)
             }
         }
-
+        
         let presentable = coordinator.toPresentable()
         presentable.presentationController?.delegate = self
         present(presentable, animated: true, completion: nil)
         coordinator.start()
         add(childCoordinator: coordinator)
     }
-
+    
     private func showLeaveSpace() {
         guard let session = mainSession, let spaceSummary = dataSource?.currentSpace?.summary else {
             return
         }
-
+        
         let name = spaceSummary.displayname ?? VectorL10n.spaceTag
-
+        
         let selectionHeader = MatrixItemChooserSelectionHeader(title: VectorL10n.leaveSpaceSelectionTitle,
                                                                selectAllTitle: VectorL10n.leaveSpaceSelectionAllRooms,
                                                                selectNoneTitle: VectorL10n.leaveSpaceSelectionNoRooms)
@@ -684,7 +662,7 @@ class AllChatsViewController: HomeViewController {
         }
         present(coordinator.toPresentable(), animated: true)
     }
-
+    
     private func showRoomInviteList() {
         let invitesViewController = RoomInvitesViewController.instantiate()
         invitesViewController.userIndicatorStore = self.userIndicatorStore
@@ -693,6 +671,7 @@ class AllChatsViewController: HomeViewController {
         invitesViewController.displayList(recentsDataSource)
         self.navigationController?.pushViewController(invitesViewController, animated: true)
     }
+    
 }
 
 private extension AllChatsViewController {
@@ -703,26 +682,26 @@ private extension AllChatsViewController {
 
 // MARK: - SpaceSelectorBottomSheetCoordinatorBridgePresenterDelegate
 extension AllChatsViewController: SpaceSelectorBottomSheetCoordinatorBridgePresenterDelegate {
-
+    
     func spaceSelectorBottomSheetCoordinatorBridgePresenterDidCancel(_ coordinatorBridgePresenter: SpaceSelectorBottomSheetCoordinatorBridgePresenter) {
         coordinatorBridgePresenter.dismiss(animated: true) {
             self.spaceSelectorBridgePresenter = nil
         }
     }
-
+    
     func spaceSelectorBottomSheetCoordinatorBridgePresenterDidSelectHome(_ coordinatorBridgePresenter: SpaceSelectorBottomSheetCoordinatorBridgePresenter) {
         coordinatorBridgePresenter.dismiss(animated: true) {
             self.spaceSelectorBridgePresenter = nil
         }
-
+        
         switchSpace(withId: nil)
     }
-
+    
     func spaceSelectorBottomSheetCoordinatorBridgePresenter(_ coordinatorBridgePresenter: SpaceSelectorBottomSheetCoordinatorBridgePresenter, didSelectSpaceWithId spaceId: String) {
         coordinatorBridgePresenter.dismiss(animated: true) {
             self.spaceSelectorBridgePresenter = nil
         }
-
+        
         switchSpace(withId: spaceId)
     }
 
@@ -735,19 +714,16 @@ extension AllChatsViewController: SpaceSelectorBottomSheetCoordinatorBridgePrese
 
 }
 
-
 // MARK: - UISearchResultsUpdating
 extension AllChatsViewController: UISearchResultsUpdating {
-    
     func updateSearchResults(for searchController: UISearchController) {
         guard let searchText = searchController.searchBar.text, !searchText.isEmpty else {
-            self.dataSource.search(withPatterns: nil)
+            self.dataSource?.search(withPatterns: nil)
             return
         }
         
-        self.dataSource.search(withPatterns: [searchText])
+        self.dataSource?.search(withPatterns: [searchText])
     }
-
 }
 
 // MARK: - UISearchControllerDelegate
@@ -770,6 +746,24 @@ extension AllChatsViewController: UIAdaptivePresentationControllerDelegate {
     }
 }
 
+// MARK: - AllChatsEditActionProviderDelegate
+extension AllChatsViewController: AllChatsEditActionProviderDelegate {
+    
+    func allChatsEditActionProvider(_ actionProvider: AllChatsEditActionProvider, didSelect option: AllChatsEditActionProviderOption) {
+        switch option {
+        case .exploreRooms:
+            joinARoom()
+        case .createRoom:
+            createNewRoom()
+        case .startChat:
+            startChat()
+        case .createSpace:
+            showCreateSpace(parentSpaceId: dataSource?.currentSpace?.spaceId)
+        }
+    }
+    
+}
+
 // MARK: - AllChatsSpaceActionProviderDelegate
 extension AllChatsViewController: AllChatsSpaceActionProviderDelegate {
     func allChatsSpaceActionProvider(_ actionProvider: AllChatsSpaceActionProvider, didSelect option: AllChatsSpaceActionProviderOption) {
@@ -786,59 +780,30 @@ extension AllChatsViewController: AllChatsSpaceActionProviderDelegate {
     }
 }
 
-// MARK: - AllChatsEditActionProviderDelegate
-extension AllChatsViewController: AllChatsEditActionProviderDelegate {
-    
-    func allChatsEditActionProvider(_ actionProvider: AllChatsEditActionProvider, didSelect option: AllChatsEditActionProviderOption) {
-        switch option {
-        case .exploreRooms:
-            joinARoom()
-        case .createRoom:
-            createNewRoom()
-        case .startChat:
-            startChat()
-//        case .invitePeople:
-//            showSpaceInvite()
-//        case .spaceMembers:
-//            showSpaceMembers()
-//        case .spaceSettings:
-//            showSpaceSettings()
-//        case .leaveSpace:
-//            showLeaveSpace()
-        case .createSpace:
-            showCreateSpace(parentSpaceId: dataSource.currentSpace?.spaceId)
-        case .upShowSpace:
-            showUPSpaceSelectorAction()
-        case .upCallHistory:
-            showUPCallHistory()
-        }
-    }
-    
-}
 // MARK: - ContactsPickerCoordinatorDelegate
 extension AllChatsViewController: ContactsPickerCoordinatorDelegate {
-
+    
     func contactsPickerCoordinatorDidStartLoading(_ coordinator: ContactsPickerCoordinatorProtocol) {
     }
-
+    
     func contactsPickerCoordinatorDidEndLoading(_ coordinator: ContactsPickerCoordinatorProtocol) {
     }
-
+    
     func contactsPickerCoordinatorDidClose(_ coordinator: ContactsPickerCoordinatorProtocol) {
         remove(childCoordinator: coordinator)
     }
-
+    
 }
 
 // MARK: - SpaceMembersCoordinatorDelegate
 extension AllChatsViewController: SpaceMembersCoordinatorDelegate {
-
+    
     func spaceMembersCoordinatorDidCancel(_ coordinator: SpaceMembersCoordinatorType) {
         coordinator.toPresentable().dismiss(animated: true) {
             self.remove(childCoordinator: coordinator)
         }
     }
-
+    
 }
 
 // MARK: - BannerPresentationProtocol
@@ -846,7 +811,7 @@ extension AllChatsViewController: BannerPresentationProtocol {
     func presentBannerView(_ bannerView: UIView, animated: Bool) {
         self.bannerView = bannerView
     }
-
+    
     func dismissBannerView(animated: Bool) {
         self.bannerView = nil
     }
@@ -864,12 +829,12 @@ extension AllChatsViewController: SplitViewMasterViewControllerProtocol {
         selectedRoomPreviewData = nil
         selectedContact = nil
     }
-
+    
     /// Refresh the missed conversations badges on tab bar icon
     func refreshTabBarBadges() {
         // Nothing to do here as we don't have tab bar
     }
-
+    
     /// Verify the current device if needed.
     ///
     /// - Parameters:
@@ -881,7 +846,7 @@ extension AllChatsViewController: SplitViewMasterViewControllerProtocol {
               viewIfLoaded?.window != nil else {
             return
         }
-
+        
         // Force verification if required by the HS configuration
         guard !session.vc_homeserverConfiguration().encryption.isSecureBackupRequired else {
             MXLog.debug("[AllChatsViewController] presentVerifyCurrentSessionAlertIfNeededWithSession: Force verification of the device")
@@ -912,7 +877,7 @@ extension AllChatsViewController: SplitViewMasterViewControllerProtocol {
             }
         }
     }
-
+    
     func showOnboardingFlow() {
         MXLog.debug("[AllChatsViewController] showOnboardingFlow")
         self.showOnboardingFlowAndResetSessionFlags(true)
@@ -942,7 +907,7 @@ extension AllChatsViewController: SplitViewMasterViewControllerProtocol {
     ///   - completion: the block to execute at the end of the operation.
     func selectRoom(with parameters: RoomNavigationParameters, completion: @escaping () -> Void) {
         releaseSelectedItem()
-
+        
         selectedRoomId = parameters.roomId
         selectedEventId = parameters.eventId
         selectedRoomSession = parameters.mxSession
@@ -951,7 +916,7 @@ extension AllChatsViewController: SplitViewMasterViewControllerProtocol {
 
         refreshSelectedControllerSelectedCellIfNeeded()
     }
-
+    
     /// Open the RoomViewController to display the preview of a room that is unknown for the user.
     /// This room can come from an email invitation link or a simple link to a room.
     /// - Parameters:
@@ -959,9 +924,9 @@ extension AllChatsViewController: SplitViewMasterViewControllerProtocol {
     ///   - completion: the block to execute at the end of the operation.
     func selectRoomPreview(with parameters: RoomPreviewNavigationParameters, completion: (() -> Void)?) {
         releaseSelectedItem()
-
+        
         let roomPreviewData = parameters.previewData
-
+        
         selectedRoomPreviewData = roomPreviewData
         selectedRoomId = roomPreviewData.roomId
         selectedRoomSession = roomPreviewData.mxSession
@@ -976,13 +941,13 @@ extension AllChatsViewController: SplitViewMasterViewControllerProtocol {
         let presentationParameters = ScreenPresentationParameters(restoreInitialDisplay: true, stackAboveVisibleViews: false)
         select(contact, with: presentationParameters)
     }
-
+    
     /// Open a ContactDetailsViewController to display the information of the provided contact.
     func select(_ contact: MXKContact, with presentationParameters: ScreenPresentationParameters) {
         releaseSelectedItem()
-
+        
         selectedContact = contact
-
+        
         allChatsDelegate?.allChatsViewController(self, didSelectContact: contact, with: presentationParameters)
 
         refreshSelectedControllerSelectedCellIfNeeded()
@@ -993,7 +958,7 @@ extension AllChatsViewController: SplitViewMasterViewControllerProtocol {
         guard let session = mxSessions as? [MXSession] else {
             return 0
         }
-
+        
         return session.reduce(0) { $0 + $1.vc_missedDiscussionsCount() }
     }
 
@@ -1002,62 +967,62 @@ extension AllChatsViewController: SplitViewMasterViewControllerProtocol {
         guard let session = mxSessions as? [MXSession] else {
             return 0
         }
-
+        
         return session.reduce(0) { $0 + $1.missedHighlightDiscussionsCount() }
     }
-
+    
     /// Emulated `UItabBarViewController.selectedViewController` member
     var selectedViewController: UIViewController? {
         return self
     }
-
+    
     var tabBar: UITabBar? {
         return nil
     }
-
+    
     // MARK: - Private
-
+    
     private func presentVerifyCurrentSessionAlert(with session: MXSession) {
         MXLog.debug("[AllChatsViewController] presentVerifyCurrentSessionAlertWithSession")
-
+        
         let alert = UIAlertController(title: VectorL10n.keyVerificationSelfVerifyCurrentSessionAlertTitle,
                                       message: VectorL10n.keyVerificationSelfVerifyCurrentSessionAlertMessage,
                                       preferredStyle: .alert)
-
+        
         alert.addAction(UIAlertAction(title: VectorL10n.keyVerificationSelfVerifyCurrentSessionAlertValidateAction,
                                       style: .default,
                                       handler: { action in
             AppDelegate.theDelegate().presentCompleteSecurity(for: session)
         }))
-
+        
         alert.addAction(UIAlertAction(title: VectorL10n.later, style: .cancel))
-
+        
         alert.addAction(UIAlertAction(title: VectorL10n.doNotAskAgain,
                                       style: .destructive,
                                       handler: { action in
             RiotSettings.shared.hideVerifyThisSessionAlert = true
         }))
-
+        
         self.present(alert, animated: true)
     }
 
     private func presentReviewUnverifiedSessionsAlert(with session: MXSession) {
         MXLog.debug("[AllChatsViewController] presentReviewUnverifiedSessionsAlert")
-
+        
         let alert = UIAlertController(title: VectorL10n.keyVerificationAlertTitle,
                                       message: VectorL10n.keyVerificationAlertBody,
                                       preferredStyle: .alert)
-
+        
         alert.addAction(UIAlertAction(title: VectorL10n.keyVerificationSelfVerifyUnverifiedSessionsAlertValidateAction,
                                       style: .default,
                                       handler: { action in
             self.showSettingsSecurityScreen(with: session)
         }))
-
+        
         alert.addAction(UIAlertAction(title: VectorL10n.later, style: .cancel, handler: { [weak self] _ in
             self?.reviewSessionAlertSnoozeController.snooze()
         }))
-
+        
         present(alert, animated: true)
     }
 
@@ -1066,12 +1031,12 @@ extension AllChatsViewController: SplitViewMasterViewControllerProtocol {
             MXLog.warning("[AllChatsViewController] showSettingsSecurityScreen: cannot instantiate SettingsViewController")
             return
         }
-
+        
         guard let securityViewController = SecurityViewController.instantiate(withMatrixSession: session) else {
             MXLog.warning("[AllChatsViewController] showSettingsSecurityScreen: cannot instantiate SecurityViewController")
             return
         }
-
+        
         settingsViewController.loadViewIfNeeded()
         AppDelegate.theDelegate().restoreInitialDisplay {
             if RiotSettings.shared.enableNewSessionManager {
@@ -1082,20 +1047,20 @@ extension AllChatsViewController: SplitViewMasterViewControllerProtocol {
             }
         }
     }
-
+    
     private func showOnboardingFlowAndResetSessionFlags(_ resetSessionFlags: Bool) {
         // Check whether an authentication screen is not already shown or preparing
         guard self.onboardingCoordinatorBridgePresenter == nil && !self.isOnboardingCoordinatorPreparing else {
             return
         }
-
+        
         self.isOnboardingCoordinatorPreparing = true
         self.isOnboardingInProgress = true
-
+        
         if resetSessionFlags {
             resetReviewSessionsFlags()
         }
-
+        
         AppDelegate.theDelegate().restoreInitialDisplay {
             self.presentOnboardingFlow()
         }
@@ -1104,32 +1069,32 @@ extension AllChatsViewController: SplitViewMasterViewControllerProtocol {
     private func resetReviewSessionsFlags() {
         RiotSettings.shared.hideVerifyThisSessionAlert = false
     }
-
+    
     private func presentOnboardingFlow() {
         MXLog.debug("[AllChatsViewController] presentOnboardingFlow")
-
+        
         let onboardingCoordinatorBridgePresenter = OnboardingCoordinatorBridgePresenter()
         onboardingCoordinatorBridgePresenter.completion = { [weak self] in
             guard let self = self else { return }
-
+            
             self.onboardingCoordinatorBridgePresenter?.dismiss(animated: true, completion: {
                 self.onboardingCoordinatorBridgePresenter = nil
             })
-
+            
             self.isOnboardingInProgress = false   // Must be set before calling didCompleteAuthentication
             self.allChatsDelegate?.allChatsViewControllerDidCompleteAuthentication(self)
         }
-
+        
         onboardingCoordinatorBridgePresenter.present(from: self, animated: true)
         self.onboardingCoordinatorBridgePresenter = onboardingCoordinatorBridgePresenter
         self.isOnboardingCoordinatorPreparing = false
     }
-
+    
     private func refreshSelectedControllerSelectedCellIfNeeded() {
         guard splitViewController != nil else {
             return
         }
-
+        
         // Refresh selected cell without scrolling the selected cell (We suppose it's visible here)
         self.refreshCurrentSelectedCell(false)
     }
@@ -1139,16 +1104,16 @@ private extension MXSpaceService {
     var hasSpaceInvite: Bool {
         spaceSummaries.contains(where: { $0.isJoined == false })
     }
-
+    
     var missedNotificationsCount: UInt {
         let notificationState = notificationCounter.homeNotificationState
         let groupNotifications = notificationState.groupMissedDiscussionsCount
         let directNotifications = notificationState.directMissedDiscussionsCount
-
+        
         // `notificationState.allCount` returns twice the messages for favourite rooms. Fixing it here.
         return groupNotifications + directNotifications
     }
-
+    
     var hasHighlightNotification: Bool {
         notificationCounter.homeNotificationState.allHighlightCount > 0
     }

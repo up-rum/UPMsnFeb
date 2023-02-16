@@ -26,15 +26,6 @@ class BubbleRoomTimelineCellDecorator: PlainRoomTimelineCellDecorator {
         
         self.addTimestampLabel(toCell: cell, cellData: cellData)
     }
-    override func addTimeLimitLabelIfNeeded(toCell cell: MXKRoomBubbleTableViewCell, cellData: RoomBubbleCellData) {
-
-        guard self.canShowTimestamp(forCellData: cellData) else {
-            return
-        }
-
-//        self.addTimeLimitLabel(toCell: cell, cellData: cellData)
-    }
-    
         
     override func addTimestampLabel(toCell cell: MXKRoomBubbleTableViewCell, cellData: RoomBubbleCellData) {
         
@@ -42,12 +33,6 @@ class BubbleRoomTimelineCellDecorator: PlainRoomTimelineCellDecorator {
             super.addTimestampLabel(toCell: cell, cellData: cellData)
             return
         }
-
-        guard let timeLimitLabel = self.createTimeLimitLabel(for: cellData) else {
-            super.addTimeLimitLabel(toCell: cell, cellData: cellData)
-            return
-        }
-
         
         if let timestampDisplayable = cell as? TimestampDisplayable {
             
@@ -61,34 +46,20 @@ class BubbleRoomTimelineCellDecorator: PlainRoomTimelineCellDecorator {
                 // Prevent overlap with send status icon
                 let bottomMargin: CGFloat = BubbleRoomCellLayoutConstants.stickerTimestampViewMargins.bottom
                 let rightMargin: CGFloat = BubbleRoomCellLayoutConstants.stickerTimestampViewMargins.right
-
-
+                
                 self.addTimestampLabel(timestampLabel,
                                        to: cell,
                                        on: cell.contentView,
                                        constrainingView: attachmentView,
                                        rightMargin: rightMargin,
                                        bottomMargin: bottomMargin)
-                self.addTimeLimitLabel(timeLimitLabel,
-                                       cellData: cellData,
-                                       to: cell,
-                                       on: cell.contentView,
-                                       constrainingView: attachmentView,
-                                       rightMargin: rightMargin,
-                                       bottomMargin: bottomMargin-20)
                 
             } else if let attachmentView = cell.attachmentView {
                 // For media with thumbnail cells, add timestamp inside thumbnail
                 
                 timestampLabel.textColor = self.theme.baseIconPrimaryColor
-                timeLimitLabel.textColor = .white//self.theme.baseIconPrimaryColor
-
+                
                 self.addTimestampLabel(timestampLabel,
-                                       to: cell,
-                                       on: cell.contentView,
-                                       constrainingView: attachmentView)
-                self.addTimeLimitLabel(timeLimitLabel,
-                                       cellData: cellData,
                                        to: cell,
                                        on: cell.contentView,
                                        constrainingView: attachmentView)
@@ -99,18 +70,11 @@ class BubbleRoomTimelineCellDecorator: PlainRoomTimelineCellDecorator {
         } else if let voiceMessageCell = cell as? VoiceMessagePlainCell, let playbackView = voiceMessageCell.playbackController?.playbackView {
             
             // Add timestamp on cell inherting from VoiceMessageBubbleCell
-            timestampLabel.textColor = self.theme.baseIconPrimaryColor
-            timeLimitLabel.textColor = .white//self.theme.baseIconPrimaryColor
+            
             self.addTimestampLabel(timestampLabel,
                                    to: cell,
                                    on: cell.contentView,
                                    constrainingView: playbackView)
-            self.addTimeLimitLabel(timeLimitLabel,
-                                   cellData: cellData,
-                                   to: cell,
-                                   on: cell.contentView,
-                                   constrainingView: playbackView)
-            
             
         } else if let fileWithoutThumbnailCell = cell as? FileWithoutThumbnailBaseBubbleCell, let fileAttachementView = fileWithoutThumbnailCell.fileAttachementView {
             
@@ -119,79 +83,10 @@ class BubbleRoomTimelineCellDecorator: PlainRoomTimelineCellDecorator {
             self.addTimestampLabel(timestampLabel,
                                    to: cell,
                                    on: fileAttachementView,
-                                   constrainingView: fileAttachementView)
-            self.addTimestampLabel(timeLimitLabel,
-                                   to: cell,
-                                   on: cell.contentView,
                                    constrainingView: fileAttachementView)
             
         } else {
             super.addTimestampLabel(toCell: cell, cellData: cellData)
-        }
-    }
-
-    override func addTimeLimitLabel(toCell cell: MXKRoomBubbleTableViewCell, cellData: RoomBubbleCellData) {
-
-
-        guard let timelimitLabel = self.createTimeLimitLabel(for: cellData) else {
-            super.addTimeLimitLabel(toCell: cell, cellData: cellData)
-            return
-        }
-
-        if let timestampDisplayable = cell as? TimestampDisplayable {
-
-            timestampDisplayable.addTimestampView(timelimitLabel)
-
-        } else if cellData.isAttachmentWithThumbnail {
-
-            if cellData.attachment?.type == .sticker,
-               let attachmentView = cell.attachmentView {
-
-                // Prevent overlap with send status icon
-                let bottomMargin: CGFloat = BubbleRoomCellLayoutConstants.stickerTimestampViewMargins.bottom
-                let rightMargin: CGFloat = BubbleRoomCellLayoutConstants.stickerTimestampViewMargins.left
-
-                self.addTimeLimitLabel(timelimitLabel, cellData: cellData,
-                                       to: cell,
-                                       on: cell.contentView,
-                                       constrainingView: attachmentView,
-                                       rightMargin: rightMargin,
-                                       bottomMargin: bottomMargin)
-
-
-            } else if let attachmentView = cell.attachmentView {
-                // For media with thumbnail cells, add timestamp inside thumbnail
-
-                timelimitLabel.textColor = .white//self.theme.baseIconPrimaryColor
-                self.addTimeLimitLabel(timelimitLabel, cellData: cellData,
-                                       to: cell,
-                                       on: cell.contentView,
-                                       constrainingView: attachmentView)
-
-
-            } else {
-                super.addTimeLimitLabel(toCell: cell, cellData: cellData)
-            }
-        } else if let voiceMessageCell = cell as? VoiceMessagePlainCell, let playbackView = voiceMessageCell.playbackController?.playbackView {
-
-            // Add timestamp on cell inherting from VoiceMessageBubbleCell
-            self.addTimeLimitLabel(timelimitLabel, cellData: cellData,
-                                   to: cell,
-                                   on: cell.contentView,
-                                   constrainingView: playbackView)
-
-
-        } else if let fileWithoutThumbnailCell = cell as? FileWithoutThumbnailBaseBubbleCell, let fileAttachementView = fileWithoutThumbnailCell.fileAttachementView {
-
-            // Add timestamp on cell inherting from VoiceMessageBubbleCell
-
-            self.addTimeLimitLabel(timelimitLabel, cellData: cellData,
-                                   to: cell,
-                                   on: fileAttachementView,
-                                   constrainingView: fileAttachementView)
-
-        } else {
-            super.addTimeLimitLabel(toCell: cell, cellData: cellData)
         }
     }
     
@@ -399,39 +294,8 @@ class BubbleRoomTimelineCellDecorator: PlainRoomTimelineCellDecorator {
         timeLabel.accessibilityIdentifier = "timestampLabel"
         
         return timeLabel
-
     }
-
-    private func createTimeLimitLabel(cellData: MXKRoomBubbleCellData, bubbleComponent: MXKRoomBubbleComponent, viewTag: Int, textColor: UIColor) -> UILabel {
-
-
-        let timelimitedLabel = UILabel()
-
-        timelimitedLabel.text = "hello 11"//cellData.eventFormatter.timeString(from: Date())// bubbleComponent.date)
-        timelimitedLabel.textAlignment = .right
-        timelimitedLabel.textColor = textColor
-        timelimitedLabel.font = self.theme.fonts.caption2
-        timelimitedLabel.adjustsFontSizeToFitWidth = true
-        timelimitedLabel.tag = viewTag + 100
-        timelimitedLabel.accessibilityIdentifier = "timelimitLabel"
-
-        return timelimitedLabel
-    }
-    private func createTimeLimitLabel(for cellData: RoomBubbleCellData, textColor: UIColor) -> UILabel? {
-
-        let componentIndex = cellData.mostRecentComponentIndex
-
-        guard let bubbleComponents = cellData.bubbleComponents, componentIndex < bubbleComponents.count else {
-            return nil
-        }
-
-        let component = bubbleComponents[componentIndex]
-
-        return self.createTimestampLabel(cellData: cellData, bubbleComponent: component, viewTag: componentIndex+100, textColor: textColor)
-    }
-    func createTimeLimitLabel(for cellData: RoomBubbleCellData) -> UILabel? {
-        return self.createTimeLimitLabel(for: cellData, textColor: self.theme.textSecondaryColor)
-    }
+    
     func createTimestampLabel(for cellData: RoomBubbleCellData) -> UILabel? {
         return self.createTimestampLabel(for: cellData, textColor: self.theme.textSecondaryColor)
     }
@@ -518,79 +382,5 @@ class BubbleRoomTimelineCellDecorator: PlainRoomTimelineCellDecorator {
             trailingConstraint,
             bottomConstraint
         ])
-    }
-
-    func secondsToHoursMinutesSeconds(_ seconds: Int) -> (Int, Int, Int) {
-        return (seconds / 3600, (seconds % 3600) / 60, (seconds % 3600) % 60)
-    }
-
-    private func addTimeLimitLabel(_ timelimitLabel: UILabel,
-                                   cellData: RoomBubbleCellData,
-                                   to cell: MXKRoomBubbleTableViewCell,
-                                   on containerView: UIView,
-                                   constrainingView: UIView,
-                                   rightMargin: CGFloat = BubbleRoomCellLayoutConstants.bubbleTimestampViewMargins.right,
-                                   bottomMargin: CGFloat = BubbleRoomCellLayoutConstants.bubbleTimestampViewMargins.bottom) {
-        timelimitLabel.translatesAutoresizingMaskIntoConstraints = false
-//        var imageSize = CGSizeMake(10, 10);
-
-        let event: MXEvent? =  cellData.events.first
-        if event?.content["time_limit"] != nil {
-            timelimitLabel.isHidden = false
-            let currentTS: UInt64 = UInt64(Date().timeIntervalSince1970 * 1000)
-            let msgTS: UInt64 = event?.originServerTs ?? 0
-            let timeLimit: UInt64 = currentTS - msgTS
-//                NSLog(@"time=limit-=> %lu",(unsigned long)timeLimit);
-//                NSLog(@"msgTS=limit-=> %lu",(unsigned long)msgTS);
-            MXLog.warning("time===>>>> \(timeLimit)")
-            if ((event?.content["time_limit"] ?? 0) as? UInt64 ?? 0 > timeLimit) {
-
-
-            var eventTime: UInt64 = ((event?.content["time_limit"] ?? 0) as? UInt64 ?? 0) -  timeLimit
-            if eventTime > 2000 {
-
-                eventTime = eventTime/1000
-                let (h,m,s) = secondsToHoursMinutesSeconds(Int(eventTime))
-                let attachment = NSTextAttachment(image: (UIImage(named: "timeLimited")!))
-                attachment.bounds = CGRect(x: 0, y: 0, width: 10, height: 10)
-
-                var myString = ""
-                if h > 0 {
-                    myString = "\(h)h "
-                }
-                if m > 0 {
-                    myString = myString + "\(m)m "
-                }
-                if s > 0 {
-                    myString = myString + "\(s)s"
-                }
-                let myAttribute = [ NSAttributedString.Key.font: UIFont.boldSystemFont(ofSize: 12), NSAttributedString.Key.foregroundColor: UIColor.white]
-                let myAttrString: NSMutableAttributedString
-                myAttrString = NSMutableAttributedString(attachment: attachment)
-                myAttrString.append(NSAttributedString(string: myString, attributes: myAttribute))
-
-                timelimitLabel.attributedText = myAttrString
-//                timelimitLabel.text = "\(eventTime )"
-                cell.addTemporarySubview(timelimitLabel)
-
-                containerView.addSubview(timelimitLabel)
-
-                let trailingConstraint = timelimitLabel.leadingAnchor.constraint(equalTo: constrainingView.leadingAnchor, constant: 10)
-
-                let bottomConstraint = timelimitLabel.bottomAnchor.constraint(equalTo: constrainingView.bottomAnchor, constant: -bottomMargin )
-
-                NSLayoutConstraint.activate([
-                    trailingConstraint,
-                    bottomConstraint
-                ])
-            } else {
-                NotificationCenter.default.post(name: Notification.Name("deleteTimerMessage"), object: nil)
-                }
-            } else {
-//                NotificationCenter.default.post(name: Notification.Name("deleteTimerMessage"), object: nil)
-            }
-        } else {
-            timelimitLabel.isHidden = true
-        }
     }
 }

@@ -10,8 +10,6 @@
 #endif
 
 // Deprecated typealiases
-@available(*, deprecated, renamed: "ColorAsset.Color", message: "This typealias will be removed in SwiftGen 7.0")
-internal typealias AssetColorTypeAlias = ColorAsset.Color
 @available(*, deprecated, renamed: "ImageAsset.Image", message: "This typealias will be removed in SwiftGen 7.0")
 internal typealias AssetImageTypeAlias = ImageAsset.Image
 
@@ -340,16 +338,16 @@ internal class Asset: NSObject {
     internal static let tabHome = ImageAsset(name: "tab_home")
     internal static let tabPeople = ImageAsset(name: "tab_people")
     internal static let tabRooms = ImageAsset(name: "tab_rooms")
-    internal static let bgColor = ColorAsset(name: "BgColor")
-    internal static let blackTF = ColorAsset(name: "BlackTF")
-    internal static let gradient1 = ColorAsset(name: "Gradient1")
-    internal static let gradient2 = ColorAsset(name: "Gradient2")
-    internal static let primaryColor = ColorAsset(name: "PrimaryColor")
-    internal static let sColor = ColorAsset(name: "SColor")
-    internal static let splashLogo = ImageAsset(name: "SplashLogo")
-    internal static let titleTextColor = ColorAsset(name: "TitleTextColor")
-    internal static let timeLimited = ImageAsset(name: "timeLimited")
-    internal static let uplogo = ImageAsset(name: "uplogo")
+      internal static let bgColor = ColorAsset(name: "BgColor")
+      internal static let blackTF = ColorAsset(name: "BlackTF")
+      internal static let gradient1 = ColorAsset(name: "Gradient1")
+      internal static let gradient2 = ColorAsset(name: "Gradient2")
+      internal static let primaryColor = ColorAsset(name: "PrimaryColor")
+      internal static let sColor = ColorAsset(name: "SColor")
+      internal static let splashLogo = ImageAsset(name: "SplashLogo")
+      internal static let titleTextColor = ColorAsset(name: "TitleTextColor")
+      internal static let timeLimited = ImageAsset(name: "timeLimited")
+      internal static let uplogo = ImageAsset(name: "uplogo")
     internal static let voiceBroadcastBackward30s = ImageAsset(name: "voice_broadcast_backward_30s")
     internal static let voiceBroadcastForward30s = ImageAsset(name: "voice_broadcast_forward_30s")
     internal static let voiceBroadcastLive = ImageAsset(name: "voice_broadcast_live")
@@ -379,48 +377,6 @@ internal class Asset: NSObject {
 // swiftlint:enable identifier_name line_length nesting type_body_length type_name
 
 // MARK: - Implementation Details
-
-internal final class ColorAsset {
-  internal fileprivate(set) var name: String
-
-  #if os(macOS)
-  internal typealias Color = NSColor
-  #elseif os(iOS) || os(tvOS) || os(watchOS)
-  internal typealias Color = UIColor
-  #endif
-
-  @available(iOS 11.0, tvOS 11.0, watchOS 4.0, macOS 10.13, *)
-  internal private(set) lazy var color: Color = Color(asset: self)
-
-  #if os(iOS) || os(tvOS)
-  @available(iOS 11.0, tvOS 11.0, *)
-  internal func color(compatibleWith traitCollection: UITraitCollection) -> Color {
-    let bundle = BundleToken.bundle
-    guard let color = Color(named: name, in: bundle, compatibleWith: traitCollection) else {
-      fatalError("Unable to load color asset named \(name).")
-    }
-    return color
-  }
-  #endif
-
-  fileprivate init(name: String) {
-    self.name = name
-  }
-}
-
-internal extension ColorAsset.Color {
-  @available(iOS 11.0, tvOS 11.0, watchOS 4.0, macOS 10.13, *)
-  convenience init!(asset: ColorAsset) {
-    let bundle = BundleToken.bundle
-    #if os(iOS) || os(tvOS)
-    self.init(named: asset.name, in: bundle, compatibleWith: nil)
-    #elseif os(macOS)
-    self.init(named: NSColor.Name(asset.name), bundle: bundle)
-    #elseif os(watchOS)
-    self.init(named: asset.name)
-    #endif
-  }
-}
 
 @objcMembers
 internal class ImageAsset: NSObject {

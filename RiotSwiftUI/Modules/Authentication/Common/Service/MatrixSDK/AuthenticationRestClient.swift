@@ -23,9 +23,9 @@ protocol AuthenticationRestClient: AnyObject {
     var identityServer: String! { get set }
     var credentials: MXCredentials! { get }
     var acceptableContentTypes: Set<String>! { get set }
-
+    
     init(homeServer: URL, unrecognizedCertificateHandler handler: MXHTTPClientOnUnrecognizedCertificate?)
-
+    
     // MARK: Login
 
     var loginFallbackURL: URL { get }
@@ -33,9 +33,9 @@ protocol AuthenticationRestClient: AnyObject {
     func getLoginSession() async throws -> MXAuthenticationSession
     func login(parameters: LoginParameters) async throws -> MXCredentials
     func login(parameters: [String: Any]) async throws -> MXCredentials
-
+    
     func generateLoginToken() async throws -> MXLoginToken
-
+    
     // MARK: Registration
 
     var registerFallbackURL: URL { get }
@@ -44,7 +44,7 @@ protocol AuthenticationRestClient: AnyObject {
     func register(parameters: RegistrationParameters) async throws -> MXLoginResponse
     func register(parameters: [String: Any]) async throws -> MXLoginResponse
     func requestTokenDuringRegistration(for threePID: RegisterThreePID, clientSecret: String, sendAttempt: UInt) async throws -> RegistrationThreePIDTokenResponse
-
+    
     // MARK: Forgot Password
 
     func forgetPassword(for email: String, clientSecret: String, sendAttempt: UInt) async throws -> String

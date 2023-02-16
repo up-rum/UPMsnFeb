@@ -1,21 +1,12 @@
 {
   "pins" : [
     {
-      "identity" : "alamofire",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/Alamofire/Alamofire.git",
-      "state" : {
-        "branch" : "master",
-        "revision" : "ce0fb463a8f95fc8363c99fab1ea197553af5dfe"
-      }
-    },
-    {
       "identity" : "devicekit",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/devicekit/DeviceKit",
       "state" : {
-        "revision" : "d37e70cb2646666dcf276d7d3d4a9760a41ff8a6",
-        "version" : "4.9.0"
+        "revision" : "20e0991f3975916ab0f6d58db84d8bc64f883537",
+        "version" : "4.7.0"
       }
     },
     {
@@ -50,8 +41,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/matrix-org/matrix-wysiwyg-composer-swift",
       "state" : {
-        "revision" : "3f72aeab7d7e04b52ff3f735ab79a75993f97ef2",
-        "version" : "0.22.0"
+        "revision" : "f25189fb9b37eb77fad016ee8f0b0346c5310644",
+        "version" : "1.1.0"
       }
     },
     {
@@ -77,8 +68,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-collections",
       "state" : {
-        "revision" : "f504716c27d2e5d4144fa4794b12129301d17729",
-        "version" : "1.0.3"
+        "revision" : "48254824bb4248676bf7ce56014ff57b142b77eb",
+        "version" : "1.0.2"
       }
     },
     {
@@ -87,7 +78,7 @@
       "location" : "https://github.com/vector-im/swift-ogg",
       "state" : {
         "branch" : "main",
-        "revision" : "0ffad3f7b45a6a4760db090d503b00f094bbecc0"
+        "revision" : "e9a9e7601da662fd8b97d93781ff5c60b4becf88"
       }
     }
   ],

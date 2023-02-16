@@ -94,7 +94,7 @@ extension FormatItem {
             return Asset.Images.link.name
         }
     }
-
+    
     var accessibilityIdentifier: String {
         switch type {
         case .bold:
@@ -123,7 +123,7 @@ extension FormatItem {
             return "linkButton"
         }
     }
-
+    
     var accessibilityLabel: String {
         switch type {
         case .bold:
@@ -173,7 +173,7 @@ extension FormatType {
         case .indent:
             return .indent
         case .unindent:
-            return .unIndent
+            return .unindent
         case .inlineCode:
             return .inlineCode
         case .codeBlock:
@@ -184,7 +184,7 @@ extension FormatType {
             return .link
         }
     }
-
+    
     // TODO: We probably don't need to expose this, clean up.
     /// Convenience method to map it to the external rust binging action
     var composerAction: ComposerAction {
@@ -204,7 +204,7 @@ extension FormatType {
         case .indent:
             return .indent
         case .unindent:
-            return .unIndent
+            return .unindent
         case .inlineCode:
             return .inlineCode
         case .codeBlock:
@@ -239,7 +239,7 @@ enum ComposerViewModelResult: Equatable {
 
 final class LinkActionWrapper: NSObject {
     let linkAction: LinkAction
-
+    
     init(_ linkAction: LinkAction) {
         self.linkAction = linkAction
         super.init()

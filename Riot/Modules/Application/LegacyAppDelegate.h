@@ -7,7 +7,7 @@
  You may obtain a copy of the License at
 
  http://www.apache.org/licenses/LICENSE-2.0
-
+ 
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -255,7 +255,7 @@ UINavigationControllerDelegate
 
 /**
  Process universal link.
-
+ 
  @param parameters the universal link parameters.
  @return YES in case of processing success.
  */
@@ -263,10 +263,10 @@ UINavigationControllerDelegate
 
 /**
  Open the dedicated space with the given ID.
-
+ 
  This method will open only joined or invited spaces.
  @note this method is temporary and should be moved to a dedicated coordinator
-
+ 
  @param spaceId ID of the space.
  */
 - (void)openSpaceWithId:(NSString*)spaceId;

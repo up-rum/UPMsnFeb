@@ -2,13 +2,13 @@
 // $ createRootCoordinator.sh Room2 RoomInfo RoomInfoList
 /*
  Copyright 2020 New Vector Ltd
-
+ 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
-
+ 
  http://www.apache.org/licenses/LICENSE-2.0
-
+ 
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,11 +20,11 @@ import UIKit
 
 @objcMembers
 final class RoomInfoCoordinator: NSObject, RoomInfoCoordinatorType {
-
+    
     // MARK: - Properties
-
+    
     // MARK: Private
-
+    
     private let navigationRouter: NavigationRouterType
     private let session: MXSession
     private let room: MXRoom
@@ -32,10 +32,10 @@ final class RoomInfoCoordinator: NSObject, RoomInfoCoordinatorType {
     private let initialSection: RoomInfoSection
     private let dismissOnCancel: Bool
     private weak var roomSettingsViewController: RoomSettingsViewController?
-
+    
     private lazy var segmentedViewController: SegmentedViewController = {
         let controller = SegmentedViewController()
-
+        
         let participants = RoomParticipantsViewController()
         participants.finalizeInit()
         participants.enableMention = true
@@ -43,7 +43,7 @@ final class RoomInfoCoordinator: NSObject, RoomInfoCoordinatorType {
         participants.parentSpaceId = self.parentSpaceId
         participants.delegate = self
         participants.screenTracker = AnalyticsScreenTracker(screen: .roomMembers)
-
+        
         let files = RoomFilesViewController()
         files.finalizeInit()
         files.screenTracker = AnalyticsScreenTracker(screen: .roomUploads)
@@ -54,14 +54,14 @@ final class RoomInfoCoordinator: NSObject, RoomInfoCoordinatorType {
             files.hasRoomDataSourceOwnership = true
             files.displayRoom(dataSource)
         }
-
+        
         let settings = RoomSettingsViewController()
         settings.parentSpaceId = parentSpaceId
         settings.delegate = self
         settings.finalizeInit()
         settings.screenTracker = AnalyticsScreenTracker(screen: .roomSettings)
         settings.initWith(self.session, andRoomId: self.room.roomId)
-
+        
         if self.room.isDirect {
             controller.title = VectorL10n.roomDetailsTitleForDm
         } else {
@@ -77,23 +77,23 @@ final class RoomInfoCoordinator: NSObject, RoomInfoCoordinatorType {
             settings
         ], defaultSelected: 0)
         controller.addMatrixSession(self.session)
-
+        
         self.roomSettingsViewController = settings
-
+        
         _ = controller.view
-
+        
         return controller
     }()
-
+    
     // MARK: Public
 
     // Must be used only internally
     var childCoordinators: [Coordinator] = []
-
+    
     weak var delegate: RoomInfoCoordinatorDelegate?
-
+    
     // MARK: - Setup
-
+    
     init(parameters: RoomInfoCoordinatorParameters, navigationRouter: NavigationRouterType? = nil) {
         if let navigationRouter = navigationRouter {
             self.navigationRouter = navigationRouter
@@ -106,17 +106,17 @@ final class RoomInfoCoordinator: NSObject, RoomInfoCoordinatorType {
         self.parentSpaceId = parameters.parentSpaceId
         self.initialSection = parameters.initialSection
         self.dismissOnCancel = parameters.dismissOnCancel
-    }
-
+    }    
+    
     // MARK: - Public methods
-
+    
     func start() {
         let rootCoordinator = self.createRoomInfoListCoordinator()
 
         rootCoordinator.start()
 
         self.add(childCoordinator: rootCoordinator)
-
+        
         if self.navigationRouter.modules.isEmpty == false {
             // push room info screen non animated if another screen needs to be pushed just after
             let animated = initialSection == .none
@@ -138,11 +138,11 @@ final class RoomInfoCoordinator: NSObject, RoomInfoCoordinatorType {
             break
         }
     }
-
+    
     func toPresentable() -> UIViewController {
         return self.navigationRouter.toPresentable()
     }
-
+    
     // MARK: - Private methods
 
     private func createRoomInfoListCoordinator() -> RoomInfoListCoordinator {
@@ -150,13 +150,13 @@ final class RoomInfoCoordinator: NSObject, RoomInfoCoordinatorType {
         coordinator.delegate = self
         return coordinator
     }
-
+    
     private func createRoomNotificationSettingsCoordinator() -> RoomNotificationSettingsCoordinator {
         let coordinator = RoomNotificationSettingsCoordinator(room: room, presentedModally: false)
         coordinator.delegate = self
         return coordinator
     }
-
+    
     private func showRoomDetails(with target: RoomInfoListTarget, animated: Bool) {
         switch target {
         case .integrations:
@@ -188,15 +188,15 @@ final class RoomInfoCoordinator: NSObject, RoomInfoCoordinatorType {
                 fatalError("No settings tab index for this target.")
             }
             segmentedViewController.selectedIndex = tabIndex
-
+            
             if case .settings(let roomSettingsField) = target {
                 roomSettingsViewController?.selectedRoomSettingsField = roomSettingsField
             }
-
+            
             navigationRouter.push(segmentedViewController, animated: animated, popCompletion: nil)
         }
     }
-
+    
     private func push(coordinator: Coordinator & Presentable, animated: Bool = true) {
         self.add(childCoordinator: coordinator)
         navigationRouter.push(coordinator, animated: animated) {
@@ -207,15 +207,15 @@ final class RoomInfoCoordinator: NSObject, RoomInfoCoordinatorType {
 
 // MARK: - RoomInfoListCoordinatorDelegate
 extension RoomInfoCoordinator: RoomInfoListCoordinatorDelegate {
-
+    
     func roomInfoListCoordinator(_ coordinator: RoomInfoListCoordinatorType, wantsToNavigateTo target: RoomInfoListTarget) {
         self.showRoomDetails(with: target, animated: true)
     }
-
+    
     func roomInfoListCoordinatorDidCancel(_ coordinator: RoomInfoListCoordinatorType) {
         self.delegate?.roomInfoCoordinatorDidComplete(self)
     }
-
+    
     func roomInfoListCoordinatorDidLeaveRoom(_ coordinator: RoomInfoListCoordinatorType) {
         self.delegate?.roomInfoCoordinatorDidLeaveRoom(self)
     }
@@ -223,23 +223,23 @@ extension RoomInfoCoordinator: RoomInfoListCoordinatorDelegate {
 }
 
 extension RoomInfoCoordinator: RoomParticipantsViewControllerDelegate {
-
+    
     func roomParticipantsViewController(_ roomParticipantsViewController: RoomParticipantsViewController!, mention member: MXRoomMember!) {
         self.navigationRouter.popToRootModule(animated: true)
         self.delegate?.roomInfoCoordinator(self, didRequestMentionForMember: member)
     }
-
+    
 }
 
 extension RoomInfoCoordinator: RoomNotificationSettingsCoordinatorDelegate {
     func roomNotificationSettingsCoordinatorDidComplete(_ coordinator: RoomNotificationSettingsCoordinatorType) {
         self.navigationRouter.popModule(animated: true)
     }
-
+    
     func roomNotificationSettingsCoordinatorDidCancel(_ coordinator: RoomNotificationSettingsCoordinatorType) {
-
+        
     }
-
+    
 }
 
 extension RoomInfoCoordinator: RoomSettingsViewControllerDelegate {
@@ -250,7 +250,7 @@ extension RoomInfoCoordinator: RoomSettingsViewControllerDelegate {
             controller.withdrawViewController(animated: true) {}
         }
     }
-
+    
     func roomSettingsViewControllerDidComplete(_ controller: RoomSettingsViewController!) {
         if self.dismissOnCancel {
             self.navigationRouter.dismissModule(animated: true, completion: nil)
@@ -258,11 +258,11 @@ extension RoomInfoCoordinator: RoomSettingsViewControllerDelegate {
             controller.withdrawViewController(animated: true) {}
         }
     }
-
+    
     func roomSettingsViewController(_ controller: RoomSettingsViewController!, didReplaceRoomWithReplacementId newRoomId: String!) {
         self.delegate?.roomInfoCoordinator(self, didReplaceRoomWithReplacementId: newRoomId)
     }
-
+    
     func roomSettingsViewControllerDidLeaveRoom(_ controller: RoomSettingsViewController!) {
         self.delegate?.roomInfoCoordinatorDidLeaveRoom(self)
     }

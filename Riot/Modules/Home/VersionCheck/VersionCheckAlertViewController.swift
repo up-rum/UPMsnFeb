@@ -72,9 +72,8 @@ class VersionCheckAlertViewController: UIViewController {
             return
         }
         
-        titleLabel.text = "New Version Available"// details.title
-//        actionButton.setTitle(details.actionButtonTitle, for: .normal)
-        actionButton.setTitle("Update", for: .normal)
+        titleLabel.text = details.title
+        actionButton.setTitle(details.actionButtonTitle, for: .normal)
         
         let attributedSubtitle = NSMutableAttributedString(string: details.subtitle)
         
@@ -94,9 +93,6 @@ class VersionCheckAlertViewController: UIViewController {
     }
     
     @IBAction private func onActionButtonTap(_ sender: UIButton) {
-        if let url = URL(string: "itms-apps://itunes.apple.com/app/id1644037554") {
-            UIApplication.shared.open(url)
-        }
         delegate?.alertViewControllerDidRequestAction(self)
     }
     

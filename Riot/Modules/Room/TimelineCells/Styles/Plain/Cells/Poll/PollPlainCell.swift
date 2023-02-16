@@ -1,4 +1,4 @@
-//
+// 
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,10 +19,10 @@ import Foundation
 class PollPlainCell: SizableBaseRoomCell, RoomCellReactionsDisplayable, RoomCellReadMarkerDisplayable {
 
     private var event: MXEvent?
-
+    
     override func render(_ cellData: MXKCellData!) {
         super.render(cellData)
-
+        
         guard
             let contentView = roomCellContentView?.innerContentView,
             let bubbleData = cellData as? RoomBubbleCellData,
@@ -32,25 +32,25 @@ class PollPlainCell: SizableBaseRoomCell, RoomCellReactionsDisplayable, RoomCell
         else {
             return
         }
-
+        
         self.event = event
         self.addContentViewController(controller, on: contentView)
     }
-
+    
     override func setupViews() {
         super.setupViews()
-
+        
         roomCellContentView?.backgroundColor = .clear
         roomCellContentView?.showSenderInfo = true
         roomCellContentView?.showPaginationTitle = false
     }
-
+    
     // The normal flow for tapping on cell content views doesn't work for bubbles without attributed strings
     override func onContentViewTap(_ sender: UITapGestureRecognizer) {
         guard let event = self.event else {
             return
         }
-
+        
         delegate.cell(self, didRecognizeAction: kMXKRoomBubbleCellTapOnContentView, userInfo: [kMXKRoomBubbleCellEventKey: event])
     }
 }

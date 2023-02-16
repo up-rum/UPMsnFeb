@@ -1,4 +1,4 @@
-// 
+//
 // Copyright 2021 New Vector Ltd
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,17 +17,16 @@
 import SwiftUI
 
 struct MentionsAndKeywordNotificationSettings: View {
-    
     @ObservedObject var viewModel: NotificationSettingsViewModel
     
     var keywordSection: some View {
         SwiftUI.Section(
-            header: FormSectionHeader(text: VectorL10n.settingsYourKeywords),
-            footer: FormSectionFooter(text: VectorL10n.settingsMentionsAndKeywordsEncryptionNotice)
+            header: FormSectionHeader(text: VectorL10n.settingsYourKeywords)
         ) {
             NotificationSettingsKeywords(viewModel: viewModel)
         }
     }
+
     var body: some View {
         NotificationSettings(
             viewModel: viewModel,

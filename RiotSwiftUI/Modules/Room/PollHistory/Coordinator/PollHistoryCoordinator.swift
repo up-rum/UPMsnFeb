@@ -29,11 +29,11 @@ final class PollHistoryCoordinator: NSObject, Coordinator, Presentable {
     private let pollHistoryHostingController: UIViewController
     private var pollHistoryViewModel: PollHistoryViewModelProtocol
     private let navigationRouter: NavigationRouterType
-
+    
     // Must be used only internally
     var childCoordinators: [Coordinator] = []
     var completion: ((MXEvent) -> Void)?
-
+    
     init(parameters: PollHistoryCoordinatorParameters) {
         self.parameters = parameters
         let viewModel = PollHistoryViewModel(mode: parameters.mode, pollService: PollHistoryService(room: parameters.room, chunkSizeInDays: PollHistoryConstants.chunkSizeInDays))
@@ -42,9 +42,9 @@ final class PollHistoryCoordinator: NSObject, Coordinator, Presentable {
         pollHistoryHostingController = VectorHostingController(rootView: view)
         navigationRouter = parameters.navigationRouter
     }
-
+    
     // MARK: - Public
-
+    
     func start() {
         MXLog.debug("[PollHistoryCoordinator] did start.")
         pollHistoryViewModel.completion = { [weak self] result in
@@ -54,7 +54,7 @@ final class PollHistoryCoordinator: NSObject, Coordinator, Presentable {
             }
         }
     }
-
+    
     func showPollDetail(_ poll: TimelinePollDetails) {
         guard let event = parameters.room.mxSession.store.event(withEventId: poll.id, inRoom: parameters.room.roomId),
               let detailCoordinator: PollHistoryDetailCoordinator = try? .init(parameters: .init(event: event, poll: poll, room: parameters.room)) else {
@@ -66,16 +66,16 @@ final class PollHistoryCoordinator: NSObject, Coordinator, Presentable {
             guard let self, let coordinator = detailCoordinator, let event = event else { return }
             self.handlePollDetailResult(result, coordinator: coordinator, event: event, poll: poll)
         }
-
+        
         add(childCoordinator: detailCoordinator)
         detailCoordinator.start()
         toPresentable().present(detailCoordinator.toPresentable(), animated: true)
     }
-
+    
     func toPresentable() -> UIViewController {
         pollHistoryHostingController
     }
-
+    
     private func handlePollDetailResult(_ result: PollHistoryDetailViewModelResult, coordinator: Coordinator, event: MXEvent, poll: TimelinePollDetails) {
         switch result {
         case .dismiss:

@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-import SwiftUI
 import CommonKit
+import SwiftUI
 
 struct AuthenticationSoftLogoutCoordinatorParameters {
     let navigationRouter: NavigationRouterType
@@ -50,7 +50,6 @@ enum AuthenticationSoftLogoutCoordinatorResult: CustomStringConvertible {
 }
 
 final class AuthenticationSoftLogoutCoordinator: Coordinator, Presentable {
-    
     // MARK: - Properties
     
     // MARK: Private
@@ -107,7 +106,7 @@ final class AuthenticationSoftLogoutCoordinator: Coordinator, Presentable {
     }
     
     func toPresentable() -> UIViewController {
-        return self.authenticationSoftLogoutHostingController
+        authenticationSoftLogoutHostingController
     }
     
     // MARK: - Private
@@ -211,7 +210,8 @@ final class AuthenticationSoftLogoutCoordinator: Coordinator, Presentable {
     /// Processes an error to either update the flow or display it to the user.
     @MainActor private func handleError(_ error: Error) {
         if let mxError = MXError(nsError: error as NSError) {
-            authenticationSoftLogoutViewModel.displayError(.mxError(mxError.error))
+            let message = mxError.authenticationErrorMessage()
+            authenticationSoftLogoutViewModel.displayError(.mxError(message))
             return
         }
         

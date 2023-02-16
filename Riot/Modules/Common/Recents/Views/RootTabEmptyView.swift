@@ -28,11 +28,11 @@ enum RootTabEmptyViewDisplayMode {
 /// `RootTabEmptyView` is a view to display when there is no UI item to display on a screen.
 @objcMembers
 final class RootTabEmptyView: UIView, NibLoadable {
-
+    
     // MARK: - Properties
-
+    
     // MARK: Outlets
-
+    
     @IBOutlet private weak var iconBackgroundView: UIView!
     @IBOutlet private weak var iconView: UIImageView!
     @IBOutlet private weak var imageView: UIImageView!
@@ -41,37 +41,37 @@ final class RootTabEmptyView: UIView, NibLoadable {
     @IBOutlet private(set) weak var contentView: UIView!
 
     // MARK: Private
-
+    
     private var theme: Theme!
-
+    
     // MARK: Public
-
+    
     // MARK: - Setup
-
+    
     class func instantiate() -> RootTabEmptyView {
         let view = RootTabEmptyView.loadFromNib()
         view.theme = ThemeService.shared().theme
         return view
     }
-
+    
     // MARK: - Life cycle
-
+    
     override func awakeFromNib() {
         super.awakeFromNib()
-
+        
         self.informationLabel.text = VectorL10n.homeEmptyViewInformation
-
+        
         self.iconBackgroundView.layer.masksToBounds = true
         self.iconBackgroundView.layer.cornerRadius = self.iconBackgroundView.bounds.width / 2
         self.iconBackgroundView.isHidden = true
     }
-
+    
     // MARK: - Public
-
+    
     func fill(with image: UIImage, title: String, informationText: String) {
         fill(with: image, title: title, informationText: informationText, displayMode: .default)
     }
-
+    
     func fill(with image: UIImage, title: String, informationText: String, displayMode: RootTabEmptyViewDisplayMode) {
         self.imageView.image = image
         self.iconView.image = image.withRenderingMode(.alwaysTemplate)
@@ -84,12 +84,12 @@ final class RootTabEmptyView: UIView, NibLoadable {
 
 // MARK: - Themable
 extension RootTabEmptyView: Themable {
-
+    
     func update(theme: Theme) {
         self.theme = theme
-
+        
         self.backgroundColor = theme.backgroundColor
-
+        
         self.titleLabel.textColor = theme.textPrimaryColor
         self.informationLabel.textColor = theme.textSecondaryColor
         self.iconBackgroundView.backgroundColor = theme.colors.quinaryContent

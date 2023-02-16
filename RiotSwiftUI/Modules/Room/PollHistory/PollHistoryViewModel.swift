@@ -23,7 +23,7 @@ final class PollHistoryViewModel: PollHistoryViewModelType, PollHistoryViewModel
     private let pollService: PollHistoryServiceProtocol
     private var polls: [TimelinePollDetails]?
     private var subcriptions: Set<AnyCancellable> = .init()
-
+    
     var completion: ((PollHistoryViewModelResult) -> Void)?
 
     init(mode: PollHistoryMode, pollService: PollHistoryServiceProtocol) {
@@ -52,7 +52,7 @@ final class PollHistoryViewModel: PollHistoryViewModelType, PollHistoryViewModel
 private extension PollHistoryViewModel {
     func fetchContent() {
         state.isLoading = true
-
+        
         pollService
             .nextBatch()
             .collect()
@@ -63,11 +63,11 @@ private extension PollHistoryViewModel {
             }
             .store(in: &subcriptions)
     }
-
+    
     func handleBatchEnded(completion: Subscribers.Completion<Error>) {
         state.isLoading = false
         state.canLoadMoreContent = pollService.hasNextBatch
-
+        
         switch completion {
         case .finished:
             break
@@ -75,13 +75,13 @@ private extension PollHistoryViewModel {
             polls = polls ?? []
             state.bindings.alertInfo = .init(id: true, title: VectorL10n.pollHistoryFetchingError)
         }
-
+        
         updateViewState()
     }
-
+    
     func setupUpdateSubscriptions() {
         subcriptions.removeAll()
-
+        
         pollService
             .updates
             .sink { [weak self] detail in
@@ -89,12 +89,12 @@ private extension PollHistoryViewModel {
                 self?.updateViewState()
             }
             .store(in: &subcriptions)
-
+        
         pollService
             .fetchedUpTo
             .weakAssign(to: \.state.syncedUpTo, on: self)
             .store(in: &subcriptions)
-
+        
         pollService
             .livePolls
             .sink { [weak self] livePoll in
@@ -103,29 +103,29 @@ private extension PollHistoryViewModel {
             }
             .store(in: &subcriptions)
     }
-
+    
     func update(poll: TimelinePollDetails) {
         guard let pollIndex = polls?.firstIndex(where: { $0.id == poll.id }) else {
             return
         }
-
+            
         polls?[pollIndex] = poll
     }
-
+    
     func add(polls: [TimelinePollDetails]) {
         self.polls = (self.polls ?? []) + polls
     }
-
+    
     func updateViewState() {
         let renderedPolls: [TimelinePollDetails]?
-
+        
         switch context.mode {
         case .active:
             renderedPolls = polls?.filter { $0.closed == false }
         case .past:
             renderedPolls = polls?.filter { $0.closed == true }
         }
-
+        
         state.polls = renderedPolls?.sorted(by: { $0.startDate > $1.startDate })
     }
 }
@@ -143,7 +143,7 @@ extension PollHistoryViewModel.Context {
             return VectorL10n.pollHistoryNoPastPollText
         }
     }
-
+    
     var syncedPastDays: Int {
         guard let days = Calendar.current.dateComponents([.day], from: viewState.syncedUpTo, to: viewState.syncStartDate).day else {
             return 0

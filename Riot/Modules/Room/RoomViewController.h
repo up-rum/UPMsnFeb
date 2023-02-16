@@ -1,13 +1,13 @@
 /*
  Copyright 2014 OpenMarket Ltd
  Copyright 2017 Vector Creations Ltd
-
+ 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
-
+ 
  http://www.apache.org/licenses/LICENSE-2.0
-
+ 
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -149,7 +149,7 @@ extern NSTimeInterval const kResizeComposerAnimationDuration;
 
 /**
  Display a new discussion with a target user without associated room.
-
+ 
  @param directChatTargetUser Direct chat target user.
  @param session The Matrix session.
  */
@@ -174,7 +174,7 @@ extern NSTimeInterval const kResizeComposerAnimationDuration;
 
 /**
  Highlights an event in the timeline. Does not reload room data source if the event is already loaded. Otherwise, loads a new data source around the given event.
-
+ 
  @param eventId Identifier of the event to be highlighted.
  @param completion Completion block to be called at the end of process. Optional.
  */
@@ -182,9 +182,9 @@ extern NSTimeInterval const kResizeComposerAnimationDuration;
 
 /**
  Creates and returns a new `RoomViewController` object.
-
+ 
  @param configuration display configuration for the room view controller.
-
+ 
  @return An initialized `RoomViewController` object.
  */
 + (instancetype)instantiateWithConfiguration:(RoomDisplayConfiguration *)configuration;
@@ -198,14 +198,14 @@ extern NSTimeInterval const kResizeComposerAnimationDuration;
 
 /**
  Tells the delegate that the user wants to open the room details (members, files, settings).
-
+ 
  @param roomViewController the `RoomViewController` instance.
  */
 - (void)roomViewControllerShowRoomDetails:(RoomViewController *)roomViewController;
 
 /**
  Tells the delegate that the user wants to display the details of a room member.
-
+ 
  @param roomViewController the `RoomViewController` instance.
  @param roomMember the selected member
  */
@@ -214,7 +214,7 @@ extern NSTimeInterval const kResizeComposerAnimationDuration;
 
 /**
  Tells the delegate that the user wants to display another room.
-
+ 
  @param roomViewController the `RoomViewController` instance.
  @param roomID the selected roomId
  @param eventID the selected eventId
@@ -225,7 +225,7 @@ extern NSTimeInterval const kResizeComposerAnimationDuration;
 
 /**
  Tells the delegate that the room has replaced by a room with a specific replacement room ID.
-
+ 
  @param roomViewController the `RoomViewController` instance.
  @param roomID the replacement roomId
  */
@@ -234,7 +234,7 @@ didReplaceRoomWithReplacementId:(NSString *)roomID;
 
 /**
  Tells the delegate that the user wants to start a direct chat with a user.
-
+ 
  @param roomViewController the `RoomViewController` instance.
  @param userId the selected user id
  @param completion Blocks called when the chat is created.
@@ -245,7 +245,7 @@ didReplaceRoomWithReplacementId:(NSString *)roomID;
 
 /**
  Tells the delegate that the user wants to show complete security screen.
-
+ 
  @param roomViewController the `RoomViewController` instance.
  @param session The selected Matrix session.
  */
@@ -253,21 +253,21 @@ didReplaceRoomWithReplacementId:(NSString *)roomID;
 
 /**
  Tells the delegate that the user left the room.
-
+ 
  @param roomViewController the `RoomViewController` instance.
  */
 - (void)roomViewControllerDidLeaveRoom:(RoomViewController *)roomViewController;
 
 /**
  Tells the delegate that the user wants to cancel the room preview.
-
+ 
  @param roomViewController the `RoomViewController` instance.
  */
 - (void)roomViewControllerPreviewDidTapCancel:(RoomViewController *)roomViewController;
 
 /**
  Process universal link.
-
+ 
  @param roomViewController the `RoomViewController` instance.
  @param parameters the universal link parameters.
  @return YES in case of processing success.
@@ -277,21 +277,21 @@ handleUniversalLinkWithParameters:(UniversalLinkParameters*)parameters;
 
 /**
  Ask the coordinator to invoke the poll creation form coordinator.
-
+ 
  @param roomViewController the `RoomViewController` instance.
  */
 - (void)roomViewControllerDidRequestPollCreationFormPresentation:(RoomViewController *)roomViewController;
 
 /**
  Ask the coordinator to invoke the location sharing form coordinator.
-
+ 
  @param roomViewController the `RoomViewController` instance.
  */
 - (void)roomViewControllerDidRequestLocationSharingFormPresentation:(RoomViewController *)roomViewController;
 
 /**
  Ask the coordinator to invoke the location sharing form coordinator.
-
+ 
  @param roomViewController the `RoomViewController` instance.
  @param event the event containing location information
  @param bubbleData the bubble data containing sender details
@@ -321,7 +321,7 @@ didRequestEditForPollWithStartEvent:(MXEvent *)startEvent;
 
 /**
  Indicate to the delegate that loading should start
-
+ 
  Note: Only called if the controller can delegate user indicators rather than managing
  loading indicators internally
  */
@@ -329,7 +329,7 @@ didRequestEditForPollWithStartEvent:(MXEvent *)startEvent;
 
 /**
  Indicate to the delegate that loading should stop
-
+ 
  Note: Only called if the controller can delegate user indicators rather than managing
  loading indicators internally
  */

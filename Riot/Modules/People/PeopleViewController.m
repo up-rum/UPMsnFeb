@@ -101,10 +101,7 @@
             [self.recentsSearchBar setText:nil];
         }
     }
-
 }
-
-
 
 #pragma mark - UITableView delegate
 
